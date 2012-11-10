@@ -26,39 +26,58 @@ use File::Basename;
 use Getopt::Long;
 
 my $dry_run="";
-GetOptions("dry-run|n" => \$dry_run);
+my $multifile="";
+my $QUIET_LOG="";
+GetOptions(
+    "dry-run|n" => \$dry_run,
+    "multifile"  => \$multifile,
+    "quiet|n"  => \$QUIET_LOG,
+    );
 
-print "Dry run: no files will be written\n" if $dry_run;
+log_msg("Dry run: no files will be written\n") if $dry_run;
 
-foreach(@ARGV) {
-    unless( -f $_ ) {
-        print "$_ not found; skipping\n";
+my $fh;
+
+unless($multifile) {
+    $fh = \*STDOUT;
+}
+
+foreach my $csv_file (@ARGV) {
+    unless( -f $csv_file ) {
+        warn "$csv_file not found; skipping\n";
         next;
     }
-    unless( /\.csv/i ) {
-        print "$_ is not of form *.(csv|CSV); skipping\n";
+    unless( $csv_file =~ /\.csv/i ) {
+        warn "$csv_file is not of form *.(csv|CSV); skipping\n";
         next;
     }
-    open INFILE, $_
-        or die "Couldn't open $_ for reading";
+    open INFILE, $csv_file
+        or die "Couldn't open $csv_file for reading";
 
-    my ($stem,$directories,$suffix) = fileparse($_,qr/\.csv/i);
-    my $filename = "${directories}$stem.txt";
+    my ($stem,$directories,$suffix) = fileparse($csv_file,qr/\.csv/i);
 
-    if( -f $filename ) {
-        print "Output $filename already exists; skipping processing of $_\n";
-        next;
-    }
+    if($multifile) {
+        my $filename = "${directories}$stem.txt"; 
 
-    unless($dry_run) {
-        open OUTFILE, ">", "$filename"
-            or die "Couldn't open $filename for writing";
+        if( -f $filename ) {
+            warn "Output $filename already exists; skipping processing of $csv_file\n";
+            next;
+        }
+
+        unless($dry_run) {
+            open $fh, ">", "$filename"
+                or die "Couldn't open $filename for writing";
+        }
     }
 
     my $header = <INFILE>;
     unless($header && $header eq "WORDCOUNTS,WEIGHT\n") {
-        print "unexpected header found: $header\nSkipping $_\n";
+        warn "unexpected header found: $header\nSkipping $csv_file\n";
         next;
+    }
+
+    unless($multifile) {
+        print "${stem}$suffix ";
     }
 
     my $total_count = 0;
@@ -66,18 +85,24 @@ foreach(@ARGV) {
         chomp;
         my ($word,$count) = split /,/;
 
-        unless($dry_run) {
-            print OUTFILE "$word\n" x (0 + $count); 
+        unless($dry_run) { 
+            print $fh "$word " x (0 + $count); 
         }
 
         $total_count += $count;
     }
-    print "$filename: $total_count words written\n";
+    print "\n";
+
+    log_msg("$csv_file: $total_count words written\n");
 
     close INFILE or die "Couldn't close input file";
 
-    unless($dry_run) { 
-        close OUTFILE
+    if(!$dry_run && $multifile) { 
+        close $fh
             or die "Couldn't close output file";
     }
+}
+
+sub log_msg {
+    print STDERR @_ unless $QUIET_LOG;
 }
