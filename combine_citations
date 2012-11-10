@@ -27,9 +27,9 @@ done
 # print the header
 echo $header_line
 
-# sort so we can uniq the results
+# grep out blank lines, then sort so we can uniq the results
 #
-# I wouldn't call this blazingly fast, but for 25000 lines it's only a few
-# seconds on my machine
+# I wouldn't call this blazingly fast, but for 25000 lines it's only a
+# few seconds on my machine, so no worries
 
-sort $tmp_file | uniq
+grep -v "^$" $tmp_file | sort | uniq
