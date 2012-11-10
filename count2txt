@@ -5,11 +5,26 @@
 #
 #        USAGE: count2txt <file1.csv file2.CSV ...>
 #
-#  DESCRIPTION: For each wordcount file xxx.csv or xxx.CSV, create a
-#  corresponding file, xxx.txt, which simply consists of each of the
-#  words listed in xxx.csv repeated as many times as the wordcount says.
-#  That way you can feed original documents to any tool that wants
-#  them---though the documents will be slightly scrambled.  
+#      OPTIONS: -n, --dry-run   read files and count words, but write no output
+#               --multifile     write one .txt file per CSV file
+#               -q, --quiet     no log messages (warnings still enabled)
+#
+#  DESCRIPTION: The opposite of compression.
+#
+#  Turn JSTOR DFR wordcount files in CSV format, *.CSV, into bags of
+#  words. That way you can feed original documents to any tool that
+#  wants them---though the documents will be...slightly...scrambled.
+#
+#  By default, each input file is output to stdout as a single line of
+#  the form
+#
+#  <filename> word word word word word word ...
+#
+#  This output can be redirected to a file and fed to mallet input-file.
+#
+#  With --multifile, each input file <file.csv> is output to a corresponding
+#  text file <file.txt>. The aggregate of such files can be fed to
+#  mallet input-dir.
 #
 #       AUTHOR: Andrew Goldstone (agoldst), andrew.goldstone@gmail.com
 # ORGANIZATION: Rutgers University, New Brunswick
@@ -22,6 +37,8 @@ use warnings FATAL => "utf8";               # Unicode encode errors are fatal
 use autodie;
 use open qw( :std :utf8 );                  # default utf8 layer for open
 use File::Basename;
+
+# Command-line options processing
 
 use Getopt::Long;
 
@@ -36,6 +53,7 @@ GetOptions(
 
 log_msg("Dry run: no files will be written\n") if $dry_run;
 
+# Output filehandle. We'll set it according to $multiline option
 my $fh;
 
 unless($multifile) {
@@ -54,7 +72,10 @@ foreach my $csv_file (@ARGV) {
     open INFILE, $csv_file
         or die "Couldn't open $csv_file for reading";
 
+    # Split up the filename into directory path, name, csv suffix
     my ($stem,$directories,$suffix) = fileparse($csv_file,qr/\.csv/i);
+
+    # for multifile output, open up the new *.txt
 
     if($multifile) {
         my $filename = "${directories}$stem.txt"; 
@@ -70,11 +91,17 @@ foreach my $csv_file (@ARGV) {
         }
     }
 
+    # double-check that this input file has the expected header
+    # jstor calls the count "weight" because you can actually write jstor
+    # search queries that specify weightings
     my $header = <INFILE>;
     unless($header && $header eq "WORDCOUNTS,WEIGHT\n") {
         warn "unexpected header found: $header\nSkipping $csv_file\n";
         next;
     }
+
+    # single file output: the start of a line is the name of the file
+    # we're turning into a bag of words
 
     unless($multifile) {
         print "${stem}$suffix ";
@@ -86,14 +113,19 @@ foreach my $csv_file (@ARGV) {
         my ($word,$count) = split /,/;
 
         unless($dry_run) { 
-            print $fh "$word " x (0 + $count); 
+            print $fh "$word " x (0 + $count); # I love the x operator
         }
+
+        # keep track of the total number of words to provide sanity check
+        # and running feedback
 
         $total_count += $count;
     }
-    print "\n";
+    print $fh "\n";
 
     log_msg("$csv_file: $total_count words written\n");
+
+    # clean up before the next iteration of the loop
 
     close INFILE or die "Couldn't close input file";
 
@@ -102,6 +134,8 @@ foreach my $csv_file (@ARGV) {
             or die "Couldn't close output file";
     }
 }
+
+# basic logging
 
 sub log_msg {
     print STDERR @_ unless $QUIET_LOG;
