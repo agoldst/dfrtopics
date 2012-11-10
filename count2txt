@@ -23,6 +23,13 @@ use autodie;
 use open qw( :std :utf8 );                  # default utf8 layer for open
 use File::Basename;
 
+use Getopt::Long;
+
+my $dry_run="";
+GetOptions("dry-run|n" => \$dry_run);
+
+print "Dry run: no files will be written\n" if $dry_run;
+
 foreach(@ARGV) {
     unless( -f $_ ) {
         print "$_ not found; skipping\n";
@@ -42,8 +49,11 @@ foreach(@ARGV) {
         print "Output $filename already exists; skipping processing of $_\n";
         next;
     }
-    open OUTFILE, ">", "$filename"
-        or die "Couldn't open $filename for writing";
+
+    unless($dry_run) {
+        open OUTFILE, ">", "$filename"
+            or die "Couldn't open $filename for writing";
+    }
 
     my $header = <INFILE>;
     unless($header && $header eq "WORDCOUNTS,WEIGHT\n") {
@@ -55,11 +65,19 @@ foreach(@ARGV) {
     while(<INFILE>) {
         chomp;
         my ($word,$count) = split /,/;
-        print OUTFILE "$word " for (1..$count); 
+
+        unless($dry_run) {
+            print OUTFILE "$word\n" for (1..$count); 
+        }
+
         $total_count += $count;
     }
     print "$filename: $total_count words written\n";
 
-    close INFILE;
-    close OUTFILE; 
+    close INFILE or die "Couldn't close input file";
+
+    unless($dry_run) { 
+        close OUTFILE
+            or die "Couldn't close output file";
+    }
 }
