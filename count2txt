@@ -28,6 +28,10 @@ foreach(@ARGV) {
         print "$_ not found; skipping\n";
         next;
     }
+    unless( /\.csv/i ) {
+        print "$_ is not of form *.(csv|CSV); skipping\n";
+        next;
+    }
     open INFILE, $_
         or die "Couldn't open $_ for reading";
 
@@ -42,7 +46,7 @@ foreach(@ARGV) {
         or die "Couldn't open $filename for writing";
 
     my $header = <INFILE>;
-    unless($header eq "WORDCOUNTS,WEIGHT\n") {
+    unless($header && $header eq "WORDCOUNTS,WEIGHT\n") {
         print "unexpected header found: $header\nSkipping $_\n";
         next;
     }
