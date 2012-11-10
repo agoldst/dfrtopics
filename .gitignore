@@ -1,4 +1,6 @@
 *.csv
 *.txt
+*.mallet
 
 test
+

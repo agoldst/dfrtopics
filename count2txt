@@ -35,7 +35,8 @@ use utf8;                                   # source code itself is in utf-8
 use warnings;
 use warnings FATAL => "utf8";               # Unicode encode errors are fatal
 use autodie;
-use open qw( :std :utf8 );                  # default utf8 layer for open
+use open qw( :std :utf8 );                  # default utf8 layer
+
 use File::Basename;
 
 # Command-line options processing
@@ -69,8 +70,9 @@ foreach my $csv_file (@ARGV) {
         warn "$csv_file is not of form *.(csv|CSV); skipping\n";
         next;
     }
-    open INFILE, $csv_file
+    open INFILE, "<:encoding(UTF-8)", $csv_file
         or die "Couldn't open $csv_file for reading";
+
 
     # Split up the filename into directory path, name, csv suffix
     my ($stem,$directories,$suffix) = fileparse($csv_file,qr/\.csv/i);
@@ -86,7 +88,7 @@ foreach my $csv_file (@ARGV) {
         }
 
         unless($dry_run) {
-            open $fh, ">", "$filename"
+            open $fh, ">:encoding(UTF-8)", "$filename"
                 or die "Couldn't open $filename for writing";
         }
     }
