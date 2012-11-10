@@ -67,7 +67,7 @@ foreach(@ARGV) {
         my ($word,$count) = split /,/;
 
         unless($dry_run) {
-            print OUTFILE "$word\n" for (1..$count); 
+            print OUTFILE "$word\n" x (0 + $count); 
         }
 
         $total_count += $count;
