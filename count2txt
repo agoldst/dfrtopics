@@ -15,11 +15,11 @@
 # ORGANIZATION: Rutgers University, New Brunswick
 #      VERSION: 1.0
 #===============================================================================
-use v5.14;                                  # entails strict, unicode_strings 
-use autodie;
+use v5.14;
 use utf8;                                   # source code itself is in utf-8
 use warnings;
 use warnings FATAL => "utf8";               # Unicode encode errors are fatal
+use autodie;
 use open qw( :std :utf8 );                  # default utf8 layer for open
 use File::Basename;
 
@@ -47,13 +47,14 @@ foreach(@ARGV) {
         next;
     }
 
+    my $total_count = 0;
     while(<INFILE>) {
         chomp;
         my ($word,$count) = split /,/;
-        if($word) {
-            print OUTFILE "$word " for (1..$count); 
-        }
+        print OUTFILE "$word " for (1..$count); 
+        $total_count += $count;
     }
+    print "$filename: $total_count words written\n";
 
     close INFILE;
     close OUTFILE; 
