@@ -1,0 +1,60 @@
+#!/usr/bin/env perl 
+#===============================================================================
+#
+#         FILE: count2txt
+#
+#        USAGE: count2txt <file1.csv file2.CSV ...>
+#
+#  DESCRIPTION: For each wordcount file xxx.csv or xxx.CSV, create a
+#  corresponding file, xxx.txt, which simply consists of each of the
+#  words listed in xxx.csv repeated as many times as the wordcount says.
+#  That way you can feed original documents to any tool that wants
+#  them---though the documents will be slightly scrambled.  
+#
+#       AUTHOR: Andrew Goldstone (agoldst), andrew.goldstone@gmail.com
+# ORGANIZATION: Rutgers University, New Brunswick
+#      VERSION: 1.0
+#===============================================================================
+use v5.14;                                  # entails strict, unicode_strings 
+use autodie;
+use utf8;                                   # source code itself is in utf-8
+use warnings;
+use warnings FATAL => "utf8";               # Unicode encode errors are fatal
+use open qw( :std :utf8 );                  # default utf8 layer for open
+use File::Basename;
+
+foreach(@ARGV) {
+    unless( -f $_ ) {
+        print "$_ not found; skipping\n";
+        next;
+    }
+    open INFILE, $_
+        or die "Couldn't open $_ for reading";
+
+    my ($stem,$directories,$suffix) = fileparse($_,qr/\.csv/i);
+    my $filename = "${directories}$stem.txt";
+
+    if( -f $filename ) {
+        print "Output $filename already exists; skipping processing of $_\n";
+        next;
+    }
+    open OUTFILE, ">", "$filename"
+        or die "Couldn't open $filename for writing";
+
+    my $header = <INFILE>;
+    unless($header eq "WORDCOUNTS,WEIGHT\n") {
+        print "unexpected header found: $header\nSkipping $_\n";
+        next;
+    }
+
+    while(<INFILE>) {
+        chomp;
+        my ($word,$count) = split /,/;
+        if($word) {
+            print OUTFILE "$word " for (1..$count); 
+        }
+    }
+
+    close INFILE;
+    close OUTFILE; 
+}
