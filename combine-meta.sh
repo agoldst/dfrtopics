@@ -1,7 +1,17 @@
 #!/bin/bash
 
+# simple shell script to combine multiple citations.CSV files from
+# jstor DFR and get rid of any duplicates
+#
+# works on any number of files passed as arguments
+#
+# prints the result to STDOUT; you probably want to redirect to a file
+#
+# NB scrambles jstor's original ordering of files, which is quasi-arbitrary
+# (by jstor id) anyway. The output is in order of a shell "sort"
+
+# the standard header line from jstor dfr
 header_line="id,doi,title,author,journaltitle,volume,issue,pubdate,pagerange,publisher,type,reviewed-work"
-target_file="citations-combined.csv"
 
 # Prepare a temporary file in /tmp for working
 tmp_stem=`basename $0`
@@ -14,6 +24,12 @@ for cit in "$@"; do
     tail -q -n +2 $cit >> $tmp_file
 done
 
-echo $header_line > $target_file 
+# print the header
+echo $header_line
 
-sort $tmp_file | uniq >> $target_file
+# sort so we can uniq the results
+#
+# I wouldn't call this blazingly fast, but for 25000 lines it's only a few
+# seconds on my machine
+
+sort $tmp_file | uniq
