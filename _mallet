@@ -25,4 +25,14 @@ if (( CURRENT == 1 )); then
   return
 fi
 
+case "$words[1]" in
+  import-dir)
+    # TODO --input should allow any number of directories
+    _arguments \
+      '(*)--help[import-dir command line option usage]: :(TRUE FALSE)' \
+      '--keep-sequence[final data will be a FeatureSequence]' \
+      '--input[The directories containing text files to be classified]:DIR...:_files -/'
+      ;;
+esac
+
 # vim: ft=zsh sw=2 ts=2 et
