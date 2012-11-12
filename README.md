@@ -1,6 +1,6 @@
 # dfr-analysis
 
-Bits and pieces to help analyze the data available from JSTOR's Data for Research (DfR) service. Skews to my needs as a literary scholar and digital-humanist-in-progress. Skews to my amateurishness as a programmer. Use at your own risk.
+Bits and pieces to help analyze the data available from JSTOR's Data for Research (DfR) service. Skews to my needs as a literary scholar and digital-humanist-in-progress. Skews to my amateurishness as a programmer. Very much in-progress, hacked together, catch-as-catch-can, I am not an expert, I am not a lawyer, etc., etc., etc. Use and share freely, at your own risk. 
 
 ## combine_citations
 
@@ -24,10 +24,12 @@ Then you can do:
     mallet import-file --input wordbags.txt --label 0 --keep-sequence --output dfr.mallet
     mallet train-topics --input dfr.mallet ....
 
+## metadata.R
+
+Unfinished sketches as I work on handling the `citations.CSV` metadata with R.
+
 ## more to come!
 
-Especially: more things to do with metadata from `citations.CSV`.
+### _mallet
 
-## _mallet
-
-Experimental zsh completion for mallet. Totally incomplete and probably broken, because have you *read* the `zshcompsys` manpage????
+Experimental zsh completion for mallet. Totally incomplete and broken, because have you *read* the `zshcompsys` manpage????
