@@ -1,4 +1,6 @@
-#  elementary manipulation of metadata with R
+# examples of elementary manipulation using the metadata
+# this file is unfinished notes and sketches, not a usable script.
+
 
 cols <- c("id","doi","title","author","journaltitle","volume","issue","pubdate","pagerange","publisher","type","reviewed.work","unused")
 
@@ -17,10 +19,10 @@ fla.df$pubdate <- as.numeric(substr(fla.df$pubdate,1,4))
 fla.df1960s <- subset(fla.df,pubdate >= 1960 && pubdate < 1970)
 
 # Subsetting of bag of words file:
-# use file, readLines, etc., cf metadata.R
+# TODO use file, readLines, etc., cf metadata.R
 
-# TODO NEED THIS AT ALL?
 # fast way to dump all the metadata into a sqlite database
+# in case you need efficient access to that outside of R
 # parameter: df, a data frame
 
 make.sqlite <- function (df) {

@@ -1,5 +1,8 @@
 #compdef mallet
 
+# zsh completion for mallet, because I got tired of retyping things
+# but not complete or working because zsh completion is hard
+
 local -a _args1
 _args1=(
   'import-dir:load the contents of a directory into mallet instances (one per file)'
