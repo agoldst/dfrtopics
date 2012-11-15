@@ -22,6 +22,22 @@ fla.subset <- function (df) {
     subset(df,type=="fla\t")
 }
 
+# convert a jstor doc id to a wordcount filename
+#
+# implicitly vectorized for a list of id's
+
+as.filename <- function(id) {
+    result <- paste("wordcounts_",id,".CSV",sep="")
+    gsub("/","_",result,fixed=TRUE)
+}
+
+as.id <- function(filename) {
+    result <- gsub("^wordcounts_","",filename)
+    result <- gsub("\\.CSV$","",result)
+    gsub("_","/",result)
+}
+
+
 # make a file listing the names of the wordcount files corresponding
 # to the entries in a dataframe, so that you can do something with the
 # wordcount files in another program
@@ -30,10 +46,7 @@ fla.subset <- function (df) {
 # entries returned by fla.subset
 
 write.filenames <- function(df,out.file="filenames.txt") { 
-    filenames <- paste("wordcounts_",df$id,".CSV",sep="")
-    filenames <- gsub("/","_",filenames,fixed=TRUE)
-
-    writeLines(filenames,con=out.file)
+    writeLines(as.filename(df$id),con=out.file)
 }
 
 # convert the pubdate field (a string in a date-time format) into numeric
@@ -52,13 +65,6 @@ pubdate.to.years <- function(datestrs) {
 daterange.subset <- function(df,min.incl,max.excl) {
     subset(df,pubdate.to.years(pubdate) >= min.incl
         & pubdate.to.years(pubdate) < max.excl)
-}
-
-
-# Subsetting of bag of words file:
-
-write.subset <- function(df,in.file,out.file="subset.txt") {
-    # TODO use file, readLines, etc., cf metadata.R
 }
 
 # dump all the metadata in a dataframe into a sqlite database in case
