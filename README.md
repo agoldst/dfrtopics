@@ -26,7 +26,11 @@ Then you can do:
 
 ## metadata.R
 
-Unfinished sketches as I work on handling the `citations.CSV` metadata with R.
+functions for manipulating the metadata with R.
+
+## subset_txt
+
+Perl script to output a subset of the bag-of-words collection produced by count2txt.
 
 ## more to come!
 
