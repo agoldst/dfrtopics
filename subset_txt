@@ -1,16 +1,15 @@
 #!/usr/bin/env perl 
 #===============================================================================
 #
-#         FILE: subset_txt.pl
+#         FILE: subset_txt
 #
-#        USAGE: ./subset_txt.pl  
+#        USAGE: ./subset_txt <subset_file>  
 #
-#  DESCRIPTION: 
+#  DESCRIPTION: filters lines from stdin to stdout, keeping only those
+# whose first word is listed in subset_file. Use in conjunction with the
+# function write.filenames in metadata.R to extract a subset of a bag of
+# words file.  
 #
-#      OPTIONS: ---
-# REQUIREMENTS: ---
-#         BUGS: ---
-#        NOTES: ---
 #       AUTHOR: Andrew Goldstone (agoldst), andrew.goldstone@gmail.com
 # ORGANIZATION: Rutgers University, New Brunswick
 #      VERSION: 1.0
@@ -32,9 +31,12 @@ open SUBSET, "< :encoding(UTF-8)", $subset_file
 my @subset_filenames = <SUBSET>;
 close SUBSET;
 
+# Put the subset filenames into a hash for fast lookup
 chomp @subset_filenames;
 my %subset;
 $subset{$_} = 1 for(@subset_filenames);
+
+# and filter
 
 while(<STDIN>) {
     my ($countfile) = /^(\S+)/;
