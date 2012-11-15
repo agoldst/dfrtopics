@@ -26,7 +26,7 @@ Then you can do:
 
 ## metadata.R
 
-functions for manipulating the metadata with R.
+Functions for manipulating the metadata with R.
 
 ## subset_txt
 
