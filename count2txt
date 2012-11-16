@@ -28,7 +28,12 @@
 #
 #       AUTHOR: Andrew Goldstone (agoldst), andrew.goldstone@gmail.com
 # ORGANIZATION: Rutgers University, New Brunswick
-#      VERSION: 1.0
+#      VERSION: 0.1 
+# REQUIREMENTS: perl 5.14. Uses only modules that should be part of a
+# basic perl installation. Should work fine with earlier perls, but
+# haven't tested this. It works with my copy of perl 5.12 (changing the
+# "use v5.14" pragma, of course).
+#
 #===============================================================================
 use v5.14;
 use utf8;                                   # source code itself is in utf-8
