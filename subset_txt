@@ -24,17 +24,21 @@ use warnings;
 use warnings FATAL => "utf8";               # Unicode encode errors are fatal
 use open qw( :std :utf8 );                  # default utf8 layer
 
+# Put the subset filenames into a hash for fast lookup
+
 my $subset_file = shift;
 open SUBSET, "< :encoding(UTF-8)", $subset_file
     or die "Couldn't open $subset_file";
 
-my @subset_filenames = <SUBSET>;
+my %subset;
+
+while(<SUBSET>) { 
+    chomp;
+    $subset{$_} = 1;
+}
+
 close SUBSET;
 
-# Put the subset filenames into a hash for fast lookup
-chomp @subset_filenames;
-my %subset;
-$subset{$_} = 1 for(@subset_filenames);
 
 # and filter
 
