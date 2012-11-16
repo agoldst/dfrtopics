@@ -20,11 +20,11 @@
 #
 #  <filename> word word word word word word ...
 #
-#  This output can be redirected to a file and fed to mallet input-file.
+#  This output can be redirected to a file and fed to mallet import-file.
 #
 #  With --multifile, each input file <file.csv> is output to a corresponding
 #  text file <file.txt>. The aggregate of such files can be fed to
-#  mallet input-dir.
+#  mallet import-dir.
 #
 #       AUTHOR: Andrew Goldstone (agoldst), andrew.goldstone@gmail.com
 # ORGANIZATION: Rutgers University, New Brunswick
