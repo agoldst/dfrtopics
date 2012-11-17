@@ -33,6 +33,12 @@
 # basic perl installation. Should work fine with earlier perls, but
 # haven't tested this. It works with my copy of perl 5.12 (changing the
 # "use v5.14" pragma, of course).
+# 
+#     WARNING: use at your own risk. Amateur hour. Note that running
+# this on a lot of files means generating a lot of data. Make sure you
+# have space on your hard drive. This is not the right way to prep
+# jstor's wordcount data for topic modeling or any other analysis, just
+# a stopgap I am using.  
 #
 #===============================================================================
 use v5.14;
