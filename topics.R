@@ -1,5 +1,9 @@
 # TODO GENERALIZE
 
+# need these functions
+
+source("metadata.R")
+
 ##############
 # File loading
 ##############
@@ -9,6 +13,9 @@
 # with raws in mallet's format:
 # doc name topic_i proportion_i topic_j proportion_j ...
 # we want to sort the topics in index order to compare documents
+#
+# note that mallet numbers topics from 0 to n - 1, but
+# we are going to put topic 0 in column 1 of the result matrix 
 
 sort.topics <- function(df) {
     # width of data frame: 2n + 2
@@ -36,47 +43,60 @@ sort.topics <- function(df) {
     result
 }
 
+# TODO TEST
+# create a dataframe with row n, column m giving proportion of topic m in doc m
+# add rows named by doc id
+# To get these names, need a way of converting from the filenames storted
+# in mallet's output to id's. Default is the as.id function, but you can pass
+# a different one
+
+read.doc.topics <- function(filename=NA,docname.to.id=as.id) {
+    topics.filename <- filename
+    if(is.na(filename)) { 
+        cat(
+  "Select file created by mallet train-topics --output-doc-topics...\n")
+        ignore <- readline("(press return to open file dialog) ")
+        topics.filename <- file.choose()
+        print(topics.filename)
+    }
+    df <- read.table(topics.filename,header=FALSE,skip=1,stringsAsFactors=FALSE)
+    ids <- docname.to.id(df$V2)
+
+    topics <- as.data.frame(sort.topics(df))
+    names(topics) <- paste("topic",1:length(topics))
+    cbind(id=docname.to.id(ids),topics,stringsAsFactors=FALSE)
+}
+
+# read.keys
+# input the information in a topic-keys file from mallet-train-topics
+# result is a data frame with topics renumbered from 1
+# and columns giving the Dirichlet alpha (TODO CHECK) parameter
+# TODO TEST
+
+read.keys <- function(filename=NA) {
+    keys.filename <- filename
+    if(is.na(filename)) { 
+        cat(
+  "Select file created by mallet train-topics --output-topic-keys...\n")
+        ignore <- readline("(press return to open file dialog) ")
+        keys.filename <- file.choose()
+        print(keys.filename)
+    }
+
+    df <- read.csv(keys.filename,sep="\t",header=FALSE,as.is=TRUE,col.names=c("topic","alpha","keywords"))
+
+    kw <- strsplit(df$keywords," ",fixed=TRUE)
+    # don't need the unsplit keywords
+    cbind(df$topic+1,df$alpha,kw)
+}
+
+topic.model.df <- function() {
+    topics <- read.doc.topics()
+    meta <- read.citations()
+    merge(topics,meta,by=id)
+}
+    
 blob.IGNORE <- function () {
-
-cat("Select a file containing SORTED topic data for all documents...\n")
-ignore <- readline("(press return to open file dialog) ")
-topics.filename <- file.choose()
-print(topics.filename)
-topics.frame <- read.csv(topics.filename,sep="\t",header=FALSE)
-
-
-# Number of docs is number of rows
-n.docs <- dim(topics.frame)[1]
-
-# Number of topics is the number of columns in the frame,
-# less two. Later on we're going to add another column to the frame
-# with article years in it, so the below is not an equation that holds
-# true at the end of this script
-
-n.topics <- dim(topics.frame)[2] - 2
-
-cat("Loaded data for", n.docs, "documents and", n.topics,"topics\n")
-
-cat("Select a file containing keywords for all topics...\n") 
-ignore <- readline("(press return to open file dialog) ")
-keys.filename <- file.choose() 
-print(keys.filename)
-keys.frame <- read.csv(keys.filename,sep="\t",header=FALSE,col.names=c("n","dirichlet","keywords"))
-
-# This one doesn't change; could also use the sqlite database
-# directly but never mind that for now.
-# N.B. CONTAINS MORE DOCUMENTS THAN WERE PROCESSED FOR TOPIC MODEL
-# because it's from the metadata for *all* pmla docs downloaded from
-# jstor, whereas topic model was applied only to articles 1890-1999
-cat("Select a file containing dates for all filenames...\n") 
-ignore <- readline("(press return to open file dialog) ")
-#docdates.filename <- "/Users/agoldst/Documents/book/20c/modernism-mining/jstor/pmla/docdates.csv"
-docdates.filename <- file.choose()
-cat("Reading document date data from:\n",docdates.filename,"\n")
-date.frame <- read.csv(docdates.filename,header=FALSE,col.names=c("id","year"))
-
-
-
 
 #################
 # Data processing
@@ -86,41 +106,11 @@ date.frame <- read.csv(docdates.filename,header=FALSE,col.names=c("id","year"))
 #################
 
 
-# Let's hard code the year range
 year.range <- 1890:1999
 
-# Access the keywords in keys.frame
-topic.keywords <- function (n) {
-    strsplit(as.character(keys.frame$keywords[n+1])," ",fixed=TRUE)[[1]]
-}
-
-# Rewrite date.frame as a vector of years labeled by doc ids
-date.map = date.frame$year
-names(date.map) <- date.frame$id
 
 
-# Function for turning a doc id into a filename
-id.to.name <- function (id) {
-    year <- date.map[id] 
-    dec <- substr(as.character(year),1,3)
-    label <- paste("file:/Users/agoldst/Documents/book/20c/modernism-mining/jstor/pmla/fla-bags/",dec,sep="")
-    id.str <- sub("/","_",id)
-    label <- paste(label,"/wordcounts_",id.str,".txt",sep="")
-    label
-}
 
-# And the reverse
-name.to.id <- function(filename) {
-    match <- regexpr("10\\.2307_\\d+\\.txt",filename,perl=TRUE)
-    id.tail <- substr(filename,match + 8,match + attr(match,"match.length") - 5)
-    paste("10.2307/",id.tail,sep="") 
-}
-
-
-# Now add a column of article years to the main data frame
-# Use date.map to carry column 2, the filename in topics.frame,
-# into the corresponding year
-topics.frame$year <- sapply(topics.frame[,2],function (f) (date.map[name.to.id(f)]))
 
 # How many articles in a given year?
 # Make a table from the date column we have just added to the topics.frame
