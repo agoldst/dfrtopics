@@ -13,7 +13,7 @@ read.citations <- function(filename="citations_combined.csv",strip=FALSE) {
 
     cols <- c("id","doi","title","author","journaltitle","volume","issue","pubdate","pagerange","publisher","type","reviewed.work","unused") 
 
-    read.csv(filename,strip.white=strip,skip=1,col.names=cols,header=FALSE)
+    read.csv(filename,strip.white=strip,skip=1,col.names=cols,header=FALSE,as.is=TRUE)
 }
 
 # given a dataframe as returned by read.citations,
