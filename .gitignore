@@ -2,6 +2,7 @@
 *.txt
 *.mallet
 .Rhistory
+.RData
 
 test
 scrap
