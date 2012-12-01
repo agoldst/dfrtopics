@@ -43,7 +43,6 @@ sort.topics <- function(df) {
     result
 }
 
-# TODO TEST
 # create a dataframe with row n, column m giving proportion of topic m in doc m
 # add rows named by doc id
 # To get these names, need a way of converting from the filenames storted
@@ -63,7 +62,7 @@ read.doc.topics <- function(filename=NA,docname.to.id=as.id) {
     ids <- docname.to.id(df$V2)
 
     topics <- as.data.frame(sort.topics(df))
-    names(topics) <- paste("topic",1:length(topics))
+    names(topics) <- paste("topic",sep="",1:length(topics))
     cbind(id=ids,topics,stringsAsFactors=FALSE)
 }
 
@@ -71,7 +70,6 @@ read.doc.topics <- function(filename=NA,docname.to.id=as.id) {
 # input the information in a topic-keys file from mallet-train-topics
 # result is a data frame with topics renumbered from 1
 # and columns giving the Dirichlet alpha (TODO CHECK) parameter
-# TODO TEST
 
 read.keys <- function(filename=NA) {
     keys.filename <- filename
@@ -83,11 +81,14 @@ read.keys <- function(filename=NA) {
         print(keys.filename)
     }
 
-    read.csv(keys.filename,sep="\t",header=FALSE,as.is=TRUE,
+    df <- read.csv(keys.filename,sep="\t",header=FALSE,as.is=TRUE,
              col.names=c("topic","alpha","keywords"))
+    df$topic <- df$topic + 1
+    df
 }
 
-
+# top-level input function: prompts for two files, returns combined dataframe with 
+# document metadata and topic breakdown
 topic.model.df <- function() {
     topics <- read.doc.topics()
     meta <- read.citations()
