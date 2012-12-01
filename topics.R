@@ -91,7 +91,7 @@ read.keys <- function(filename=NA) {
 topic.model.df <- function() {
     topics <- read.doc.topics()
     meta <- read.citations()
-    merge(topics,meta,by=id)
+    merge(topics,meta,by="id")
 }
     
 blob.IGNORE <- function () {
