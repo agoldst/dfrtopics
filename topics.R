@@ -83,12 +83,10 @@ read.keys <- function(filename=NA) {
         print(keys.filename)
     }
 
-    df <- read.csv(keys.filename,sep="\t",header=FALSE,as.is=TRUE,col.names=c("topic","alpha","keywords"))
-
-    kw <- strsplit(df$keywords," ",fixed=TRUE)
-    # don't need the unsplit keywords
-    cbind(df$topic+1,df$alpha,kw)
+    read.csv(keys.filename,sep="\t",header=FALSE,as.is=TRUE,
+             col.names=c("topic","alpha","keywords"))
 }
+
 
 topic.model.df <- function() {
     topics <- read.doc.topics()
