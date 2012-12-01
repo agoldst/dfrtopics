@@ -64,7 +64,7 @@ read.doc.topics <- function(filename=NA,docname.to.id=as.id) {
 
     topics <- as.data.frame(sort.topics(df))
     names(topics) <- paste("topic",1:length(topics))
-    cbind(id=docname.to.id(ids),topics,stringsAsFactors=FALSE)
+    cbind(id=ids,topics,stringsAsFactors=FALSE)
 }
 
 # read.keys
