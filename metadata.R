@@ -7,13 +7,23 @@
 # whitespace from each field. NB jstor puts a trailing tab at the end of each
 # entry in fields that can contain multiple tab-separated entries (e.g. author)
 
-read.citations <- function(filename="citations_combined.csv",strip=FALSE) { 
+read.citations <- function(filename=NA,strip=FALSE) { 
     # Let's hardcode the headers, since read.csv gets confused by
     # the trailing comma at the end of every line
 
     cols <- c("id","doi","title","author","journaltitle","volume","issue","pubdate","pagerange","publisher","type","reviewed.work","unused") 
 
-    read.csv(filename,strip.white=strip,skip=1,col.names=cols,header=FALSE,as.is=TRUE)
+    citations.filename <- filename
+    if(is.na(filename)) { 
+        cat(
+  "Select citations.CSV file from jstor dfr...\n")
+        ignore <- readline("(press return to open file dialog) ")
+        citations.filename <- file.choose()
+        print(citations.filename)
+    }
+
+    read.csv(citations.filename,strip.white=strip,skip=1,
+             col.names=cols,header=FALSE,as.is=TRUE)
 }
 
 # given a dataframe as returned by read.citations,
@@ -73,7 +83,7 @@ daterange.subset <- function(df,min.incl,max.excl) {
 # table.name is the name of the database table to write the data frame to
 # filename is the name of the sqlite database
 
-make.sqlite <- function (df,filename="citations_combined.db",table.name="document") {
+make.sqlite <- function (df,filename=file.choose(),table.name="document") {
     library(RSQLite)
     db.driver <- dbDriver("SQLite") 
     db.con <- dbConnect(db.driver,dbname=filename)
