@@ -140,6 +140,14 @@ topic.keywords <- function(topic,keys.frame,num.words=5) {
     words[1:num.words]
 }
 
+topic.shortnames <- function(topic,keys.frame,num.words=2) {
+    words.list <- strsplit(keys.frame$keywords[topic],split=" ")
+    sapply(words.list, function (words) {
+           paste(words[1:num.words],collapse=" ")
+             }
+    )
+}
+
 year.range <- function(df) {
     range(df$pubdate)
 }
@@ -180,8 +188,6 @@ topic.proportions.by.year <- function(topic,df,smoothing.window=0) {
            (topic.years.proportion(topic,(y-w):(y+w),df)))
     result
 }
-
-# TODO TEST ALL THESE
 
 ##########
 # Plotting
@@ -248,5 +254,14 @@ write.plots <- function(df,keys.frame,dirname="Rplots",topics=1:n.topics(df),geo
         plot.topic(i,df,keys.frame,geom=geom)
         ggsave(filename)
     }
+}
+
+######################
+# Topic interrelations
+######################
+
+topics.cor <- function(df) {
+    m <- df[,1:n.topics(df)]
+    cor(m)
 }
 
