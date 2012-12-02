@@ -94,7 +94,13 @@ read.keys <- function(filename=NA) {
 topic.model.df <- function(topic.frame,meta.frame) {
     mf <- meta.frame
     mf$pubdate <- pubdate.to.years(mf$pubdate)
-    merge(topic.frame,mf,by="id")
+    
+    # merge and
+    # clumsily reorder to ensure that subsetting result to nth column
+    # will give topic n
+    merged <- merge(topic.frame,mf,by="id")
+    ids <- merged$id
+    cbind(subset(merged,select=-id),id=ids)  
 }
 
 
@@ -120,12 +126,11 @@ topic.info <- function(n,df,keys.frame,threshold=0.3) {
     result$alpha <- keys.frame$alpha[n]
     topic.selector <- paste("topic",n,sep="")
     docs <- df[df[topic.selector] > threshold,]
-    docs <- docs[c("id,","title","pubdate",topic.selector)]
+    docs <- docs[c("id","title","pubdate",topic.selector)]
     result$top.articles <- docs[order(docs[topic.selector],decreasing=TRUE),]
     result
 }
 
-# TODO TEST ALL THESE
 year.range <- function(df) {
     range(df$pubdate)
 }
@@ -133,8 +138,8 @@ year.range <- function(df) {
 # topics are numbered from 1
 # time course of topic number n is thus one column of the topics.frame
 # together with the list of years
-topic.year.series <- function (n,df) { 
-    matrix(c(df[,n],df$pubdate),ncol=2) 
+topic.time.series <- function (n,df) { 
+    matrix(c(df$pubdate,df[,n]),ncol=2) 
 }
 
 # expects df to have a pubdate column of integer years for factoring
@@ -142,14 +147,17 @@ articles.per.year <- function(df) {
     table(df$pubdate)
 }
 
-# Nice R: this accepts a year or a range of years
+# Nice R: vectorized in topics and years
+# Unnice R: table, being a table, is indexable by labels, not numbers
+# even though it is a table of numbers
 topic.years.proportion <- function(topic,yrs,df,
-                                   yrs.table <- articles.per.year(df)
+                                   yrs.table = articles.per.year(df)
                                    ) {
     sum(df[df$pubdate %in% yrs,topic]) /
-        sum(yrs.table[yrs])
+        sum(yrs.table[as.character(yrs)])
 }
 
+# TODO TEST ALL THESE
 # The window for smoothing by moving averages is 2w + 1
 # returns a two-column matrix, with the years covered in the first column
 # and the averaged values in the second column
