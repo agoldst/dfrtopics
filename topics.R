@@ -222,6 +222,28 @@ plot.topic.lines <- function(topic,df,keys.frame,w=2) {
            text.col=c("blue","orange")) 
 }
 
+plot.topic.yearly <- function(topic,df,keys.frame,w=2) { 
+    topic.words <- paste(topic.keywords(topic,keys.frame),collapse=" ")
+    topic.label <- paste("Presence over time of topic", as.character(topic),topic.words)
+
+    # construct frame of all observations to plot
+    unsmoothed <- as.data.frame(
+        topic.proportions.by.year(topic,df,smoothing.window=0))
+    smoothed <- as.data.frame(
+        topic.proportions.by.year(topic,df,smoothing.window=w))
+    unsmoothed$window <- "1 year window"
+    smoothed$window <- paste(2*w+1,"year moving window")
+    to.plot <- rbind(unsmoothed,smoothed)
+    names(to.plot) <- c("year","proportion","window")
+
+    qplot(year,proportion,color=window,data=to.plot,geom="line",
+        main=topic.label,
+        xlab="Year",
+        ylab="Overall proportion of topic"
+    )
+}
+
+
 #
 # geom: boxplot is clearest for seeing time trends and outliers
 # but "jitter" is also illustrative of where the topic is distributed
