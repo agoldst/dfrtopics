@@ -87,14 +87,24 @@ read.keys <- function(filename=NA) {
     df
 }
 
-# top-level input function: prompts for two files, returns combined dataframe with 
-# document metadata and topic breakdown
-topic.model.df <- function() {
-    topics <- read.doc.topics()
-    meta <- read.citations()
-    merge(topics,meta,by="id")
+# top-level input function: prompts for two files, returns combined 
+# dataframe of metadata and topic proportions
+# NB. id column must be mergeable.
+topic.model.df <- function(topic.frame,meta.frame) {
+    merge(topic.frame,meta.frame,by="id")
 }
-    
+
+topic.info <- function(n,df,keys.frame,threshold=0.2) {
+    result <- list()
+    result$top.words <- keys.frame$keywords[n]
+    result$alpha <- keys.frame$alpha[n]
+    topic.selector <- paste("topic",n,sep="")
+    docs <- df[df[topic.selector] > threshold,]
+    docs <- docs[c("title","pubdate",topic.selector)]
+    result$top.articles <- docs[order(docs[topic.selector],decreasing=TRUE),]
+    result
+}
+
 blob.IGNORE <- function () {
 
 #################
