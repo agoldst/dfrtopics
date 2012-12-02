@@ -147,7 +147,7 @@ articles.per.year <- function(df) {
     table(df$pubdate)
 }
 
-# Nice R: vectorized in topics and years
+# Nice R: vectorized in topics and years, gives overall proportion
 # Unnice R: table, being a table, is indexable by labels, not numbers
 # even though it is a table of numbers
 topic.years.proportion <- function(topic,yrs,df,
@@ -157,7 +157,6 @@ topic.years.proportion <- function(topic,yrs,df,
         sum(yrs.table[as.character(yrs)])
 }
 
-# TODO TEST ALL THESE
 # The window for smoothing by moving averages is 2w + 1
 # returns a two-column matrix, with the years covered in the first column
 # and the averaged values in the second column
@@ -173,6 +172,7 @@ topic.proportions.by.year <- function(topic,df,smoothing.window=0) {
     result
 }
 
+# TODO TEST ALL THESE
 
 blob.IGNORE <- function () {
 ##########
@@ -262,68 +262,3 @@ write.all.exemplary.docs <- function(
 }
 }
 
-#########
-# Testing
-#########
-
-# TODO MAKE GENERIC
-test.routines <- function () {
-
-cat("Sanity tests on the data:\n")
-test.year <- 1940
-test.topic <- 25
-test.row <- 3023
-cat("Test year", test.year)
-cat("; test topic", test.topic, ":\n",paste(topic.keywords(test.topic)))
-cat("\nTest doc: row #", test.row)
-cat("\nFilename on that row:", as.character(topics.frame[test.row,2]))
-cat("\nDoc id #", name.to.id(topics.frame[test.row,2]))
-
-cat("\nSum of all topics in test doc (should be 1)","\n")
-print(sum(topics.frame[test.row,3:(n.topics + 2)]))
-
-cat("Sum of proportions over all docs and topics")
-cat("\nShould be equal to the number of documents,",n.docs,"\n")
-
-print(sum(topics.frame[,3:(n.topics + 2)]))
-
-cat("Testing that year range is as expected:")
-cat("\nrange(year.range)==range(topics.frame$year)\n")
-print(all(range(year.range)==range(topics.frame$year)))
-
-cat("Yearly aggregates:")
-cat("\nSum of proportions of topics in the test year (should be 1)\n")
-print(
-      sum(
-          sapply(0:(n.topics-1),
-                 function(n) (topic.years.proportion(n,test.year)))
-          )
-      )
-
-cat("Sum over all topics of proportions across all years")
-cat("\nShould be equal to the number of years in the range",
-    max(year.range)-min(year.range)+1,"\n")
-print(
-      sum(
-          sapply(0:(n.topics-1), topic.proportions.by.year)
-          )
-      )
-
-cat("Smoothing:")
-cat("\nZero smoothing is same as proportions by year without smoothing\n")
-print(
-      all(
-          topic.proportions.by.year.smoothed(test.topic,0)[,2]
-          ==
-          topic.proportions.by.year(test.topic)
-          )
-      )
-
-cat("Showing a plot superimposing smoothed (blue) and unsmoothed (orange) data")
-plot.topic.smoothed.and.unsmoothed(test.topic)
-
-cat("\nShowing exemplary documents for test topic\n")
-metadata.frame <- metadata.from.db()
-print(documents.by.topic(test.topic,metadata.frame))
-cat("\nEnd of tests.")
-}
