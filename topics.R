@@ -103,6 +103,10 @@ topic.model.df <- function(topic.frame,meta.frame) {
     cbind(subset(merged,select=-id),id=ids)  
 }
 
+# for the frame returned by topic.model.df(), this is the number of topics
+n.topics <- function(tm) {
+    length(tm) - 13
+}
 
 
 #################
@@ -199,7 +203,7 @@ plot.topic <- function(topic,df,keys.frame,w=2) {
     plot(topic.proportions.by.year(topic,df,smoothing.window=0),
         type="l",col="orange",
         main=topic.label,
-        xlab="year",
+        xlab="Year",
         ylab="Overall proportion of topic"
         )
     lines(topic.proportions.by.year(topic,df,smoothing.window=w),
@@ -209,13 +213,13 @@ plot.topic <- function(topic,df,keys.frame,w=2) {
            text.col=c("blue","orange")) 
 }
 
-blob.IGNORE <- function () {
-make.all.plots <- function() {
-    dir.create("Rplots")
-    for(i in 0:(n.topics - 1)) {
-        filename <- paste("Rplots/topic",as.character(i),".pdf",sep="")
+write.plots <- function(df,keys.frame,dirname="Rplots") {
+    dir.create(dirname)
+    n <- n.topics(df)
+    for(i in 1:n) {
+        filename <- paste(dirname,"/topic",as.character(i),".pdf",sep="")
         pdf(filename)
-        plot.topic.smoothed.and.unsmoothed(i)
+        plot.topic(topic=i,df=df,keys.frame=keys.frame)
         dev.off()
     }
 }
@@ -243,6 +247,7 @@ metadata.from.db <- function(database.filename=file.choose(),table.name="documen
 }
 
 
+blob.IGNORE <- function () {
 write.all.exemplary.docs <- function(
         topic.model.frame,
         keys.frame,
