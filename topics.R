@@ -131,6 +131,11 @@ topic.info <- function(n,df,keys.frame,threshold=0.3) {
     result
 }
 
+topic.keywords <- function(topic,keys.frame,num.words=5) {
+    words <- unlist(strsplit(keys.frame$keywords[topic],split=" "))
+    words[1:num.words]
+}
+
 year.range <- function(df) {
     range(df$pubdate)
 }
@@ -174,40 +179,37 @@ topic.proportions.by.year <- function(topic,df,smoothing.window=0) {
 
 # TODO TEST ALL THESE
 
-blob.IGNORE <- function () {
 ##########
 # Plotting
 ##########
 
-plot.topic.proportion <- function(topic) {
-    topic.words <- paste(topic.keywords(topic)[1:5],collapse=" ")
+plot.topic.proportion <- function(topic,df,keys.frame) {
+    topic.words <- paste(topic.keywords(topic,keys.frame),collapse=" ")
     topic.label <- paste("Presence over time of topic", as.character(topic),topic.words)
-    plot(year.range,topic.proportions.by.year(topic), 
+    plot(topic.proportions.by.year(topic,df), 
         main=topic.label,
         xlab="year",
         ylab="Overall proportion in year's articles"
         )
 }
 
-# parameters to the function would be better than function names,
-# but I'm too lazy
-plot.topic.smoothed.and.unsmoothed <- function(topic) {
-    w <- 2 
-    topic.words <- paste(topic.keywords(topic)[1:5],collapse=" ")
+plot.topic <- function(topic,df,keys.frame,w=2) {
+    topic.words <- paste(topic.keywords(topic,keys.frame),collapse=" ")
     topic.label <- paste("Presence over time of topic", as.character(topic),topic.words)
-    y.label <- paste("Overall proportion in year's articles")
-    plot(year.range,topic.proportions.by.year(topic),
+    plot(topic.proportions.by.year(topic,df,smoothing.window=0),
         type="l",col="orange",
         main=topic.label,
         xlab="year",
-        ylab=y.label
+        ylab="Overall proportion of topic"
         )
-    lines(topic.proportions.by.year.smoothed(topic,w),type="l",col="blue")
+    lines(topic.proportions.by.year(topic,df,smoothing.window=w),
+          type="l",col="blue")
     legend(x="topright",
-           c(paste(2*w+1,"year smoothing"),"raw"),
+           c(paste(2*w+1,"year moving window"),"1 year window"),
            text.col=c("blue","orange")) 
 }
 
+blob.IGNORE <- function () {
 make.all.plots <- function() {
     dir.create("Rplots")
     for(i in 0:(n.topics - 1)) {
