@@ -63,7 +63,7 @@ read.doc.topics <- function(filename=NA,docname.to.id=as.id) {
 
     topics <- as.data.frame(sort.topics(df))
     names(topics) <- paste("topic",sep="",1:length(topics))
-    cbind(id=ids,topics,stringsAsFactors=FALSE)
+    cbind(topics,id=ids,stringsAsFactors=FALSE)
 }
 
 # read.keys
@@ -87,25 +87,41 @@ read.keys <- function(filename=NA) {
     df
 }
 
-# top-level input function: prompts for two files, returns combined 
-# dataframe of metadata and topic proportions
+# top-level input function: make a combined 
+# dataframe of topic proportions and document metadata
+# replace pubdate string with numeric year
 # NB. id column must be mergeable.
 topic.model.df <- function(topic.frame,meta.frame) {
-    merge(topic.frame,meta.frame,by="id")
+    mf <- meta.frame
+    mf$pubdate <- pubdate.to.years(mf$pubdate)
+    merge(topic.frame,mf,by="id")
 }
 
-topic.info <- function(n,df,keys.frame,threshold=0.2) {
+# return some descriptive information about the topic
+# n: topic number, from 1
+# df: frame returned by topic.model.df
+# keys.frame: frame returned by read.keys
+# threshold: proportion of topic required for a document to be considered
+#   exemplary of that topic
+# result: a list
+#   $top.words: key words in descending order
+#   $alpha: alpha_n for the topic
+#   $top.articles: exemplary articles, in descending order
+topic.info <- function(n,df,keys.frame,threshold=0.3) {
     result <- list()
     result$top.words <- keys.frame$keywords[n]
     result$alpha <- keys.frame$alpha[n]
     topic.selector <- paste("topic",n,sep="")
     docs <- df[df[topic.selector] > threshold,]
-    docs <- docs[c("title","pubdate",topic.selector)]
+    docs <- docs[c("id,","title","pubdate",topic.selector)]
     result$top.articles <- docs[order(docs[topic.selector],decreasing=TRUE),]
     result
 }
 
-blob.IGNORE <- function () {
+year.range <- function(df) {
+    range(df$pubdate)
+}
+
 
 #################
 # Data processing
@@ -114,60 +130,49 @@ blob.IGNORE <- function () {
 # also create some utility functions
 #################
 
-
-year.range <- 1890:1999
-
-
-
-
+# TODO TEST ALL THESE
 
 # How many articles in a given year?
 # Make a table from the date column we have just added to the topics.frame
 # The table is labeled by years AS STRINGS
 
-articles.per.year <- table(topics.frame$year)
-
-# Utility function returning the series of data on topic n
-# n runs from 0 to n.topics - 1
-# Nice R: this is implicitly vectorized for a vector n of topic numbers
-topic.proportions <- function (n) {
-    topics.frame[,n+3]
-}
-
-# topics are numbered from 0
+# topics are numbered from 1
 # time course of topic number n is thus one column of the topics.frame
 # together with the list of years
-topic.year.series <- function (n) { 
-    matrix(c(topic.proportions(n),topics.frame$year),ncol=2) 
+topic.year.series <- function (n,df) { 
+    matrix(c(df[,n],df$pubdate),ncol=2) 
+}
+
+# expects df to have a pubdate column of integer years for factoring
+articles.per.year <- function(df) {
+    table(df$pubdate)
 }
 
 # Nice R: this accepts a year or a range of years
-# (unfortunately not in topics, since I can't figure out how write 
-# the year subscript correctly for that)
-topic.years.proportion <- function(topic,yrs) {
-    sum(topic.proportions(topic)[topics.frame$year %in% yrs]) /
-        sum(articles.per.year[as.character(yrs)])
-}
-
-# The run over the whole range of years of the topic fractions
-# for a given topic
-topic.proportions.by.year <- function(topic) { 
-    sapply(year.range, function (y) (topic.years.proportion(topic,y)))
+topic.years.proportion <- function(topic,yrs,df,
+                                   yrs.table <- articles.per.year(df)
+                                   ) {
+    sum(df[df$pubdate %in% yrs,topic]) /
+        sum(yrs.table[yrs])
 }
 
 # The window for smoothing by moving averages is 2w + 1
 # returns a two-column matrix, with the years covered in the first column
 # and the averaged values in the second column
-topic.proportions.by.year.smoothed <- function(topic,w) {
-    years <- year.range[(1+w):(length(year.range)-w)] 
+topic.proportions.by.year <- function(topic,df,smoothing.window=0) {
+    yi <- year.range(df)
+    w <- smoothing.window
+    
+    years <- seq.int(yi[1]+w,yi[2]-w) 
     result <- matrix(nrow=length(years),ncol=2)
     result[,1] <- years
     result[,2] <- sapply(years, function (y)
-           (topic.years.proportion(topic,(y-w):(y+w))))
+           (topic.years.proportion(topic,(y-w):(y+w),df)))
     result
 }
 
 
+blob.IGNORE <- function () {
 ##########
 # Plotting
 ##########
@@ -213,20 +218,17 @@ make.all.plots <- function() {
 
 #######################
 # Topic browsing
-# Uses sqlite database
 #######################
-
-
 
 # metadata.from.db
 # gets metadata from database, returns it in a frame
 # opens and closes database connection
 
-metadata.from.db <- function(database.filename="/Users/agoldst/Documents/book/20c/modernism-mining/jstor/pmla/metadata.db") { 
+metadata.from.db <- function(database.filename=file.choose(),table.name="document") { 
     library(RSQLite)
     db.driver <- dbDriver("SQLite") 
     db.con <- dbConnect(db.driver,dbname=database.filename)
-    result <- dbReadTable(db.con,"document")
+    result <- dbReadTable(db.con,table.name)
 
     # Database cleanup
 
@@ -236,35 +238,17 @@ metadata.from.db <- function(database.filename="/Users/agoldst/Documents/book/20
     result
 }
 
-# documents.by.topic
-# show metadata about documents for which the specified topic n
-# is present in proportion greater than threshold
-# pass in the frame with metadata returned by metadata.from.db
-
-documents.by.topic <- function(n,docs.metadata.frame,threshold=0.3) {
-    # Database access
-
-    cat("Exemplary documents for topic",n)
-    cat("\nKeywords: ", paste(topic.keywords(test.topic)),"\n")
-
-    docs <- topics.frame[topic.proportions(n) >= threshold,2]
-    ids <- name.to.id(docs)
-
-    result <- docs.metadata.frame[
-                                  docs.metadata.frame$id %in% ids,
-                                  c("author","title","pubdate")] 
-    result$topic <- topic.proportions(n)[topics.frame[,2] %in% docs]
-
-    result 
-}
 
 write.all.exemplary.docs <- function(
-        docs.metadata.frame,
+        topic.model.frame,
+        keys.frame,
         filename="exemplary-documents.txt",
         t=0.2
         ) {
     write(paste("# Threshold: >",t),filename) 
-    for(n in 0:(n.topics - 1)) {
+
+    # TODO FIX UP TO USE NEW ROUTINES
+    for(n in 1:(n.topics - 1)) {
         write(paste("Topic",n),filename,append=TRUE) 
         write(paste(topic.keywords(n),collapse=" "),filename,append=TRUE) 
         write.table(
@@ -274,10 +258,14 @@ write.all.exemplary.docs <- function(
     }
     cat("Data written to ",filename,"\n")
 }
+}
 
 #########
 # Testing
 #########
+
+# TODO MAKE GENERIC
+test.routines <- function () {
 
 cat("Sanity tests on the data:\n")
 test.year <- 1940
@@ -336,5 +324,4 @@ cat("\nShowing exemplary documents for test topic\n")
 metadata.frame <- metadata.from.db()
 print(documents.by.topic(test.topic,metadata.frame))
 cat("\nEnd of tests.")
-
 }
