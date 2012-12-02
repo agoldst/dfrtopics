@@ -151,6 +151,9 @@ topic.shortnames <- function(topic,keys.frame,num.words=2) {
     )
 }
 
+# what is the time interval covered by the data?
+# N.B. this is a two-element vector c(min, max)
+# if a sequence is desired, generate one with seq from this result
 year.range <- function(df) {
     range(df$pubdate)
 }
@@ -162,13 +165,14 @@ topic.time.series <- function (n,df) {
     data.frame(pubdate=df$pubdate,topic.proportion=df[,n])
 }
 
+# a frequency table of publication years
 # expects df to have a pubdate column of integer years for factoring
 articles.per.year <- function(df) {
     table(df$pubdate)
 }
 
 # Nice R: vectorized in topics and years, gives overall proportion
-# Unnice R: table, being a table, is indexable by labels, not numbers
+# Unnice R: yrs.table, being a table, is indexable by labels, not numbers
 # even though it is a table of numbers
 topic.years.proportion <- function(topic,yrs,df,
                                    yrs.table = articles.per.year(df)
@@ -177,7 +181,9 @@ topic.years.proportion <- function(topic,yrs,df,
         sum(yrs.table[as.character(yrs)])
 }
 
-# The window for smoothing by moving averages is 2w + 1
+# The moving window for averages is 2w + 1 years
+# (not exactly smoothing, since it doesn't just average averages but
+# calculates the average over the whole time-interval)
 # returns a two-column matrix, with the years covered in the first column
 # and the averaged values in the second column
 topic.proportions.by.year <- function(topic,df,smoothing.window=0) {
@@ -196,6 +202,8 @@ topic.proportions.by.year <- function(topic,df,smoothing.window=0) {
 # Plotting
 ##########
 
+# Plot the yearly proportions of a topic in a basic R plot
+
 plot.topic.proportion <- function(topic,df,keys.frame) {
     topic.words <- paste(topic.keywords(topic,keys.frame),collapse=" ")
     topic.label <- paste("Presence over time of topic", as.character(topic),topic.words)
@@ -206,6 +214,8 @@ plot.topic.proportion <- function(topic,df,keys.frame) {
         )
 }
 
+# Plot yearly proportions of a topic as well as proportions in a moving window
+# of 2w + 1 years
 plot.topic.lines <- function(topic,df,keys.frame,w=2) {
     topic.words <- paste(topic.keywords(topic,keys.frame),collapse=" ")
     topic.label <- paste("Presence over time of topic", as.character(topic),topic.words)
@@ -222,6 +232,7 @@ plot.topic.lines <- function(topic,df,keys.frame,w=2) {
            text.col=c("blue","orange")) 
 }
 
+# Same as plot.topic.lines, but uses qplot
 plot.topic.yearly <- function(topic,df,keys.frame,w=2) { 
     topic.words <- paste(topic.keywords(topic,keys.frame),collapse=" ")
     topic.label <- paste("Presence over time of topic", as.character(topic),topic.words)
@@ -243,11 +254,38 @@ plot.topic.yearly <- function(topic,df,keys.frame,w=2) {
     )
 }
 
+# Builds a faceted plot of yearly proportions (or proportions for a
+# given time window 2w + 1) for a vector of topics;
+# each facet is a topic.
+# graphs are colored according to the "alpha" value, so with a
+# hyperparameter-optimized topic model you can see which topics are "bigger"
+#
 
+plot.topics.yearly <- function(topics,df,keys.frame,w=2) {
+    n <- length(topics) * length(df$id)
+
+    to.plot.list <- lapply(as.list(topics), function (i) { 
+        to.add <- as.data.frame(topic.proportions.by.year(i,df,w))
+        names(to.add) <- c("year","proportion")
+        to.add$topic <- paste(i,topic.shortnames(i,keys.frame))
+        to.add$alpha <- keys.frame$alpha[i]
+        to.add
+    }
+    )
+    to.plot <- do.call(rbind,to.plot.list)
+    qplot(year,proportion,data=to.plot,facets= ~ topic,color=alpha,geom="line")
+}
+
+
+#
+# visualize a topic over time by plotting its proportion in each document
+# against the year of the document
 #
 # geom: boxplot is clearest for seeing time trends and outliers
 # but "jitter" is also illustrative of where the topic is distributed
 #
+# date.bin: interval of years to bin documents by
+
 plot.topic <- function(topic,df,keys.frame,date.bin=10,geom="boxplot") {
     require(ggplot2)
 
@@ -272,6 +310,8 @@ plot.topic <- function(topic,df,keys.frame,date.bin=10,geom="boxplot") {
     )
 }
 
+# for each topic in topics, save a plot created by plot.topic to
+# a file topicNN.pdf in dirname
 write.plots <- function(df,keys.frame,dirname="Rplots",topics=1:n.topics(df),geom="boxplot") {
     dir.create(dirname)
     for(i in topics) {
