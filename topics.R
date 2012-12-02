@@ -108,6 +108,9 @@ n.topics <- function(tm) {
     length(tm) - 13
 }
 
+topic.model.matrix <- function(tm) {
+    tm[,1:n.topics(tm)]
+}
 
 #################
 # Data processing
@@ -261,7 +264,15 @@ write.plots <- function(df,keys.frame,dirname="Rplots",topics=1:n.topics(df),geo
 ######################
 
 topics.cor <- function(df) {
-    m <- df[,1:n.topics(df)]
-    cor(m)
+    cor(topic.model.matrix(df))
+}
+
+# dendrogram: experimental
+# returns cluster object, which can be plotted with plot()
+topics.cluster <- function(df,keys.frame) {
+    m <- topic.model.matrix(df)
+    m <- t(m)
+    row.names(m) <- topic.shortnames(1:n.topics(df),keys.frame)
+    hclust(dist(m))
 }
 
