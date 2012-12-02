@@ -197,7 +197,7 @@ plot.topic.proportion <- function(topic,df,keys.frame) {
         )
 }
 
-plot.topic <- function(topic,df,keys.frame,w=2) {
+plot.topic.lines <- function(topic,df,keys.frame,w=2) {
     topic.words <- paste(topic.keywords(topic,keys.frame),collapse=" ")
     topic.label <- paste("Presence over time of topic", as.character(topic),topic.words)
     plot(topic.proportions.by.year(topic,df,smoothing.window=0),
@@ -213,14 +213,40 @@ plot.topic <- function(topic,df,keys.frame,w=2) {
            text.col=c("blue","orange")) 
 }
 
-write.plots <- function(df,keys.frame,dirname="Rplots") {
+#
+# geom: boxplot is clearest for seeing time trends and outliers
+# but "jitter" is also illustrative of where the topic is distributed
+#
+plot.topic <- function(topic,df,keys.frame,date.bin=10,geom="boxplot") {
+    require(ggplot2)
+
+    topic.words <- paste(topic.keywords(topic,keys.frame,8),collapse=" ")
+    topic.label <- paste("Presence over time of topic ", topic,"\n",
+                         topic.words," (",keys.frame$alpha[topic],")\n",
+                         "by ",date.bin," year intervals", 
+                         sep="")
+
+    series <- topic.time.series(topic,df)
+    # binning the years produces a clearer plot
+    # I'm sure I'm not supposed to do this manually, but whatevs
+    attach(series)
+    binned.pubdate <- pubdate - pubdate %% date.bin
+    detach(series)
+    series$pubdate <- factor(binned.pubdate)
+
+    qplot(pubdate,topic.proportion,data=series,geom=geom, 
+        main=topic.label,
+        xlab="Date",
+        ylab="Overall proportion of topic"
+    )
+}
+
+write.plots <- function(df,keys.frame,dirname="Rplots",topics=1:n.topics(df),geom="boxplot") {
     dir.create(dirname)
-    n <- n.topics(df)
-    for(i in 1:n) {
+    for(i in topics) {
         filename <- paste(dirname,"/topic",as.character(i),".pdf",sep="")
-        pdf(filename)
-        plot.topic(topic=i,df=df,keys.frame=keys.frame)
-        dev.off()
+        plot.topic(i,df,keys.frame,geom=geom)
+        ggsave(filename)
     }
 }
 
