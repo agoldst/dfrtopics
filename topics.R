@@ -148,7 +148,7 @@ year.range <- function(df) {
 # time course of topic number n is thus one column of the topics.frame
 # together with the list of years
 topic.time.series <- function (n,df) { 
-    matrix(c(df$pubdate,df[,n]),ncol=2) 
+    data.frame(pubdate=df$pubdate,topic.proportion=df[,n])
 }
 
 # expects df to have a pubdate column of integer years for factoring
@@ -222,50 +222,5 @@ write.plots <- function(df,keys.frame,dirname="Rplots") {
         plot.topic(topic=i,df=df,keys.frame=keys.frame)
         dev.off()
     }
-}
-
-#######################
-# Topic browsing
-#######################
-
-# metadata.from.db
-# gets metadata from database, returns it in a frame
-# opens and closes database connection
-
-metadata.from.db <- function(database.filename=file.choose(),table.name="document") { 
-    library(RSQLite)
-    db.driver <- dbDriver("SQLite") 
-    db.con <- dbConnect(db.driver,dbname=database.filename)
-    result <- dbReadTable(db.con,table.name)
-
-    # Database cleanup
-
-    dbDisconnect(db.con)
-    dbUnloadDriver(db.driver)
-
-    result
-}
-
-
-blob.IGNORE <- function () {
-write.all.exemplary.docs <- function(
-        topic.model.frame,
-        keys.frame,
-        filename="exemplary-documents.txt",
-        t=0.2
-        ) {
-    write(paste("# Threshold: >",t),filename) 
-
-    # TODO FIX UP TO USE NEW ROUTINES
-    for(n in 1:(n.topics - 1)) {
-        write(paste("Topic",n),filename,append=TRUE) 
-        write(paste(topic.keywords(n),collapse=" "),filename,append=TRUE) 
-        write.table(
-                documents.by.topic(n,docs.metadata.frame,threshold=t),
-                filename, row.names=FALSE,col.names=FALSE,quote=FALSE,
-                append=TRUE)
-    }
-    cat("Data written to ",filename,"\n")
-}
 }
 

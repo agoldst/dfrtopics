@@ -83,7 +83,7 @@ daterange.subset <- function(df,min.incl,max.excl) {
 # table.name is the name of the database table to write the data frame to
 # filename is the name of the sqlite database
 
-make.sqlite <- function (df,filename=file.choose(),table.name="document") {
+write.sqlite <- function (df,filename=file.choose(),table.name="document") {
     library(RSQLite)
     db.driver <- dbDriver("SQLite") 
     db.con <- dbConnect(db.driver,dbname=filename)
@@ -91,3 +91,20 @@ make.sqlite <- function (df,filename=file.choose(),table.name="document") {
     dbDisconnect(db.con)
     dbUnloadDriver(db.driver)
 }
+
+read.sqlite <- function(database.filename=file.choose(),
+                        table.name="document") { 
+    library(RSQLite)
+    db.driver <- dbDriver("SQLite") 
+    db.con <- dbConnect(db.driver,dbname=database.filename)
+    result <- dbReadTable(db.con,table.name)
+
+    # Database cleanup
+
+    dbDisconnect(db.con)
+    dbUnloadDriver(db.driver)
+
+    result
+}
+
+
