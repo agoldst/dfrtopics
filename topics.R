@@ -90,12 +90,19 @@ read.keys <- function(filename=NA) {
 # top-level input function: make a combined 
 # dataframe of topic proportions and document metadata
 # replace pubdate string with numeric year
-# NB. id column must be mergeable.
+# NB id formats must match in the two frames, since the merge is by id
 topic.model.df <- function(topic.frame,meta.frame) {
     mf <- meta.frame
     mf$pubdate <- pubdate.to.years(mf$pubdate)
     merge(topic.frame,mf,by="id")
 }
+
+
+
+#################
+# Data processing
+#################
+
 
 # return some descriptive information about the topic
 # n: topic number, from 1
@@ -118,23 +125,10 @@ topic.info <- function(n,df,keys.frame,threshold=0.3) {
     result
 }
 
+# TODO TEST ALL THESE
 year.range <- function(df) {
     range(df$pubdate)
 }
-
-
-#################
-# Data processing
-# Do some elementary computations on the data and store results
-# in global variables
-# also create some utility functions
-#################
-
-# TODO TEST ALL THESE
-
-# How many articles in a given year?
-# Make a table from the date column we have just added to the topics.frame
-# The table is labeled by years AS STRINGS
 
 # topics are numbered from 1
 # time course of topic number n is thus one column of the topics.frame
