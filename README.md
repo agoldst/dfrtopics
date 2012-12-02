@@ -32,6 +32,10 @@ Functions for manipulating the metadata with R.
 
 Perl script to output a subset of the bag-of-words collection produced by count2txt.
 
+## topics.R
+
+Basic R script for loading the topic model, getting basic information from it, and making time-series plots. In progress.
+
 ## more to come!
 
 ### _mallet
