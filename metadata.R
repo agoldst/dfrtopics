@@ -41,10 +41,15 @@ as.filename <- function(id) {
     gsub("/","_",result,fixed=TRUE)
 }
 
+# as.id can be more generic
+# it expects the file (possibly including a path) to end with
+# wordcounts_xxxxxxxxx.XYZ
+# where xxxxxx are a jstor id, but with / replaced with _
+# and the file extension XYZ is alphabetic
 as.id <- function(filename) {
-    result <- gsub("^wordcounts_","",filename)
-    result <- gsub("\\.CSV$","",result)
-    gsub("_","/",result)
+  result <- sub("^.*wordcounts_","",filename)
+  result <- sub("\\.[[:alpha:]]*$","",result)
+  gsub("_","/",result)
 }
 
 
