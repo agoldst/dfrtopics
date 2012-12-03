@@ -45,9 +45,9 @@ sort.topics <- function(df) {
 
 # create a dataframe with row n, column m giving proportion of topic m in doc m
 # add rows named by doc id
-# To get these names, need a way of converting from the filenames storted
-# in mallet's output to id's. Default is the as.id function, but you can pass
-# a different one
+# Pass in a function for converting filenames stored
+# in mallet's output to id's. The default is the as.id function from metadata.
+# R, but you can pass a different one
 
 read.doc.topics <- function(filename=NA,docname.to.id=as.id) {
     topics.filename <- filename
@@ -63,6 +63,30 @@ read.doc.topics <- function(filename=NA,docname.to.id=as.id) {
 
     topics <- as.data.frame(sort.topics(df))
     names(topics) <- paste("topic",sep="",1:length(topics))
+    cbind(topics,id=ids,stringsAsFactors=FALSE)
+}
+
+# alternative to read.doc.topics
+# if you have run sort_doc_topics perl script on mallet's --output-doc-topics
+# output. Should be faster; otherwise the same
+
+read.sorted.doc.topics <- function(filename=NA,docname.to.id=as.id) {
+    topics.filename <- filename
+    if(is.na(filename)) { 
+        cat("Select doc-topics file sorted by sort_doc_topics...\n")
+        ignore <- readline("(press return to open file dialog) ")
+        topics.filename <- file.choose()
+        print(topics.filename)
+    }
+    df <- read.table(topics.filename,header=FALSE,stringsAsFactors=FALSE)
+    # in this format, V1 is the doc number, V2 is the filename
+    ids <- docname.to.id(df$V2)
+
+    # drop those first two columns
+    topics <- subset(df,select=-c(V1,V2))
+    names(topics) <- paste("topic",sep="",1:length(topics))
+
+    # add the ids again, but on the right 
     cbind(topics,id=ids,stringsAsFactors=FALSE)
 }
 
