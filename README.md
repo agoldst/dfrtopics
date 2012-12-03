@@ -34,9 +34,17 @@ Perl script to output a subset of the bag-of-words collection produced by count2
 
 ## topics.R
 
-Basic R script for loading the topic model, getting basic information from it, and making time-series plots. In progress.
+Basic R script for loading the topic model, getting basic information from it, and making time-series plots of various kinds. In progress.
 
-## more to come!
+## sort_doc_topics
+
+Perl script to convert the result of
+
+    mallet train-topics --output-doc-topics filename.tsv
+
+into a table with columns ordered by topic number. This can then be fed into the ``read.sorted.doc.topics`` method in ``topics.R``.
+
+## More to come!
 
 ### _mallet
 
