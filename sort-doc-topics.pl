@@ -6,7 +6,19 @@
 #        USAGE: ./sort-doc-topics.pl  
 #
 #  DESCRIPTION: read mallet doc-topics output from stdin, write a tab-delimited 
-#  file with the topic proportion data ordered by topic number to stdout
+#  file with the topic proportion data ordered by 0-indexed topic number to 
+#  stdout. I haven't found a fast way to do this in R, so here it is in perl 
+#  (fast).
+#
+#  If the columns of the doc-topics output are 0, 1, 2, ...
+#  and there are 100 topics,
+#  then the topic numbers are at positions 2, 4, ... 200
+#  and the proportions are at 3, 5, ... 201
+#  but topics themselves are numbered 0 .. 99
+#  (position 0 is the doc number and position 1 is the doc name)
+#
+#  This script discards the initial comment line from the mallet output
+#  as well as the trailing tab stop at the end of every data line
 #
 #      OPTIONS: ---
 # REQUIREMENTS: ---
@@ -25,25 +37,27 @@ use warnings;
 use warnings FATAL => "utf8";               # Unicode encode errors are fatal
 use open qw( :std :utf8 );                  # utf8 layer for open, stdin/out
 
-# If the columns of the csv are 0, 1, 2, ...
-# and there are 100 topics,
-# then the topic numbers are at positions 2, 4, ... 200
-# and the proportions are at 3, 5, ... 201
-# but topics themselves are numbered 0 .. 99
-
-my $N_TOPICS = 100;
-my @top_indices = map { $_ * 2 } (1..$N_TOPICS);
 
 # Read and discard the header
-my $header_line = <STDIN>;
+my $line = <STDIN>;
 
-while (<STDIN>) {
-    my @row = split /\t/;
+$line = <STDIN>;
+
+
+# Number of topics is: (number of tab delimeters - 2) / 2
+# since mallet adds a tab at the end of every line
+# So count tabs
+my $n = (($line =~ tr/\t//) - 2) / 2;
+
+do {
+    my @row = split /\t/, $line;
 
     # hash saying which topics are in which columns of this row
 
     my %indexmap = ();
-    $indexmap{$row[$_]} = $_ foreach (@top_indices);
+    for(my $i = 2;$i <= $n * 2;$i += 2) {
+        $indexmap{$row[$i]} = $i;
+    }
 
     # keep the first two columns
     
@@ -51,9 +65,9 @@ while (<STDIN>) {
 
     # now output the topic proportions in order
 
-    for (my $i = 0;$i <= $N_TOPICS - 1;$i++) {
-        print "\t" . $row[$indexmap{$i} + 1] 
+    for (my $i = 0;$i <= $n - 1;$i++) {
+        print "\t", $row[$indexmap{$i} + 1];
     }
 
     print "\n";
-}
+} while($line = <STDIN>);
