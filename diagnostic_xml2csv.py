@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+# USAGE
+# diagnostic_xml2csv file.xml outfile1.csv outfile2.csv
+# file.xml: diagnostic results produced by mallet
+# outfile1.csv: table of mallet's diagnostics on topics
+# outfile2.csv: table of mallet's diagnostics on top keywords in each topic
+
 from xml.dom import minidom
 import csv
 
