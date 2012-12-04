@@ -1,11 +1,13 @@
 #!/usr/bin/env perl 
 #===============================================================================
 #
-#         FILE: wc_stop.pl
+#         FILE: wc_stop
 #
-#        USAGE: ./wc_stop.pl  
+#        USAGE: wc_stop -s stoplist_file file1 file2 file3 file4...
 #
-#  DESCRIPTION: 
+#  DESCRIPTION: Count words in file1 file2, ..., not counting words in 
+#  stoplist_file. Outputs results as comma-separated values to stdout:
+#  filename,wordcount
 #
 #      OPTIONS: ---
 # REQUIREMENTS: ---
