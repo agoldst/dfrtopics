@@ -30,7 +30,7 @@ wc_stop -s stoplist_file file1 file2 file3 file4...
 EOM
 
 my $first = shift;
-unless $first eq "-s" {
+unless ($first && $first eq "-s") {
     say $USAGE;
     exit;
 }
@@ -44,16 +44,16 @@ while(<STOP>) {
 close STOP;
 
 my $count;
-foreach(@ARGV) {
-    open my $fh, "$_" or die;
-    if(/\.csv$/i) {
+foreach my $filename (@ARGV) {
+    open my $fh, "$filename" or die;
+    if($filename =~ /\.csv$/i) {
         $count = count_csv($fh);
     }
     else {
         $count = count($fh);
     }
     close $fh;
-    print "$_,$count\n";
+    print "$filename,$count\n";
 }
 
 sub count_csv {
@@ -68,7 +68,7 @@ sub count_csv {
     while(<$fh>) {
         chomp;
         my ($word,$count) = split /,/;
-        $result++ unless $STOPLIST($word);
+        $result++ unless $STOPLIST{$word};
     }
 
     return $result;
