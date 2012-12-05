@@ -362,7 +362,9 @@ topics.cluster <- function(df,keys.frame) {
     hclust(dist(m))
 }
 
-# TODO TEST
+# Save a matrix of distances among documents
+# What is a reasonable metric? Manhattan?
+# nb the rows will carry an id column indexed from 0
 
 write.doc.distances <- function(tm,outfile="doc_dists.csv") {
     # dist operates on rows
@@ -370,6 +372,10 @@ write.doc.distances <- function(tm,outfile="doc_dists.csv") {
     row.names(distances) <- seq_along(tm$id) - 1
     write.csv(distances,outfile,quote=FALSE)
 } 
+
+# Save a list of nodes
+# these will be listed with an id indexed from 0 to match the output of the 
+# above
 
 write.doc.nodes <- function(tm,outfile="doc_nodes.csv") {
     write.csv(data.frame(Id=seq_along(tm$id) - 1,Label=tm$id,Year=tm$pubdate),outfile,row.names=FALSE,quote=FALSE)
