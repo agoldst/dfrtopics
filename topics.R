@@ -362,3 +362,15 @@ topics.cluster <- function(df,keys.frame) {
     hclust(dist(m))
 }
 
+# TODO TEST
+
+write.doc.distances <- function(tm,outfile="doc_dists.csv") {
+    # dist operates on rows
+    distances <- as.matrix(dist(topic.model.matrix(tm),method="euclidean"))
+    row.names(distances) <- seq_along(tm$id) - 1
+    write.csv(distances,outfile,quote=FALSE)
+} 
+
+write.doc.nodes <- function(tm,outfile="doc_nodes.csv") {
+    write.csv(data.frame(Id=seq_along(tm$id) - 1,Label=tm$id,Year=tm$pubdate),outfile,row.names=FALSE,quote=FALSE)
+}
