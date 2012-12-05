@@ -58,6 +58,9 @@ foreach my $filename (@ARGV) {
     print "$filename,$count\n";
 }
 
+# experimental, untested
+# tally up wordcountsXXX.CSV files from jstor DfR
+
 sub count_csv {
     my $fh = shift;
     my $header = <$fh>;
@@ -70,7 +73,7 @@ sub count_csv {
     while(<$fh>) {
         chomp;
         my ($word,$count) = split /,/;
-        $result++ unless $STOPLIST{$word};
+        $result += $count unless $STOPLIST{$word};
     }
 
     return $result;
