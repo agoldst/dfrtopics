@@ -1,9 +1,9 @@
 #!/usr/bin/env perl 
 #===============================================================================
 #
-#         FILE: sort-doc-topics.pl
+#         FILE: sort-doc-topics
 #
-#        USAGE: ./sort-doc-topics.pl  
+#        USAGE: ./sort-doc-topics
 #
 #  DESCRIPTION: read mallet doc-topics output from stdin, write a tab-delimited 
 #  file with the topic proportion data ordered by 0-indexed topic number to 

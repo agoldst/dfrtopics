@@ -1,5 +1,3 @@
-# TODO GENERALIZE
-
 # need these functions
 
 source("metadata.R")
@@ -8,14 +6,16 @@ source("metadata.R")
 # File loading
 ##############
 
-
 # t is the data frame read in from the doc-topics file
-# with raws in mallet's format:
+# with rows in mallet's format:
 # doc name topic_i proportion_i topic_j proportion_j ...
 # we want to sort the topics in index order to compare documents
 #
 # note that mallet numbers topics from 0 to n - 1, but
 # we are going to put topic 0 in column 1 of the result matrix 
+#
+# this is pretty slow. a faster way is outboard sorting in perl or other
+# for-loop-friendly language; see the read.sorted.doc.topics() function
 
 sort.topics <- function(df) {
     # width of data frame: 2n + 2
@@ -66,9 +66,9 @@ read.doc.topics <- function(filename=NA,docname.to.id=as.id) {
     cbind(topics,id=ids,stringsAsFactors=FALSE)
 }
 
-# alternative to read.doc.topics
-# if you have run sort_doc_topics perl script on mallet's --output-doc-topics
-# output. Should be faster; otherwise the same
+# alternative to read.doc.topics, if you have run the sort_doc_topics
+# script on mallet's --output-doc-topics output. Should be faster,
+# otherwise the same result
 
 read.sorted.doc.topics <- function(filename=NA,docname.to.id=as.id) {
     topics.filename <- filename
@@ -93,7 +93,7 @@ read.sorted.doc.topics <- function(filename=NA,docname.to.id=as.id) {
 # read.keys
 # input the information in a topic-keys file from mallet-train-topics
 # result is a data frame with topics renumbered from 1
-# and columns giving the Dirichlet alpha (TODO CHECK) parameter
+# and columns giving the Dirichlet alpha parameter
 
 read.keys <- function(filename=NA) {
     keys.filename <- filename
@@ -162,11 +162,16 @@ topic.info <- function(n,df,keys.frame,threshold=0.3) {
     result
 }
 
+# Return the top num.words keywords for topic i
+# not vectorized in topic
+
 topic.keywords <- function(topic,keys.frame,num.words=5) {
     words <- unlist(strsplit(keys.frame$keywords[topic],split=" "))
     words[1:num.words]
 }
 
+# Return a list of keyword-based labels for topics
+# vectorized in topic
 topic.shortnames <- function(topic,keys.frame,num.words=2) {
     words.list <- strsplit(keys.frame$keywords[topic],split=" ")
     sapply(words.list, function (words) {
