@@ -113,3 +113,16 @@ read.sqlite <- function(database.filename=file.choose(),
 }
 
 
+
+# return a list of strings citing the articles identified by ids
+# or citing all articles in tm if no ids supplied
+cite.articles <- function(tm,ids=NA)  {
+    df <- tm
+    if(!is.na(ids)) {
+        df <- tm[tm$id %in% ids,] 
+    }
+    result <- paste(df$author,", \"",df$title,",\" ",df$journaltitle," ",df$volume,
+          " no. ",df$issue," (",df$pubdate,"): ",df$pagerange,sep="")
+    result <- gsub("_",",",result)
+    gsub("\t","",result)
+}
