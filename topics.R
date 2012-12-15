@@ -162,6 +162,11 @@ topic.info <- function(n,df,keys.frame,threshold=0.3) {
     result
 }
 
+doc.info <- function(doc,tm,kf,num.topics=3) {
+    top.topics <- order(tm[doc,1:100],decreasing=TRUE)[seq(num.topics)]
+    data.frame(topic=top.topics,proportion=as.numeric(tm[doc,top.topics]),top.words=kf$keywords[top.topics])
+}
+
 # Return the top num.words keywords for topic i
 # not vectorized in topic
 
@@ -384,4 +389,13 @@ write.doc.distances <- function(tm,outfile="doc_dists.csv") {
 
 write.doc.nodes <- function(tm,outfile="doc_nodes.csv") {
     write.csv(data.frame(Id=seq_along(tm$id) - 1,Label=tm$id,Year=tm$pubdate),outfile,row.names=FALSE,quote=FALSE)
+}
+
+write.topic.nodes <- function(tm,kf,outfile="topic_nodes.csv") {
+    topic.sequence <- seq(n.topics(tm))
+    write.csv(
+      data.frame(Id=(topic.sequence - 1),
+                 Label=topic.shortnames(topic.sequence,kf)
+                 ),
+      outfile,row.names=FALSE,quote=FALSE)
 }
