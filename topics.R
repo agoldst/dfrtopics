@@ -426,20 +426,17 @@ write.topic.nodes <- function(tm,kf,outfile="topic_nodes.csv") {
       outfile,row.names=FALSE,quote=FALSE)
 }
 
+# TODO TEST
 write.topic.time.corrs <- function(tm,outfile="topic_corr_edges.csv") {
-   edge.list <- time.correlated.topics(tm,
-                                       threshold=0.7,
-                                       anti.correlation=FALSE)
-   to.write <- as.data.frame(edge.list)
-   names(to.write) <- c("Source","Target")
-   write.table(cbind(edge.list,"Undirected"))
-   
-   # TODO FINISH
-   #Source
-   #Target
-   #Type=Undirected
-   #Weight
-   
-   
-   
+    edge.list <- time.correlated.topics(tm,
+                                        threshold=0.7,
+                                        anti.correlation=FALSE)
+    to.write <- as.data.frame(edge.list)
+    names(to.write) <- c("Source","Target","Weight")
+    to.write$Type <- Undirected
+    write.csv(
+      subset(to.write,select=c(Source,Target,Type,Weight)),
+      file=outfile,
+      row.names=FALSE,
+      quote=FALSE)  
 } 
