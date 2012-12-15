@@ -363,6 +363,32 @@ topics.cor <- function(df) {
     cor(topic.model.matrix(df))
 }
 
+topic.time.series.cor <- function(tm) {
+  yts <- sapply(1:100,
+    function (t) {
+      topic.proportions.by.year(t,tm,smoothing.window=0)[,2]
+    }
+  )
+  cor(yts)
+}
+
+time.correlated.topics <- function(tm,
+                                   corrs=topic.time.series.cor(tm),
+                                   threshold=0.7,
+                                   anti.correlation=FALSE) {
+  # Don't care about the lower triangle or the diagonal 
+  m <- corrs
+  m[lower.tri(m,diag=TRUE)] <- NA
+  result <-
+    if(anti.correlation) {
+      which(m < -abs(threshold),arr.ind=TRUE) 
+    }
+    else {
+      which(m > threshold,arr.ind=TRUE)
+    }
+  data.frame(result,Corr=m[result])
+}
+
 # dendrogram: experimental
 # returns cluster object, which can be plotted with plot()
 topics.cluster <- function(df,keys.frame) {
@@ -394,8 +420,26 @@ write.doc.nodes <- function(tm,outfile="doc_nodes.csv") {
 write.topic.nodes <- function(tm,kf,outfile="topic_nodes.csv") {
     topic.sequence <- seq(n.topics(tm))
     write.csv(
-      data.frame(Id=(topic.sequence - 1),
+      data.frame(Id=topic.sequence,
                  Label=topic.shortnames(topic.sequence,kf)
                  ),
       outfile,row.names=FALSE,quote=FALSE)
 }
+
+write.topic.time.corrs <- function(tm,outfile="topic_corr_edges.csv") {
+   edge.list <- time.correlated.topics(tm,
+                                       threshold=0.7,
+                                       anti.correlation=FALSE)
+   to.write <- as.data.frame(edge.list)
+   names(to.write) <- c("Source","Target")
+   write.table(cbind(edge.list,"Undirected"))
+   
+   # TODO FINISH
+   #Source
+   #Target
+   #Type=Undirected
+   #Weight
+   
+   
+   
+} 
