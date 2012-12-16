@@ -301,7 +301,11 @@ plot.topics.yearly <- function(topics,df,keys.frame,w=2) {
     to.plot.list <- lapply(as.list(topics), function (i) { 
         to.add <- as.data.frame(topic.proportions.by.year(i,df,w))
         names(to.add) <- c("year","proportion")
-        to.add$topic <- paste(i,topic.shortnames(i,keys.frame))
+        # The facets will be sorted in alphabetical order
+        # so, until I learn how to order them,
+        # let's just do this kludge, works for n.topics < 1000
+        tnum <- sprintf("%03d",i)
+        to.add$topic <- paste(tnum,topic.shortnames(i,keys.frame))
         to.add$alpha <- keys.frame$alpha[i]
         to.add
     }
