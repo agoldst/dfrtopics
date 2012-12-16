@@ -402,7 +402,7 @@ topics.cluster <- function(df,keys.frame) {
     hclust(dist(m))
 }
 
-# Save a matrix of distances among documents
+# Save a matrix of distances among documents: experimental
 # What is a reasonable metric? Manhattan?
 # nb the rows will carry an id column indexed from 0
 
@@ -421,26 +421,49 @@ write.doc.nodes <- function(tm,outfile="doc_nodes.csv") {
     write.csv(data.frame(Id=seq_along(tm$id) - 1,Label=tm$id,Year=tm$pubdate),outfile,row.names=FALSE,quote=FALSE)
 }
 
+# Write a list of nodes corresponding to topics, suitable for importing
+# into gephi.
+# Indexed from 1, labeled by topic.shortnames
 write.topic.nodes <- function(tm,kf,outfile="topic_nodes.csv") {
     topic.sequence <- seq(n.topics(tm))
     write.csv(
       data.frame(Id=topic.sequence,
-                 Label=topic.shortnames(topic.sequence,kf)
+                 Label=topic.shortnames(topic.sequence,kf),
+                 Alpha=kf$alpha
                  ),
       outfile,row.names=FALSE,quote=FALSE)
 }
 
-# TODO TEST
-write.topic.time.corrs <- function(tm,outfile="topic_corr_edges.csv") {
-    edge.list <- time.correlated.topics(tm,
-                                        threshold=0.7,
-                                        anti.correlation=FALSE)
-    to.write <- as.data.frame(edge.list)
+# Write a list of edges connecting correlated topics, suitable
+# for importing in gephi.
+# Topics are indexed from 1 as in the write.doc.nodes output
+# Edges are weighted by r
+# Only topic pairs with r > corr.threshold are included
+# Because computing the yearly average document proportions for all
+# topics is expensive, you can pass in the matrix of correlations
+# returned by topic.time.series.cor to bypass recalculating it.
+write.topic.time.corrs <- function(tm,
+                                   outfile="topic_corr_edges.csv",
+                                   corrs=NA,
+                                   corr.threshold=0.7) {
+    to.write <- NA
+    if(any(is.na(corrs))) {
+      to.write <- time.correlated.topics(tm,
+                                          threshold=corr.threshold,
+                                          anti.correlation=FALSE)
+    }
+    else {
+      to.write <- time.correlated.topics(tm,
+                                         corrs,
+                                         threshold=corr.threshold,
+                                         anti.correlation=FALSE)
+    }
     names(to.write) <- c("Source","Target","Weight")
-    to.write$Type <- Undirected
+    to.write$Type <- "Undirected"
     write.csv(
       subset(to.write,select=c(Source,Target,Type,Weight)),
       file=outfile,
       row.names=FALSE,
       quote=FALSE)  
 } 
+
