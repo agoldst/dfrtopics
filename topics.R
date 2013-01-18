@@ -136,6 +136,90 @@ topic.model.matrix <- function(tm) {
     tm[,1:n.topics(tm)]
 }
 
+#
+# Using the R mallet API
+#
+
+# TODO TEST
+
+# USAGE
+# <load metadata frame to mf>
+#
+# trainer.object <- run.rmallet("alldocs.txt","stoplist.txt",100)
+# tf <- topic.frame.rmallet(trainer.object)
+# tm <- topic.model.df(tf,mf)
+# kf <- keys.frame.rmallet(trainer.object)
+
+# create mallet instance and train model
+run.rmallet <- function(docsfile,stopfile,num.topics,
+                        alpha.sum=5,beta=0.01,
+                        n.iters=200,n.max.iters=10) {
+    require(mallet)
+    documents <- read.table(docsfile, col.names=c("id", "class", "text"), colClasses=rep("character", 3), sep="\t", quote="")
+
+    # TODO munge ids from docfile to jstor ID format compatible with metadata
+    instances <- mallet.import(documents,stopfile)
+    trainer <- MalletLDA(num.topics,alpha.sum,beta)
+    trainer$loadDocuments(instances)
+    trainer$train(n.iters)
+    # following from dmimno's mallet-example.R:
+    # iterate picking "best" (?) topic for each token instead of sampling
+    # from posterior distribution (?)
+    trainer$maximize(n.max.iters)
+    trainer
+}
+
+topic.frame.rmallet <- function(trainer) { 
+    require(mallet)
+
+    # matrix of topic proportions (cols) in docs (rows)
+    # smoothing means nothing has 0 prob.
+    # normalized instead of raw counts 
+    doc.topics <- mallet.doc.topics(trainer, smoothed=T, normalized=T)
+
+    doc.frame <- as.data.frame(doc.topics) 
+    names(doc.frame) <- paste("topic",sep="",seq(num.topics))
+    cbind(doc.frame,id=trainer$getDocumentNames(),stringsAsFactors=F)
+}
+
+# for compatibility with above read.keys function, this
+# throws out the weighting information returned by mallet.topic.words
+
+keys.frame.rmallet <- function(trainer,num.top.words=20) {
+    trainer$getAlpha()
+    # matrix of weight assigned to vocabulary item j (cols) in topic i (rows)
+    # word j is trainer$getVocabulary()[j]
+    topic.word.weights <- mallet.topic.words(trainer,smoothed=T,normalized=T)
+    
+    n.topics <- trainer$model$numTopics
+    result <- data.frame(topic=seq(n),
+                         alpha=trainer$getAlpha(),
+                         keywords=character(n))
+
+    # aagggh failure to vectorize
+    # mallet.top.words doesn't do this right
+    # correct: order() all rows of topic.word.weights at once
+    # don't know how to do that
+    # screw it
+    for(topic in seq(n)) { 
+        result$keywords[topic]
+            <- paste(as.character(
+                                  mallet.top.words(trainer,
+                                                   topic.words[topic,],
+                                                   num.top.words
+                                                   )$words
+                                  ),
+                     collapse=" ")
+    }
+    result
+}
+
+# the trainer object actually holds the full topic model in the form of
+# the ParallelTopicTrainer java object accessible at trainer$model
+
+model.state.rmallet <- function(trainer) {
+    # TODO
+}
 #################
 # Data processing
 #################
