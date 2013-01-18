@@ -447,16 +447,17 @@ write.topic.time.corrs <- function(tm,
                                    corrs=NA,
                                    corr.threshold=0.7) {
     to.write <- NA
+    anti.cor <- corr.threshold < 0
     if(any(is.na(corrs))) {
       to.write <- time.correlated.topics(tm,
                                           threshold=corr.threshold,
-                                          anti.correlation=FALSE)
+                                          anti.correlation=anti.cor)
     }
     else {
       to.write <- time.correlated.topics(tm,
                                          corrs,
                                          threshold=corr.threshold,
-                                         anti.correlation=FALSE)
+                                         anti.correlation=anti.cor)
     }
     names(to.write) <- c("Source","Target","Weight")
     to.write$Type <- "Undirected"
