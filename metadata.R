@@ -23,7 +23,7 @@ read.citations <- function(filename=NA,strip=FALSE) {
     }
 
     read.csv(citations.filename,strip.white=strip,skip=1,
-             col.names=cols,header=FALSE,as.is=TRUE)
+             col.names=cols,header=FALSE,as.is=TRUE,quote="")
 }
 
 # given a dataframe as returned by read.citations,
