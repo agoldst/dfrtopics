@@ -297,6 +297,9 @@ plot.topic.yearly <- function(topic,df,keys.frame,w=2) {
 
 plot.topics.yearly <- function(topics,df,keys.frame,w=2) {
     n <- length(topics) * length(df$id)
+    
+    # TODO better split-apply-combine strategy
+    # TODO allow choice of superimposed lines or facets
 
     to.plot.list <- lapply(as.list(topics), function (i) { 
         to.add <- as.data.frame(topic.proportions.by.year(i,df,w))
@@ -319,33 +322,42 @@ plot.topics.yearly <- function(topics,df,keys.frame,w=2) {
 # visualize a topic over time by plotting its proportion in each document
 # against the year of the document
 #
-# geom: boxplot is clearest for seeing time trends and outliers
-# but "jitter" is also illustrative of where the topic is distributed
+# geom: deprecated parameter
+# decided the jitter plot option was more chart-junky than anything
 #
 # date.bin: interval of years to bin documents by
 
 plot.topic <- function(topic,df,keys.frame,date.bin=10,geom="boxplot") {
-    require(ggplot2)
+    library(ggplot2)
+    library(plyr)
+    library(scales)
 
     topic.words <- paste(topic.keywords(topic,keys.frame,8),collapse=" ")
-    topic.label <- paste("Presence over time of topic ", topic,"\n",
-                         topic.words," (",keys.frame$alpha[topic],")\n",
+    topic.label <- paste("Distributions of proportions for topic ", topic,"\n",
+                         topic.words, "\n(alpha=",
+                         round(keys.frame$alpha[topic],digits=2),") ",
                          "by ",date.bin," year intervals", 
                          sep="")
 
     series <- topic.time.series(topic,df)
     # binning the years produces a clearer plot
     # I'm sure I'm not supposed to do this manually, but whatevs
-    attach(series)
-    binned.pubdate <- pubdate - pubdate %% date.bin
-    detach(series)
-    series$pubdate <- factor(binned.pubdate)
+    df.plot <- transform(series,pubdate.binned=pubdate - pubdate %% date.bin)
+    df.means <- ddply(series,"pubdate",summarize,topic.mean=mean(topic.proportion))
 
-    qplot(pubdate,topic.proportion,data=series,geom=geom, 
-        main=topic.label,
-        xlab="Date",
-        ylab="Overall proportion of topic"
-    )
+    box.plot <- ggplot(df.plot,aes(pubdate)) +
+      geom_boxplot(aes(y=topic.proportion,group=pubdate.binned),
+                   color=alpha("black",0.5))
+    
+    # results: box plots by date.bin intervals with overlay average line
+    # TODO smoothing window on average?
+    box.plot +
+      geom_line(data=df.means,aes(pubdate,topic.mean,
+                                  color="yearly average")) +
+      labs(title=topic.label) +
+      xlab("Date") +
+      ylab("Topic proportion") +
+      scale_color_hue("") # no title on legend
 }
 
 # for each topic in topics, save a plot created by plot.topic to
