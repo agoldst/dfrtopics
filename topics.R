@@ -202,8 +202,7 @@ keys.frame.rmallet <- function(trainer,num.top.words=20) {
     # don't know how to do that
     # screw it
     for(topic in seq(n)) { 
-        result$keywords[topic]
-            <- paste(as.character(
+        result$keywords[topic] <- paste(as.character(
                                   mallet.top.words(trainer,
                                                    topic.words[topic,],
                                                    num.top.words
