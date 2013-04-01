@@ -327,7 +327,7 @@ plot.topics.yearly <- function(topics,df,keys.frame,w=2) {
 #
 # date.bin: interval of years to bin documents by
 
-plot.topic <- function(topic,df,keys.frame,date.bin=10,geom="boxplot") {
+plot.topic.boxplot <- function(topic,df,keys.frame,date.bin=10,geom="boxplot") {
     library(ggplot2)
     library(plyr)
     library(scales)
@@ -359,6 +359,28 @@ plot.topic <- function(topic,df,keys.frame,date.bin=10,geom="boxplot") {
       ylab("Topic proportion") +
       scale_color_hue("") # no title on legend
 }
+
+# plain plot.topic is alias for boxplot (backwards compatibility)
+plot.topic <- plot.topic.boxplot
+
+plot.topic.scatter <- function(topic,df,keys.frame,a=1/10) {
+
+    topic.words <- paste(topic.keywords(topic,keys.frame,8),collapse=" ")
+    topic.label <- paste("Yearly distributions of proportions for topic ",
+                         topic,"\n",
+                         topic.words, "\n",
+                         "(alpha=",
+                         round(keys.frame$alpha[topic],digits=2),") ",
+                         sep="")
+    qplot(pubdate,topic.proportion,
+          data=topic.time.series(topic,df),
+          alpha=I(a),
+          geom=c("point","smooth"),
+          xlab="publication date",
+          ylab="topic proportion in article",
+          main=topic.label)
+}
+
 
 # for each topic in topics, save a plot created by plot.topic to
 # a file topicNN.pdf in dirname
