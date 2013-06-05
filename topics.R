@@ -2,6 +2,8 @@
 
 source("metadata.R")
 
+# TODO fix irresponsible function names
+
 ##############
 # File loading
 ##############
