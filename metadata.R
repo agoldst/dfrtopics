@@ -29,7 +29,7 @@ read_metadata <- function(filename=NA,...) {
     cols <- scan(f,nlines=1,what=character(),sep=",",quiet=T)
     cols <- c(cols,"unused")
 
-    subset(read.csv(f,skip=1,header=F,col.names=cols,as.is=T,...),
+    subset(read.csv(f,skip=1,header=F,col.names=cols,quote="",as.is=T,...),
            select=-unused)
 }
     
