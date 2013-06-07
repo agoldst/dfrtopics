@@ -223,11 +223,10 @@ sampling_state_nodisk <- function(trainer) {
 
         for(p in seq_len(doclen)) {
             pj <- as.integer(p - 1) # java 0-index
-            result$pos[p0 + pj] <- 
-                            pj,
-                            toks$getIndexAtPosition(pj),
-                            alph$lookupObject(pj),
-                            tops$getIndexAtPosition(pj))
+            result[p0 + pj,3:6] <- c(pj,
+                                      toks$getIndexAtPosition(pj),
+                                      alph$lookupObject(pj),
+                                      tops$getIndexAtPosition(pj))
         }
         p0 <- p0 + doclen
     }
