@@ -167,7 +167,7 @@ weighted_keys_frame <- function(trainer,num.top.words=20) {
 # save the state
 write_mallet_state <- function(trainer,outfile="state.gz") {
     fileobj <- new(J("java.io.File"),outfile)
-    trainer$model$printState(outf)
+    trainer$model$printState(fileobj)
 }
 
 
@@ -177,7 +177,6 @@ read_mallet_state <- function(infile) {
     result <- read.table(con,header=F,comment.char="#",
                col.names=c("doc","source","pos","typeindex","type","topic"),
                sep=" ",as.is=T) 
-    close(con)
     result
 }
 
