@@ -49,7 +49,6 @@ read_dfr_wordcounts <- function(files=NULL,dirs=NULL) {
         counts <- read.csv(fv[i],strip.white=T,header=T,as.is=T)
         result$text[i] <- paste(rep(counts$WORDCOUNTS,times=counts$WEIGHT),
                                 collapse=" ")
-        result$text[i] <- paste(result$text[i],"\n",collapse="")        
     }
 
     result
