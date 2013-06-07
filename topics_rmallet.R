@@ -23,7 +23,7 @@ source("topics.R")
 # run these steps individually
 
 model_documents <- function(citations.file,dirs,stoplist.file,num.topics) { 
-    mf <- read.citations(citations.file)
+    mf <- read_metadata(citations.file)
     texts <- read_dfr_wordcounts(dirs=dirs)
     instances <- make_instances(texts,stoplist.file)
     model <- train_model(instances,num.topics=num.topics)
