@@ -16,6 +16,25 @@ Basic R script for loading information from a topic model created by MALLET, get
 
 Thanks to the advent of [the mallet interface for R](http://www.cs.princeton.edu/~mimno/R/), it's possible to avoid having to do the kinds of reprocessing of the output from the mallet command-line tool that I used to need to do (using the perl scripts listed below). In fact it's possible to run mallet itself from within R. This script provides basic functions for using mallet to topic-model wordcount data from DfR. I use it to put together a data frame with document metadata and document-topic proportions, which can then work with the same plotting functions in topics.R. But much more is possible, given access, within R, to the mallet topic model object itself.
 
+### basic example usage within R
+
+```R
+# let's imagine you have this repository in ~/projects/dfr-analysis
+# Download and unzip DFR data to, say ~/dfr/test/
+# you get metadata in ~/dfr/test/citations.CSV
+# and wordcounts per document in ~/dfr/test/wordcounts/*.CSV
+
+setwd("~/projects/dfr-analysis")
+source("topics_rmallet.R")
+model <- model_documents(citations.file="~/dfr/test/citations.CSV",
+    dirs="~/dfr/test/wordcounts/",stoplist.file="stoplist/long.txt",
+    num.topics=12)
+
+library(ggplot2)
+plot.topics.yearly(1:12,docmodel$tm,docmodel$kf)
+```
+
+
 ## Legacy scripts
 
 ### combine_citations
