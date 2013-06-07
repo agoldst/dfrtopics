@@ -10,11 +10,13 @@ Functions for manipulating metadata from DfR with R.
 
 Basic R script for loading information from a topic model created by MALLET, getting basic information from it, and making time-series plots of various kinds. In progress.
 
+*Note.* These functions were written to use in conjunction with the "legacy scripts" below. I am moving to the R interface for mallet (see below) and so am using the data-reading functions in this file less and less. Since I gather a few people have been making use of some of this code, I have left the legacy functions in. But this is really for my own use, so I won't maintain backwards compatibility longer than I feel like it.
+
 ## topics_rmallet.R
 
 Thanks to the advent of [the mallet interface for R](http://www.cs.princeton.edu/~mimno/R/), it's possible to avoid having to do the kinds of reprocessing of the output from the mallet command-line tool that I used to need to do (using the perl scripts listed below). In fact it's possible to run mallet itself from within R. This script provides basic functions for using mallet to topic-model wordcount data from DfR. I use it to put together a data frame with document metadata and document-topic proportions, which can then work with the same plotting functions in topics.R. But much more is possible, given access, within R, to the mallet topic model object itself.
 
-## Legacy Scripts
+## Legacy scripts
 
 ### combine_citations
 
