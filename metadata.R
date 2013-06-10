@@ -1,10 +1,10 @@
 # examples of elementary manipulation using the metadata
 
-# read_metadata: make a dataframe from citations.CSV
+# read_metadata: make a dataframe from citations.CSV files
 #
-# filename: source citations.CSV file
+# filenames: vector of citations.CSV filenames
 #
-# assumes that the file has a trailing comma at the end of every line,
+# assumes that each file has a trailing comma at the end of every line,
 # which makes read.csv find an extra field. DfR has changed their output
 # data format before, so check results carefully.
 #
@@ -15,8 +15,25 @@
 # tab-separated entries (e.g. author)--even if there is only a single
 # entry
 
+read_metadata <- function(filenames,...) {
+    all_rows <- do.call(rbind,lapply(filenames,read_citations,...))
+    # deduplicate
+    result <- unique(all_rows)
 
-read_metadata <- function(filename=NA,...) { 
+    if(any(duplicated(result$id))) {
+        warning("Some rows have the same id")
+    }
+
+    result
+}
+
+# read_citations: this does the work for the above.
+#
+# Reads a single citations.CSV file. Opens file dialog if filename is NA.
+#
+# See above re: trailing commas in dfr citations.CSV files.
+
+read_citations <- function(filename=NA,...) { 
     f <- filename
     if(is.na(filename)) { 
         cat("Select citations.CSV file from jstor dfr...\n")
@@ -32,6 +49,7 @@ read_metadata <- function(filename=NA,...) {
     subset(read.csv(f,skip=1,header=F,col.names=cols,quote="",as.is=T,...),
            select=-unused)
 }
+
     
 # legacy function: now just a wrapper around read_metadata
 
