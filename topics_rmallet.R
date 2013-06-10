@@ -1,4 +1,5 @@
 library(mallet)
+library(plyr)
 source("topics.R")
 
 #
@@ -33,33 +34,58 @@ model_documents <- function(citations.file,dirs,stoplist.file,num.topics) {
     list(tm=doc_topics,kf=kf,trainer=model)
 }
 
-read_dfr_wordcounts <- function(files=NULL,dirs=NULL) {
-    # aggregate all filenames in files and all all files in each dir in dirs
+read_dfr_wordcounts <- function(dirs=NULL,files=NULL) {
+    counts <- read_dfr(dirs=dirs,files=files)
+    docs_frame(counts)
+}
+
+read_dfr <- function(dirs=NULL,files=NULL) {
+    # aggregate all filenames in files
+    # and all wordcounts*.CSV files in each dir in dirs
     # into a single vector
     fv <- c(files,unlist(lapply(dirs,function(d) {
-                                    file.path(d,list.files(d))
+                                    Sys.glob(file.path(d,"wordcounts*.CSV"))
                                 })))
     
-    result <- data.frame(id=character(length(fv)),
-                         text=character(length(fv)),
-                         stringsAsFactors=F)
-    result$id <- as.id(fv)   # see metadata.R
-    
-    for(i in seq_along(fv)) {
-        counts <- read.csv(fv[i],strip.white=T,header=T,as.is=T)
-        result$text[i] <- paste(rep(counts$WORDCOUNTS,times=counts$WEIGHT),
-                                collapse=" ")
+    if(any(!grepl("\\.CSV$",fv))) {
+        warning("Not all files specified for reading are named *.CSV")
     }
 
-    result
+    counts <- vector("list",length(fv))
+    n_types <- integer(length(fv))
+    
+    for(i in seq_along(fv)) { 
+        counts[[i]] <- read.csv(fv[i],strip.white=T,header=T,as.is=T,
+                                colClasses=c("character","integer"))
+
+        
+        n_types[i] <- nrow(counts[[i]])
+    }
+
+    # infuriatingly, concatenating columns separately is a major
+    # performance improvement
+
+    wordtype <- do.call(c,lapply(counts,"[[","WORDCOUNTS"))
+    wordweight <- do.call(c,lapply(counts,"[[","WEIGHT"))
+
+    # add id column
+
+    data.frame(id=rep(as.id(fv),times=n_types),
+               WORDCOUNTS=wordtype,
+               WEIGHT=wordweight,
+               stringsAsFactors=F)
+
+}
+
+docs_frame <- function(counts) {
+    ddply(counts,.(id),summarize,
+          text=paste(rep(WORDCOUNTS,times=WEIGHT),collapse=" "))
 }
 
 
 # create mallet instance and train model
 make_instances <- function(docs_frame,stoplist.file,...) {
-    library(mallet)
-
-    # token regex: letters
+    # token regex: letters only, by default
     # another possibility would be to include punctuation \p{P}
     mallet.import(docs_frame$id,docs_frame$text,
                   stoplist.file=stoplist.file,
@@ -93,8 +119,6 @@ train_model <- function(instances,num.topics,
 # renumbers topics from 1
 
 topic_frame <- function(trainer) { 
-    require(mallet)
-
     # matrix of topic proportions (cols) in docs (rows)
     # smoothing means nothing has 0 prob.
     # normalized instead of raw counts 
