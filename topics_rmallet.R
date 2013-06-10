@@ -101,6 +101,21 @@ read_dfr <- function(dirs=NULL,files=NULL) {
 
 }
 
+# remove_rare
+#
+# throw out words whose frequency in the *corpus* is below freq_threshold
+# 
+# counts: long-form dataframe as returned by read_dfr
+
+remove_rare <- function(counts,freq_threshold) { 
+    # the dumb way is surprisingly fast (lazy evaluation?)
+    # whereas ddply(counts,.(WORDCOUNTS),summarize,count=sum(WEIGHT))
+    # is very slow
+    overall <- with(counts,table(rep(WORDCOUNTS,times=WEIGHT)))
+    subset(counts,
+           subset=(overall[WORDCOUNTS] / total >= freq_threshold))
+} 
+                        
 # docs_frame
 #
 # counts: long-format data frame like that returned by read_dfr
