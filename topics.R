@@ -3,6 +3,7 @@
 source("metadata.R")
 
 # TODO fix irresponsible function names
+# despite the use of "plot.topics" I am not writing S3 generic functions
 
 ##############
 # File loading
@@ -344,6 +345,7 @@ plot.topic.boxplot <- function(topic,df,keys.frame,date.bin=10,geom="boxplot") {
     series <- topic.time.series(topic,df)
     # binning the years produces a clearer plot
     # I'm sure I'm not supposed to do this manually, but whatevs
+    # TODO at least use cut()
     df.plot <- transform(series,pubdate.binned=pubdate - pubdate %% date.bin)
     df.means <- ddply(series,"pubdate",summarize,topic.mean=mean(topic.proportion))
 
