@@ -2,7 +2,6 @@ library(mallet)
 library(plyr)
 source("topics.R")
 
-#
 # Using the R mallet API
 #
 # when you make a trainer object with MalletLDA(), the result actually
@@ -10,8 +9,6 @@ source("topics.R")
 # java object accessible at trainer$model. N.B. java is strict about
 # typing, which makes for some funtimes. To index into array-like
 # objects, apply as.integer() to parameters
-
-# TODO TEST
 
 # Basic usage is wrapped up in this convenience function.
 #
@@ -34,10 +31,37 @@ model_documents <- function(citations.file,dirs,stoplist.file,num.topics) {
     list(tm=doc_topics,kf=kf,trainer=model)
 }
 
+# read_dfr_wordcounts
+#
+# reads in wordcounts*.CSV files and produces a dataframe with one line
+# for each document containing the id and the "text" of the document as
+# an inflated bag of words
+#
+# dirs, files: vectors
+#
+# uses all wordcounts*.CSV files in each of the dirs and all the files
+# in files
+
 read_dfr_wordcounts <- function(dirs=NULL,files=NULL) {
     counts <- read_dfr(dirs=dirs,files=files)
     docs_frame(counts)
 }
+
+# read_dfr
+#
+# dirs, files: as above
+#
+# reads in a bunch of wordcounts*.CSV files and stacks them up in a
+# single "long format" dataframe with rows:
+# id        WORDCOUNTS  WEIGHT
+# <docid>   <feature>   <count>
+#
+# Note that empty documents are skipped; DfR supplies wordcounts files for 
+# documents that have no wordcount data. These will be in DfR's metadata but
+# not in the output dataframehere.  
+#
+# TODO could this be faster? This is slow. A perl script would be
+# faster, but this keeps us in R and does everything in memory.
 
 read_dfr <- function(dirs=NULL,files=NULL) {
     # aggregate all filenames in files
@@ -77,27 +101,53 @@ read_dfr <- function(dirs=NULL,files=NULL) {
 
 }
 
+# docs_frame
+#
+# counts: long-format data frame like that returned by read_dfr
+#
+# inflates wordcounts into bags of words
+# 
+# the result is a dataframe
+
 docs_frame <- function(counts) {
     ddply(counts,.(id),summarize,
           text=paste(rep(WORDCOUNTS,times=WEIGHT),collapse=" "))
 }
 
-
-# create mallet instance and train model
-make_instances <- function(docs_frame,stoplist.file,...) {
+# make_instances
+# 
+# given a frame like that returned by docs_frame above,
+# create a mallet InstanceList object
+#
+# stoplist.file is passed on to mallet
+ 
+make_instances <- function(docs,stoplist.file,...) {
     # token regex: letters only, by default
     # another possibility would be to include punctuation \p{P}
-    mallet.import(docs_frame$id,docs_frame$text,
+    mallet.import(docs$id,docs$text,
                   stoplist.file=stoplist.file,
                   ...)
 }
 
+# write_instances
+#
+# write a mallet InstanceList object to a file
+ 
 write_instances <- function(instances,output.file) {
   instances$save(new(J("java.io.File"),output.file))
 }
 
-# instances can either be a mallet instance object
-# or the name of a mallet instance file
+# train_model
+#
+# train the topic model
+#
+# instances: can either be a mallet instance object or the name of a
+# mallet instance file
+#
+# returns the trainer object, which holds a reference to the RTopicModel
+# object (which in turns points to the actual modeling object of class
+# ParallelTopicModel
+
 train_model <- function(instances,num.topics,
                         alpha.sum=5,beta=0.01,
                         n.iters=200,n.max.iters=10,
@@ -114,9 +164,12 @@ train_model <- function(instances,num.topics,
     trainer
 }
 
-# create a data frame with topic proportions for each document
-# rows are in the order they were passed in to mallet
-# renumbers topics from 1
+# topic_frame
+#
+# create a data frame with topic proportions for each document rows
+# are in the order they were passed in to mallet renumbers topics
+# from 1. The result is suitable for joining with metadata using
+# topic.model.df() (see "topics.R")
 
 topic_frame <- function(trainer) { 
     # matrix of topic proportions (cols) in docs (rows)
@@ -129,11 +182,13 @@ topic_frame <- function(trainer) {
     cbind(doc.frame,id=trainer$getDocumentNames(),stringsAsFactors=F)
 }
 
-# for compatibility with my old read.keys function, this
-# throws out the weighting information returned by mallet.topic.words
-# the provided mallet.top.words function only works on one topic at a time
-# and rather expensively copies out the whole vocabulary each time you call it
-# so let's at least frontload that step
+# keys_frame
+#
+# for compatibility with my old read.keys function, this throws out the
+# weighting information returned by mallet.topic.words the provided
+# mallet.top.words function only works on one topic at a time and rather
+# expensively copies out the whole vocabulary each time you call it so
+# let's at least frontload that step
 #
 # efficiency: where it counts least!
 
@@ -156,6 +211,8 @@ keys_frame <- function(trainer,num.top.words=20) {
     )
 } 
 
+# weighted_keys_frame
+#
 # A more informative topic key-words data frame, in "long" format
 # each row is (alpha,topic,word,weight)
 # with num.top.words rows for each of the topics
@@ -186,15 +243,22 @@ weighted_keys_frame <- function(trainer,num.top.words=20) {
     result
 }
 
+# write_mallet_state
+# 
+# save the Gibbs sampling state of <trainer> to a (gzipped) file
 
-# save the state
 write_mallet_state <- function(trainer,outfile="state.gz") {
     fileobj <- new(J("java.io.File"),outfile)
     trainer$model$printState(fileobj)
 }
 
 
-# Read in a Gibbs sampling state from disk. supply a .gz filename
+# read_mallet_state
+#
+# Read in a Gibbs sampling state from disk
+#
+# expects the name of a gzipped file in <infile>
+
 read_mallet_state <- function(infile) {
     con <- gzfile(infile)
     result <- read.table(con,header=F,comment.char="#",
@@ -203,8 +267,12 @@ read_mallet_state <- function(infile) {
     result
 }
 
-# wrapper for the previous two
+# sampling_state
+#
+# wrapper for the previous two: get a dataframe with the sampling state
+#
 # obviously you could do this all in memory, but: rJava = annoying
+
 sampling_state <- function(trainer,tmpfile="state.gz",rm.tmpfile=F) {
     write_mallet_state(trainer,tmpfile)
     result <- read_mallet_state(tmpfile)
@@ -214,8 +282,14 @@ sampling_state <- function(trainer,tmpfile="state.gz",rm.tmpfile=F) {
     result
 }
 
+# sampling_state_nodisk: DO NOT USE
+#
 # TODO this attempt to clone ParallelTopicModel.printState doesn't work
+#
 # TODO for speed, must rewrite rJava $ operator with low-level .jcall()
+# and probably also build up each column separately to get away from the
+# nightmares associated with indexing into dataframes
+
 sampling_state_nodisk <- function(trainer) {
     warning("Function not implemented. Use sampling_state() instead.")
     return(NULL)
