@@ -182,8 +182,11 @@ write_instances <- function(instances,output.file) {
 train_model <- function(instances,num.topics,
                         alpha.sum=5,beta=0.01,
                         n.iters=200,n.max.iters=10,
-                        n.hyper.iters=20,n.burn.in=50) {
+                        n.hyper.iters=20,n.burn.in=50,
+                        threads=4L) {
     trainer <- MalletLDA(num.topics,alpha.sum,beta)
+    trainer$model$setNumThreads(threads)
+
     trainer$loadDocuments(instances)
     trainer$setAlphaOptimization(n.hyper.iters,n.burn.in)
 
@@ -359,4 +362,13 @@ sampling_state_nodisk <- function(trainer) {
     }
     result <- result[1:p0,]     # truncate to length of actual data
     result
+}
+
+# Save the "topic word weights," i.e. the estimated weights of each word for
+# each topic
+#
+# outfile : in tsv format. big (contains n_topics * n_vocabulary rows)
+
+write_topic_words <- function(trainer,outfile="weights.tsv") {
+    trainer$model$printTopicWordWeights(new(J("java.io.File"),outfile))
 }
