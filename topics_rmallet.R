@@ -1,3 +1,7 @@
+# Let's assume we're typically going to need more Java heap space
+# this sets the maximum allocation
+
+options(java.parameters = "-Xmx2g")
 library(mallet)
 library(plyr)
 source("topics.R")
