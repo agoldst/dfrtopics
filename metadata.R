@@ -147,7 +147,9 @@ read.sqlite <- function(database.filename=file.choose(),
     result
 }
 
-
+# --------
+# plots, descriptive output, etc.
+# --------
 
 # return a list of strings citing the articles identified by ids
 # or citing all articles in tm if no ids supplied
@@ -160,4 +162,18 @@ cite.articles <- function(tm,ids=NA)  {
           " no. ",df$issue," (",df$pubdate,"): ",df$pagerange,sep="")
     result <- gsub("_",",",result)
     gsub("\t","",result)
+}
+
+# How many of each item type appear in each temporal interval?
+#
+# not a very fancy plot
+
+plot_items_by_year <- function(metadata) {
+    if(is.null(metadata$date)) {
+        metadata$date <- pubdate_Date(metadata$pubdate)
+    }
+
+    # TODO proper date-interval breaks with cut.Date()
+    qplot(date,data=metadata,geom="histogram",
+          facet = . ~ type)
 }
