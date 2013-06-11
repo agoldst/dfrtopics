@@ -67,9 +67,8 @@ read_dfr <- function(dirs=NULL,files=NULL) {
     # aggregate all filenames in files
     # and all wordcounts*.CSV files in each dir in dirs
     # into a single vector
-    fv <- c(files,unlist(lapply(dirs,function(d) {
-                                    Sys.glob(file.path(d,"wordcounts*.CSV"))
-                                })))
+    globs <- file.path(dirs,"wordcounts*.CSV")
+    fv <- c(files,Sys.glob(globs))
     
     if(any(!grepl("\\.CSV$",fv))) {
         warning("Not all files specified for reading are named *.CSV")
