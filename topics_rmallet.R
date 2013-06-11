@@ -56,14 +56,18 @@ read_dfr_wordcounts <- function(dirs=NULL,files=NULL) {
 # id        WORDCOUNTS  WEIGHT
 # <docid>   <feature>   <count>
 #
-# Note that empty documents are skipped; DfR supplies wordcounts files for 
-# documents that have no wordcount data. These will be in DfR's metadata but
-# not in the output dataframehere.  
+# Note that empty documents are skipped; DfR supplies wordcounts files
+# for documents that have no wordcount data. These will be in DfR's
+# metadata but not in the output dataframe here.
 #
 # TODO could this be faster? This is slow. A perl script would be
 # faster, but this keeps us in R and does everything in memory.
+#
+# memory usage: for N typical journal articles, the resulting dataframe
+# needs about 20N K of memory. So R will hit its limits somewhere around
+# 100K articles.
 
-read_dfr <- function(dirs=NULL,files=NULL) {
+read_dfr <- function(dirs=NULL,files=NULL,report_interval=100) {
     # aggregate all filenames in files
     # and all wordcounts*.CSV files in each dir in dirs
     # into a single vector
@@ -83,7 +87,13 @@ read_dfr <- function(dirs=NULL,files=NULL) {
 
         
         n_types[i] <- nrow(counts[[i]])
+
+        if(i %% report_interval == 0) {
+            message("Read ",i," files")
+        }
     }
+
+    message("Preparing aggregate data frame...")
 
     # infuriatingly, concatenating columns separately is a major
     # performance improvement
@@ -102,15 +112,18 @@ read_dfr <- function(dirs=NULL,files=NULL) {
 
 # remove_rare
 #
-# throw out words whose frequency in the *corpus* is below freq_threshold
-# 
+# throw out words whose frequency in the *corpus* is below a threshold
+#
 # counts: long-form dataframe as returned by read_dfr
+#
+# freq_threshold: between 0 and 1.
 
 remove_rare <- function(counts,freq_threshold) { 
     # the dumb way is surprisingly fast (lazy evaluation?)
     # whereas ddply(counts,.(WORDCOUNTS),summarize,count=sum(WEIGHT))
     # is very slow
     overall <- with(counts,table(rep(WORDCOUNTS,times=WEIGHT)))
+    total <- sum(counts$WEIGHT)
     subset(counts,
            subset=(overall[WORDCOUNTS] / total >= freq_threshold))
 } 
