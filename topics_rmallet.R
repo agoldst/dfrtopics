@@ -114,22 +114,60 @@ read_dfr <- function(dirs=NULL,files=NULL,report_interval=100) {
 
 }
 
+# overall_counts
+#
+# given a counts frame like that returned by read_dfr, calculate total
+# corpus-wide counts for each word type
+#
+# returns a 1D table, i.e. a vector of counts with word types as the
+# element names
+
+overall_counts <- function(counts) {
+    # the dumb way is surprisingly fast (lazy evaluation?)
+    # whereas ddply(counts,.(WORDCOUNTS),summarize,count=sum(WEIGHT))
+    # is very slow
+    with(counts,table(rep(WORDCOUNTS,times=WEIGHT)))
+}
+
 # remove_rare
 #
 # throw out words whose frequency in the *corpus* is below a threshold
 #
 # counts: long-form dataframe as returned by read_dfr
 #
-# freq_threshold: between 0 and 1.
+# freq_threshold: frequency threshold (between 0 and 1)
+#
+# OR rank_threshold: rank threshold (natural number)
 
-remove_rare <- function(counts,freq_threshold) { 
-    # the dumb way is surprisingly fast (lazy evaluation?)
-    # whereas ddply(counts,.(WORDCOUNTS),summarize,count=sum(WEIGHT))
-    # is very slow
-    overall <- with(counts,table(rep(WORDCOUNTS,times=WEIGHT)))
-    total <- sum(counts$WEIGHT)
-    subset(counts,
-           subset=(overall[WORDCOUNTS] / total >= freq_threshold))
+remove_rare <- function(counts,freq_threshold=NULL,rank_threshold=NULL,
+                        .overall=NULL) { 
+    # (buried parameter: .overall: precalculated overall counts) 
+    if(is.null(.overall)) {
+        overall <- overall_counts(counts)
+    }
+    else {
+        overall <- .overall
+    }
+
+    if(!is.null(freq_threshold)) {
+        message("applying freq_threshold ",freq_threshold)
+        total <- sum(overall)
+        result <- subset(counts,
+                         subset=(overall[WORDCOUNTS] / total >= freq_threshold))
+    }
+    else {
+        if(is.null(rank_threshold)) {
+            warning("No threshold provided.")
+            result <- counts
+        }
+        else { 
+            count_threshold <- sort(overall,decreasing=T)[rank_threshold]
+            result <- subset(counts,
+                             subset=(overall[WORDCOUNTS] >= count_threshold))
+        }
+    }
+
+    result
 } 
                         
 # docs_frame
@@ -371,4 +409,13 @@ sampling_state_nodisk <- function(trainer) {
 
 write_topic_words <- function(trainer,outfile="weights.tsv") {
     trainer$model$printTopicWordWeights(new(J("java.io.File"),outfile))
+}
+
+# Use the mallet diagnostics
+# TODO implement
+
+find_bad_topics <- function(trainer,n_top_words=20L) {
+    d <- .jnew("cc/mallet/topics/TopicModelDiagnostics",trainer,n_top_words)
+    scores <- d$getDistanceFromCorpus()
+    # TODO how to handle these results?
 }
