@@ -315,6 +315,17 @@ weighted_keys_frame <- function(trainer,num.top.words=20) {
     result
 }
 
+# wkf_kf
+#
+# turn a weighted keys frame into something like what keys_frame returns
+# (for use with plot.topics.yearly etc. from topics.R)
+
+wkf_kf <- function(wkf) {
+    ddply(wkf,"topic",summarize,
+          alpha=alpha[1],
+          keywords=paste(word[order(weight,decreasing=T)],collapse=" "))
+}
+
 # write_mallet_state
 # 
 # save the Gibbs sampling state of <trainer> to a (gzipped) file
