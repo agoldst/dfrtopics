@@ -34,6 +34,9 @@ library(ggplot2)
 plot.topics.yearly(1:12,docmodel$tm,docmodel$kf)
 ```
 
+## topics_vis.R
+
+Very sketchy: I'm gradually rewriting and polishing the visualizations for use with the fuller model output I'm working with from Rmallet.
 
 ## Legacy scripts
 
