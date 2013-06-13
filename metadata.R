@@ -117,6 +117,13 @@ pubdate_Date <- function(pubdate) {
     as.Date(substr(pubdate,1,10))
 }
 
+# convert a DFR id into a jstor url
+
+dfr_id_url <- function(id) {
+    sub("^.*\\/","http://www.jstor.org/stable/",md$id)
+}
+                    
+
 # dump all the metadata in a dataframe into a sqlite database in case
 # you need efficient access to that outside of R 
 #
@@ -168,12 +175,15 @@ cite.articles <- function(tm,ids=NA)  {
 #
 # not a very fancy plot
 
-plot_items_by_year <- function(metadata) {
-    if(is.null(metadata$date)) {
-        metadata$date <- pubdate_Date(metadata$pubdate)
-    }
+plot_items_by_year <- function(metadata,time_interval="year") {
+    to.plot <- transform(metadata,
+                         Date=cut(pubdate_Date(pubdate),
+                                  breaks=time_interval))
 
     # TODO proper date-interval breaks with cut.Date()
-    qplot(date,data=metadata,geom="histogram",
-          facet = . ~ type)
+    qplot(as.Date(Date),
+          data=to.plot,geom="histogram",
+          facets = ~ type) +
+        xlab("publication date") +
+        ggtitle("Number of each item type, by year")
 }
