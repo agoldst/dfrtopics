@@ -29,7 +29,7 @@ model_documents <- function(citations.file,dirs,stoplist.file,num.topics) {
     texts <- read_dfr_wordcounts(dirs=dirs)
     instances <- make_instances(texts,stoplist.file)
     model <- train_model(instances,num.topics=num.topics)
-    doc_topics <- topic.model.df(topic_frame(model),mf)
+    doc_topics <- topic.model.df(doc_topics_frame(model),mf)
     kf <- keys_frame(model)
 
     list(tm=doc_topics,kf=kf,trainer=model)
@@ -236,18 +236,19 @@ train_model <- function(instances,num.topics,
     trainer
 }
 
-# topic_frame
+# doc_topics_frame
 #
 # create a data frame with topic proportions for each document rows
 # are in the order they were passed in to mallet renumbers topics
 # from 1. The result is suitable for joining with metadata using
 # topic.model.df() (see "topics.R")
 
-topic_frame <- function(trainer) { 
+doc_topics_frame <- function(trainer,smoothed=T,normalized=T) { 
     # matrix of topic proportions (cols) in docs (rows)
     # smoothing means nothing has 0 prob.
     # normalized instead of raw counts 
-    doc.topics <- mallet.doc.topics(trainer, smoothed=T, normalized=T)
+    doc.topics <- mallet.doc.topics(trainer,smoothed=smoothed,
+                                    normalized=normalized)
 
     doc.frame <- as.data.frame(doc.topics) 
     names(doc.frame) <- paste("topic",sep="",seq(trainer$model$numTopics))
@@ -413,13 +414,79 @@ sampling_state_nodisk <- function(trainer) {
     result
 }
 
-# Save the "topic word weights," i.e. the estimated weights of each word for
-# each topic
+# Save the "topic word weights," i.e. the estimated weights of each word
+# for each topic
 #
-# outfile : in tsv format. big (contains n_topics * n_vocabulary rows)
+# topic_wordfile: name of a file to write the topic x word matrix as a
+# csv file (topics are rows). No row or column headers.
+#
+# vocab_file: name of a file to write the vocabulary corresponding to
+# columns of topic_wordfile. one word per line.
+#
+# This is the same information, differently organized, output in a
+# single file by mallet's --topic-word-weights-file <outfile.tsv>
+# option. To access that, use:
+#
+# trainer$model$printTopicWordWeights(new(J("java.io.File"),"outfile.tsv"))
+#
+# TODO TEST
+write_topic_words <- function(trainer,
+                              topic_words_file="topics_words.csv",
+                              vocab_file="vocab.txt",
+                              smoothed=T,
+                              normalized=T) {
+    tw <- mallet.topic.words(trainer,smoothed=smoothed,normalized=normalized)
+    write.table(tw,topic_words_file,sep=",",row.names=F,col.names=F) 
+    message("Saved topic-word matrix to ",topic_words_file)
+    vocab <- trainer$getVocabulary()
+    writeLines(vocab,vocab_file)
+    message("Saved vocabulary to ",vocab_file)
+}
 
-write_topic_words <- function(trainer,outfile="weights.tsv") {
-    trainer$model$printTopicWordWeights(new(J("java.io.File"),outfile))
+# read_topic_words
+#
+# get a "long" format dataframe of words in topics by reading in the
+# two files output by the above
+#
+# result: data frame with three columns, topic, word, and weight.
+# 
+# NB. check the data: it may be weighted or unweighted, normalized or
+# unnormalized
+
+read_topic_words <- function(topic_words_file,vocab_file) {
+    vocab <- readLines(vocab_file)
+    tw <- read.csv(topic_words_file,header=F,as.is=T)
+    nwords <- length(vocab)
+    ntopics <- nrow(tw)
+
+    # matrices are unrolled column by column, so we need the transpose of the
+    # topic x word matrix
+
+    data.frame(topic=rep(1:ntopics,each=nwords),
+               word=rep(vocab,times=ntopics),
+               weight=as.vector(t(tw)),
+               stringsAsFactors=F)      # if you want to factorize it...
+}
+    
+# topic_words
+#
+# in-memory version of the above: much, much faster
+#
+# TODO refactor
+
+topic_words <- function(trainer,smoothed=T,normalized=T) {
+    tw <- mallet.topic.words(trainer,smoothed=smoothed,normalized=normalized)
+    vocab <- trainer$getVocabulary()
+    nwords <- length(vocab)
+    ntopics <- nrow(tw)
+
+    # matrices are unrolled column by column, so we need the transpose of the
+    # topic x word matrix
+
+    data.frame(topic=rep(1:ntopics,each=nwords),
+               word=rep(vocab,times=ntopics),
+               weight=as.vector(t(tw)),
+               stringsAsFactors=F)      # if you want to factorize it...
 }
 
 # Use the mallet diagnostics
