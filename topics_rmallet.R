@@ -19,10 +19,11 @@ source("topics.R")
 # Returns a list with
 # tm: data frame with document topic proportions and metadata together
 # kf: data frame with topic "key words" and alpha parameters
+# topics: data frame with list of weights of all words in all topics
 # trainer: the RTopicModel object, after running LDA
 #
 # To tweak modeling parameters, keep the instances, or work on the documents,
-# run these steps individually
+# run these steps individually.
 
 model_documents <- function(citations.file,dirs,stoplist.file,num.topics) { 
     mf <- read_metadata(citations.file)
@@ -31,8 +32,9 @@ model_documents <- function(citations.file,dirs,stoplist.file,num.topics) {
     model <- train_model(instances,num.topics=num.topics)
     doc_topics <- topic.model.df(doc_topics_frame(model),mf)
     kf <- keys_frame(model)
+    topics <- topic_words(model)
 
-    list(tm=doc_topics,kf=kf,trainer=model)
+    list(tm=doc_topics,kf=kf,topics=topics,trainer=model)
 }
 
 # read_dfr_wordcounts
