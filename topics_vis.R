@@ -3,17 +3,35 @@ topic_keyword_multi <- function(wkf,topics,breaks,
                                 filename_base="",
                                 format="png",
                                 w=6,h=4) {
-  cuts <- cut(topics,breaks=breaks,ordered_result=T)
-  for(c in levels(cuts)) {
-    ts <- topics[cuts==c]
-    p <- topic_keyword_plot(wkf,ts)
-    plotname <- paste(filename_base,min(ts),"_",max(ts),".",format,sep="")
-    message("Saving ",plotname)
-    ggsave(plot=p,filename=plotname,width=w,height=h)
-  } 
+
+    cuts <- cut(topics,breaks=breaks,ordered_result=T)
+    for(c in levels(cuts)) {
+        ts <- topics[cuts==c]
+        p <- topic_keyword_plot(wkf,ts)
+        plotname <- paste(filename_base,min(ts),"_",max(ts),".",format,sep="")
+        message("Saving ",plotname)
+        ggsave(plot=p,filename=plotname,width=w,height=h)
+    } 
 }
 
-topic_keyword_plot <- function(wkf,topic) {
+topic_report <- function(doc_topics,wkf,topics=NA,
+                         filename="topic_report.pdf",
+                         w=12,h=9) {
+    quartz(file=filename,type="pdf",width=w,height=h)
+    if(is.na(topics)) {
+        topics <- 1:length(unique(wkf$topic))
+    }
+    color_scale <- scale_color_gradient(limits=range(wkf$alpha))
+    for(topic in topics) {
+        # TODO keywords on one side of page
+        # TODO time series and top documents on the other
+        print(topic_keyword_plot(wkf,topic,color_scale))
+    }
+    dev.off()
+}
+
+topic_keyword_plot <- function(wkf,topic,
+                               color_scale=scale_color_gradient()) {
     keys <- wkf[wkf$topic %in% topic,]
     keys <- transform(keys,
                       topic_label=sprintf("topic %03d, a=%.3f",topic,alpha))
@@ -28,11 +46,19 @@ topic_keyword_plot <- function(wkf,topic) {
                          yend=word_order,
                          color=alpha),
                      size=2) +
-        facet_wrap(~ topic_label,scale="free")
+        color_scale
+
+    if(length(topic) > 1) {
+        p <- p + facet_wrap(~ topic_label,scale="free")
+    }
+    else {
+        p <- p + ggtitle(unique(keys$topic_label))
+    }
     p <- p + theme(axis.title.y=element_blank(),
                    axis.ticks.y=element_blank(),
                    axis.text.y=element_text(color="black",size=10),
-                   legend.position="none")
+                   legend.position="none") +
+        xlab("weight in topic")
             
     p
 }
