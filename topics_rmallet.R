@@ -257,6 +257,25 @@ doc_topics_frame <- function(trainer,smoothed=T,normalized=T) {
     cbind(doc.frame,id=trainer$getDocumentNames(),stringsAsFactors=F)
 }
 
+# doc_topics_long
+#
+# synthesize the above doc_topics frame with metadata into a "long" format
+#
+# meta_keep: vector of names of columns of metadata to keep
+#
+# the result will have rows called:
+#
+# "id"      meta_keep[1]  meta_keep[2] ...  "variable"  "value"
+# <docid>   <metadata vals ...>             topicN      <topic proportion>
+
+doc_topics_long <- function(doctops,metadata,
+                            meta_keep=c("pubdate","journaltitle")) {
+    library(reshape2)
+    meta <- unique(c("id",meta_keep))
+    wide <- merge(doctops,metadata[,meta],by="id")
+    melt(wide,id.vars=meta)
+}
+
 # keys_frame
 #
 # for compatibility with my old read.keys function, this throws out the

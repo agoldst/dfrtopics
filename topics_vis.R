@@ -14,18 +14,26 @@ topic_keyword_multi <- function(wkf,topics,breaks,
     } 
 }
 
-topic_report <- function(doc_topics,wkf,topics=NA,
+topic_report <- function(dt_long,wkf,topics=NULL,
                          filename="topic_report.pdf",
-                         w=12,h=9) {
+                         w=12,h=8) {
+
     quartz(file=filename,type="pdf",width=w,height=h)
-    if(is.na(topics)) {
+    if(is.null(topics)) {
         topics <- 1:length(unique(wkf$topic))
     }
     color_scale <- scale_color_gradient(limits=range(wkf$alpha))
     for(topic in topics) {
-        # TODO keywords on one side of page
-        # TODO time series and top documents on the other
-        print(topic_keyword_plot(wkf,topic,color_scale))
+        grid.newpage()
+        pushViewport(viewport(layout=grid.layout(1,2)))
+
+        print(topic_keyword_plot(wkf,topic,color_scale),
+              vp=viewport(layout.pos.row=1,layout.pos.col=1))
+        print(tm_time_boxplots(subset(dt_long,
+                                      variable==paste("topic",topic,
+                                                      sep=""))),
+              vp=viewport(layout.pos.row=1,layout.pos.col=2)) 
+        
     }
     dev.off()
 }
@@ -63,24 +71,17 @@ topic_keyword_plot <- function(wkf,topic,
     p
 }
 
-# TODO test
-doctops_long <- function(doctops,metadata,
-                    meta_keep=c("pubdate","journaltitle")) {
-    meta <- unique(c("id",meta_keep))
-    wide <- merge(doctops,metadata[,meta],by="id")
-    melt(wide,id.vars=c(meta))
-}
 
-# TODO test
 tm_time_averages <- function(tm_long,time_breaks="5 years",
                              grouping="journaltitle") {
     # copy on modify
     tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),time_breaks)
     
-    # TODO use grouping
+    grouping <- c("pubdate",grouping,"variable")
 
-    ddply(tm_long,.(pubdate,journaltitle,variable),summarize,
-          proportion=mean(value))
+    ddply(tm_long,grouping,summarize,
+          proportion=mean(value),
+          median=median(value))
 }
 
 # TODO test and fix up
@@ -92,9 +93,34 @@ tm_time_averages_plot <- function(tm_long,time_breaks="5 years",
 
     # "variable" is topic1,topic2,etc
     # "proportion" is the mean proportion
-    qplot(as.Date(pubdate),proportion,data=to.plot,
-          fill=journaltitle,geom="bar",stat="identity",position="dodge",
-          facets=~variable)
+    result <- ggplot(to.plot,aes(as.Date(pubdate),proportion))
+    if(!is.null(grouping)) {
+        geom <- geom_line(aes_string(fill=grouping))
+
+    }
+    else {
+        geom <- geom_line()
+    }
+
+    result <- result + geom + facet_wrap(~ variable)
+
+    # add a median line to give some clue to distorted averages
+    result <- result + geom_line(aes(as.Date(pubdate),median),
+                                 color="blue",alpha=I(0.5))
+    result +
+        xlab(paste("date (intervals of ",time_breaks,")",sep="")) +
+        ylab("overall topic proportion")
+        
+}
+
+tm_time_boxplots <- function(tm_long,time_breaks="5 years") {
+    tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),time_breaks)
+
+    ggplot(tm_long,aes(x=as.Date(pubdate),y=value,group=pubdate)) +
+        geom_boxplot() +
+        facet_wrap(~ variable) +
+        xlab(paste("date (intervals of ",time_breaks,")",sep="")) +
+        ylab("document topic proportions")
 }
 
 topic_time_series <- function(tm,wkf,topic,
