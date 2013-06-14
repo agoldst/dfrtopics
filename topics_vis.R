@@ -1,3 +1,7 @@
+# libraries
+library(grid)
+library(ggplot2)
+library(plyr)
 
 topic_keyword_multi <- function(wkf,topics,breaks,
                                 filename_base="",
@@ -15,15 +19,18 @@ topic_keyword_multi <- function(wkf,topics,breaks,
 }
 
 topic_report <- function(dt_long,wkf,topics=NULL,
-                         filename="topic_report.pdf",
-                         w=12,h=8) {
+                         time_breaks="5 years",
+                         filename_base="topic_report",
+                         w=1200,h=800) {
 
-    quartz(file=filename,type="pdf",width=w,height=h)
     if(is.null(topics)) {
         topics <- 1:length(unique(wkf$topic))
     }
     color_scale <- scale_color_gradient(limits=range(wkf$alpha))
     for(topic in topics) {
+        filename <- sprintf("%s%03d.png",filename_base,topic)
+        png(file=filename,width=w,height=h)
+        message("Saving ",filename)
         grid.newpage()
         pushViewport(viewport(layout=grid.layout(1,2)))
 
@@ -31,11 +38,12 @@ topic_report <- function(dt_long,wkf,topics=NULL,
               vp=viewport(layout.pos.row=1,layout.pos.col=1))
         print(tm_time_boxplots(subset(dt_long,
                                       variable==paste("topic",topic,
-                                                      sep=""))),
+                                                      sep="")),
+                               time_breaks=time_breaks),
               vp=viewport(layout.pos.row=1,layout.pos.col=2)) 
         
+        dev.off()
     }
-    dev.off()
 }
 
 topic_keyword_plot <- function(wkf,topic,
@@ -46,7 +54,7 @@ topic_keyword_plot <- function(wkf,topic,
     
     # TODO fix axis ordering problem.
     keys$word_order <- with(keys,
-                            reorder(word,order(topic,-weight)))
+                            reorder(word,order(topic,weight)))
     p <- ggplot(keys) 
     p <- p + 
         geom_segment(aes(x=0,xend=weight,
@@ -116,11 +124,14 @@ tm_time_averages_plot <- function(tm_long,time_breaks="5 years",
 tm_time_boxplots <- function(tm_long,time_breaks="5 years") {
     tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),time_breaks)
 
-    ggplot(tm_long,aes(x=as.Date(pubdate),y=value,group=pubdate)) +
+    result <- ggplot(tm_long,aes(x=as.Date(pubdate),y=value,group=pubdate))
+    result <- result +
         geom_boxplot() +
+        scale_y_continuous(trans=log_trans()) +
         facet_wrap(~ variable) +
         xlab(paste("date (intervals of ",time_breaks,")",sep="")) +
-        ylab("document topic proportions")
+        ylab("document topic proportions") +
+        ggtitle("Doc-Topic distributions (log scale)")
 }
 
 topic_time_series <- function(tm,wkf,topic,
