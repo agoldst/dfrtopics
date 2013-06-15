@@ -1,6 +1,7 @@
 # libraries
 library(grid)
 library(ggplot2)
+library(scales)
 library(plyr)
 
 topic_keyword_multi <- function(wkf,topics,breaks,
@@ -8,6 +9,8 @@ topic_keyword_multi <- function(wkf,topics,breaks,
                                 format="png",
                                 w=6,h=4) {
 
+    # TODO given limitations of topic_keyword_plot, use grid to put multiple
+    # plots on each page instead
     cuts <- cut(topics,breaks=breaks,ordered_result=T)
     for(c in levels(cuts)) {
         ts <- topics[cuts==c]
@@ -28,7 +31,8 @@ topic_report <- function(dt_long,wkf,topics=NULL,
     }
     color_scale <- scale_color_gradient(limits=range(wkf$alpha))
     for(topic in topics) {
-        filename <- sprintf("%s%03d.png",filename_base,topic)
+        filename <- file.path(filename_base,
+                              sprintf("%03d.png",topic))
         png(file=filename,width=w,height=h)
         message("Saving ",filename)
         grid.newpage()
@@ -48,33 +52,38 @@ topic_report <- function(dt_long,wkf,topics=NULL,
 
 topic_keyword_plot <- function(wkf,topic,
                                color_scale=scale_color_gradient()) {
-    keys <- wkf[wkf$topic %in% topic,]
-    keys <- transform(keys,
-                      topic_label=sprintf("topic %03d, a=%.3f",topic,alpha))
+    if(length(topic) > 1) {
+        stop("Can only plot a single topic's keywords at once")
+    }
+
+    keys <- wkf[wkf$topic==topic,]
+    ordered_words <- keys$word[order(keys$weight,decreasing=T)]
+    plot_title=sprintf("Top words in topic %03d %s,\na=%.3f",
+                        topic,paste(ordered_words[1:3],collapse=" "),
+                        wkf$alpha[1])
     
-    # TODO fix axis ordering problem.
-    keys$word_order <- with(keys,
-                            reorder(word,order(topic,weight)))
+    keys$sort_order <- with(keys,order(topic,-weight))
     p <- ggplot(keys) 
     p <- p + 
         geom_segment(aes(x=0,xend=weight,
-                         y=word_order,
-                         yend=word_order,
+                         y=word,
+                         yend=word,
                          color=alpha),
                      size=2) +
         color_scale
 
-    if(length(topic) > 1) {
-        p <- p + facet_wrap(~ topic_label,scale="free")
-    }
-    else {
-        p <- p + ggtitle(unique(keys$topic_label))
-    }
+    #if(length(topic) > 1) {
+    #    p <- p + facet_wrap(~ topic_label,scale="free")
+    #} else
+
+
+    p <- p + scale_y_discrete(limits=rev(ordered_words))
     p <- p + theme(axis.title.y=element_blank(),
                    axis.ticks.y=element_blank(),
                    axis.text.y=element_text(color="black",size=10),
                    legend.position="none") +
-        xlab("weight in topic")
+        xlab("weight in topic") +
+        ggtitle(plot_title)
             
     p
 }
@@ -92,7 +101,7 @@ tm_time_averages <- function(tm_long,time_breaks="5 years",
           median=median(value))
 }
 
-# TODO test and fix up
+# TODO moving averages
 tm_time_averages_plot <- function(tm_long,time_breaks="5 years",
                                   grouping="journaltitle") {
     to.plot <- tm_time_averages(tm_long,time_breaks,grouping)
@@ -122,13 +131,20 @@ tm_time_averages_plot <- function(tm_long,time_breaks="5 years",
 }
 
 tm_time_boxplots <- function(tm_long,time_breaks="5 years") {
-    tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),time_breaks)
+    tm_long$date_cut <- cut(pubdate_Date(tm_long$pubdate),time_breaks)
 
-    result <- ggplot(tm_long,aes(x=as.Date(pubdate),y=value,group=pubdate))
+    result <- ggplot(tm_long,aes(x=as.Date(date_cut),y=value,group=date_cut))
     result <- result +
         geom_boxplot() +
-        scale_y_continuous(trans=log_trans()) +
-        facet_wrap(~ variable) +
+        geom_smooth(aes(x=pubdate_Date(pubdate),y=value,group=1),
+                    method="auto") +
+        scale_y_continuous(trans=log_trans())
+
+    if(length(unique(tm_long$variable)) > 1) {
+        result <- result + facet_wrap(~ variable)
+    }
+
+    result +
         xlab(paste("date (intervals of ",time_breaks,")",sep="")) +
         ylab("document topic proportions") +
         ggtitle("Doc-Topic distributions (log scale)")
