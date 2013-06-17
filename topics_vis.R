@@ -4,6 +4,12 @@ library(ggplot2)
 library(scales)
 library(plyr)
 
+# topic_keyword_multi
+#
+# currently deprecated; use topic_report instead.
+#
+# put multiple topic keyword plots on a single page
+
 topic_keyword_multi <- function(wkf,topics,breaks,
                                 filename_base="",
                                 format="png",
@@ -21,8 +27,27 @@ topic_keyword_multi <- function(wkf,topics,breaks,
     } 
 }
 
+# topic_report
+#
+# Visualize some information about a number of topics. Generates one
+# PNG for each topic, with two plots: a plot showing the weights of the
+# most probable words in each topic, and a plot showing distributions of
+# doc-topic proportions over time (with a smoothing line).
+#
+# dt_long: long-form doc-topics data frame
+#
+# topic: a vector of topics (if NULL, visualizes every topic in dt_long)
+#
+# wkf: weighted keys data frame
+#
+# time_breaks: time intervals by which to show doc-topic distributions
+#
+# log-scale: whether to show topic proportions on a log scale (for
+# unsmoothed models, set to F so as not to take log 0 )
+
 topic_report <- function(dt_long,wkf,topics=NULL,
                          time_breaks="5 years",
+                         log_scale=T, 
                          filename_base="topic_report",
                          w=1200,h=800) {
 
@@ -43,12 +68,22 @@ topic_report <- function(dt_long,wkf,topics=NULL,
         print(tm_time_boxplots(subset(dt_long,
                                       variable==paste("topic",topic,
                                                       sep="")),
-                               time_breaks=time_breaks),
+                               time_breaks=time_breaks,
+                               log_scale=log_scale),
               vp=viewport(layout.pos.row=1,layout.pos.col=2)) 
         
         dev.off()
     }
 }
+
+# topic_keyword_plot
+#
+# Plot a single topic's most probable words.
+#
+# wkf: weighted keys frame; topic: a topic number from 1.
+#
+# color_scale: specify if you are making many plots and want coloration
+# by alpha.
 
 topic_keyword_plot <- function(wkf,topic,
                                color_scale=scale_color_gradient()) {
@@ -130,15 +165,30 @@ tm_time_averages_plot <- function(tm_long,time_breaks="5 years",
         
 }
 
-tm_time_boxplots <- function(tm_long,time_breaks="5 years") {
+# tm_time_boxplots
+#
+# tm_long: a doc-topics frame with merged-in pubdate metadata
+#
+# time_breaks: intervals in which to plot doc-topic distributions
+#
+# log_scale: set to F if there are zeroes in the doc-topic proportions.
+
+tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
     tm_long$date_cut <- cut(pubdate_Date(tm_long$pubdate),time_breaks)
 
     result <- ggplot(tm_long,aes(x=as.Date(date_cut),y=value,group=date_cut))
     result <- result +
         geom_boxplot() +
         geom_smooth(aes(x=pubdate_Date(pubdate),y=value,group=1),
-                    method="auto") +
-        scale_y_continuous(trans=log_trans())
+                    method="auto")
+
+    plot_title <- "Doc-Topic distributions"
+    if(log_scale) {
+        result <- result +
+            scale_y_continuous(trans=log_trans())
+
+        plot_title <- paste(plot_title,"(log scale)")
+    }
 
     if(length(unique(tm_long$variable)) > 1) {
         result <- result + facet_wrap(~ variable)
@@ -147,7 +197,7 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years") {
     result +
         xlab(paste("date (intervals of ",time_breaks,")",sep="")) +
         ylab("document topic proportions") +
-        ggtitle("Doc-Topic distributions (log scale)")
+        ggtitle(plot_title)
 }
 
 topic_time_series <- function(tm,wkf,topic,
