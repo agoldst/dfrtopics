@@ -118,9 +118,11 @@ pubdate_Date <- function(pubdate) {
 }
 
 # convert a DFR id into a jstor url
+#
+# FIXME this works often, but not always
 
 dfr_id_url <- function(id) {
-    sub("^.*\\/","http://www.jstor.org/stable/",md$id)
+    sub("^.*\\/","http://www.jstor.org/stable/",id)
 }
                     
 
@@ -186,4 +188,16 @@ plot_items_by_year <- function(metadata,time_interval="year") {
           facets = ~ type) +
         xlab("publication date") +
         ggtitle("Number of each item type, by year")
+}
+
+# view_on_jstor
+#
+# Take an item id, open it in the web browser (using MacOS X "open").
+# Relies on dfr_id_url() above
+#
+# FIXME N.B. this doesn't always work
+
+view_on_jstor <- function(id) {
+    cmd <- paste("open",dfr_id_url(id))
+    system(cmd)
 }
