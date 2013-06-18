@@ -510,6 +510,19 @@ topic_words <- function(trainer,smoothed=T,normalized=T) {
                stringsAsFactors=F)      # if you want to factorize it...
 }
 
+# topic_words_wide
+#
+# convert a long-format topic_words frame to wide
+
+
+topic_words_wide <- function(tw) {
+    tw <- rename(tw,c("weight"="value"))
+    result <- dcast(tw,word ~ topic)
+    names(result) <- paste("topic",names(result),sep="")
+    names(result)[1] <- "word"
+    result
+}
+
 # Basic access to mallet topic diagnostics
 
 get_diagnostics <- function(trainer,num_top_words=20L) {
@@ -539,3 +552,81 @@ diagnostics_list <- function(trainer,diagnostics=get_diagnostics(trainer)) {
 #		diagnostics.add(getDocumentPercent(5));
     
 }
+
+# JS_divergence
+#
+# TODO TEST
+#
+# computes the Jensen-Shannon divergence between two vectors, understood as
+# distributions over the index.
+#
+# See Mimno, D. 2012. Computational historiography: Data mining in
+# a century of classics journals. ACM J. Comput. Cult. Herit. 5, 1,
+# Article 3 (April 2012), 19 pages.
+#
+# http://doi.acm.org/10.1145/2160165.2160168
+
+JS_divergence <- function(P,Q) {
+    PQ_mean = (P + Q) / 2
+    sum((1/2) * (P * log(P / PQ_mean) + Q * log(Q / PQ_mean)))
+}
+
+# row_dists
+#
+# Compute a matrix of distances between the rows of a matrix M.
+#
+# specify method="pearson" or "spearman" for
+# correlations, or "JS" for the Jensen-Shannon divergence given above.
+#
+# The generic name is a reminder that there are multiple possible
+# applications to a hierarchical model; see functions below for examples.
+
+row_dists <- function(M,g=NULL,method="JS") {
+    if(is.null(g)) {
+        if(method=="pearson" || method=="spearman") {
+            return(cor(t(M),method=method))
+        } else if(method=="JS") {
+            # FIXME failure to vectorize. Ugh.
+
+            n <- nrow(M)
+            result <- matrix(0,nrow=n,ncol=n)
+
+            for(i in seq(n)) {
+                for(j in i:n) {
+                    result[i,j] <- JS_divergence(M[i,],M[j,])
+                }
+            }
+            # at least take advantage of the symmetry
+            result[lower.tri(result)] <- t(result)[lower.tri(result)]
+            return(result)
+        } else {
+            stop("Unknown method. Specify g instead.")
+        }
+    }
+}
+
+# doc_topic_cor
+#
+# Correlations between TOPICS according to their log proportions in documents
+#
+# Pass the transpose of doc_topics_frame, which has documents in rows.
+
+doc_topic_cor <- function(doctops) {
+    # copy on modify
+    doctops$id <- NULL
+    row_dists(log(t(doctops)),method="pearson")
+}
+
+# topic_divergences
+#
+# this will give you the J-S divergences between topics considered as
+# distributions of words; pass in the LONG format data # frame returned
+# by topic_words().
+
+topic_divergences <- function(tw) {
+    # drop the first column (with the vocab)
+    tw_wide <- topic_words_wide(tw)[-1]
+    row_dists(tw_wide,method="JS")
+}
+
+
