@@ -510,11 +510,32 @@ topic_words <- function(trainer,smoothed=T,normalized=T) {
                stringsAsFactors=F)      # if you want to factorize it...
 }
 
-# Use the mallet diagnostics
-# TODO implement
+# Basic access to mallet topic diagnostics
 
-find_bad_topics <- function(trainer,n_top_words=20L) {
-    d <- .jnew("cc/mallet/topics/TopicModelDiagnostics",trainer,n_top_words)
-    scores <- d$getDistanceFromCorpus()
-    # TODO how to handle these results?
+get_diagnostics <- function(trainer,num_top_words=20L) {
+    .jnew("cc/mallet/topics/TopicModelDiagnostics",
+          trainer$model,num_top_words)
+}
+
+write_diagnostics <- function(trainer,output_file="diagnostics.xml",
+                              diagnostics=get_diagnostics(trainer,20L)) {
+    xml <- diagnostics$toXML()
+    cat(xml,file=output_file)
+}
+
+# TODO implement fuller access here 
+diagnostics_list <- function(trainer,diagnostics=get_diagnostics(trainer)) {
+    # from TopicModelDiagnostics constructor
+#		diagnostics.add(getTokensPerTopic(model.tokensPerTopic));
+#		diagnostics.add(getDocumentEntropy(model.tokensPerTopic));
+#		diagnostics.add(getWordLengthScores());
+#		diagnostics.add(getCoherence());
+#		diagnostics.add(getDistanceFromUniform());
+#		diagnostics.add(getDistanceFromCorpus());
+#		diagnostics.add(getEffectiveNumberOfWords());
+#		diagnostics.add(getTokenDocumentDiscrepancies());
+#		diagnostics.add(getRank1Percent());
+#		diagnostics.add(getDocumentPercentRatio(FIFTY_PERCENT_INDEX, TWO_PERCENT_INDEX));
+#		diagnostics.add(getDocumentPercent(5));
+    
 }
