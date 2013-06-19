@@ -338,8 +338,10 @@ keys_frame <- function(trainer,num.top.words=20) {
 # 
 # renumbers topics from 1
 
-weighted_keys_frame <- function(trainer,num.top.words=20) {
-    word_weights <- mallet.topic.words(trainer,smoothed=T,normalized=T)
+weighted_keys_frame <- function(trainer,num.top.words=20,smoothed=F,normalized=F) {
+    word_weights <- mallet.topic.words(trainer,
+                                       smoothed=smoothed,
+                                       normalized=normalized)
     vocab <- trainer$getVocabulary()
     n <- trainer$model$numTopics
     reps <- rep(num.top.words,n)
