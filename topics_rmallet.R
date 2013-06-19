@@ -519,6 +519,31 @@ topic_words <- function(trainer,smoothed=T,normalized=T) {
                stringsAsFactors=F)      # if you want to factorize it...
 }
 
+# topic_words_wide
+#
+# Convert a long-format topic_words frame to wide (rows are topics,
+# variables are words). Or at least try. No promises on speed. The
+# result is like the topic-word matrix but has a first column labeling
+# the topic (and its variable names contain the actual words).
+
+topic_words_wide <- function(tw,assume_ordered=T) {
+    library(reshape2)
+    tw <- rename(tw,c("weight"="value"))
+    dcast(tw,topic ~ word)
+}
+
+# smooth_words
+
+smooth_words <- function(tw,beta) {
+    transform(tw,weight=weight + beta)
+}
+
+# normalize_words
+
+normalize_words <- function(tw,smoothed,beta=NULL) {
+    ddply(tw,"topic",transform,weight=weight/sum(weight))
+}
+
 # Basic access to mallet topic diagnostics
 
 get_diagnostics <- function(trainer,num_top_words=20L) {
@@ -602,4 +627,114 @@ model_params <- function(trainer) {
                n_tokens=trainer$model$totalTokens,
                LL=trainer$model$modelLogLikelihood())
 }
+
+# JS_divergence
+#
+# TODO TEST
+#
+# computes the Jensen-Shannon divergence between two vectors, understood as
+# distributions over the index.
+#
+# See Mimno, D. 2012. Computational historiography: Data mining in
+# a century of classics journals. ACM J. Comput. Cult. Herit. 5, 1,
+# Article 3 (April 2012), 19 pages.
+#
+# http://doi.acm.org/10.1145/2160165.2160168
+
+JS_divergence <- function(P,Q) {
+    PQ_mean = (P + Q) / 2
+    sum((1/2) * (P * log(P / PQ_mean) + Q * log(Q / PQ_mean)))
+
+}
+
+# JS_flexmix
+#
+# For testing JS_divergence against an "official" implementation of
+# KLdiv. Not faster on a single pair of rows, and can't use KLdiv's
+# vectorization to do lots of JS's at once, unfortunately.
+
+JS_flexmix <- function(P,Q) {
+    library(flexmix)
+    PQ_mean = (P + Q) / 2
+    eps = min(P,Q) / 2    # otherwise KLdiv replaces values less than 10^-4
+    result <- (KLdiv(cbind(P,PQ_mean),eps=eps) +
+               KLdiv(cbind(Q,PQ_mean),eps=eps)) / 2
+    result[1,2]
+}
+
+# row_dists
+#
+# Compute a matrix of distances between the rows of a matrix M.
+#
+# specify method="pearson" or "spearman" for
+# correlations, or "JS" for the Jensen-Shannon divergence given above.
+#
+# The generic name is a reminder that there are multiple possible
+# applications to a hierarchical model; see functions below for examples.
+
+row_dists <- function(M,method="JS") {
+    if(method=="pearson" || method=="spearman") {
+        return(cor(t(M),method=method))
+    } else if(method=="JS") {
+        # FIXME failure to vectorize. Ugh.
+
+        n <- nrow(M)
+        result <- matrix(0,nrow=n,ncol=n)
+
+        for(i in seq(n)) {
+            for(j in i:n) {
+                result[i,j] <- JS_divergence(M[i,],M[j,])
+            }
+        }
+        # at least take advantage of the symmetry
+        result[lower.tri(result)] <- t(result)[lower.tri(result)]
+        return(result)
+    } else {
+        stop("Unknown method.")
+    }
+}
+
+# doc_topic_cor
+#
+# Correlations between TOPICS according to their log proportions in documents
+#
+# Pass the transpose of doc_topics_frame, which has documents in rows.
+
+doc_topic_cor <- function(doctops) {
+    # copy on modify
+    doctops$id <- NULL
+    row_dists(log(t(doctops)),method="pearson")
+}
+
+# topic_divergences
+#
+# this will give you the J-S divergences between topics considered as
+# distributions of words.
+#
+# tw_wide: the wide format data frame from topic_words_wide.
+# TODO why so slow???
+#
+# OR trainer: the live trainer object. Better.
+#
+# If you have the topic-word matrix, just call row_dists(M).
+
+topic_divergences <- function(tw_wide=NULL,trainer=NULL) {
+    if(!is.null(tw_wide)) {
+        # drop the first column (with the topic id); copy on modify
+        tw_wide$topic <- NULL
+        return(row_dists(tw_wide,method="JS"))
+    }
+    else if(!is.null(trainer)) {
+        mtw <- mallet.topic.words(trainer,smoothed=F,normalized=F)
+        # smoothing
+        mtw <- mtw + trainer$model$beta
+        # normalization
+        mtw <- diag(1 / rowSums(mtw)) %*% mtw
+        return(row_dists(mtw,method="JS"))
+    }
+    else {
+        stop("Specify either tw (topic_words dataframe) or trainer object.")
+    }
+}
+
 
