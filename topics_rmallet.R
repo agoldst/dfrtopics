@@ -227,17 +227,31 @@ write_instances <- function(instances,output.file) {
 # returns the trainer object, which holds a reference to the RTopicModel
 # object (which in turns points to the actual modeling object of class
 # ParallelTopicModel
+#
+# optimize_hyperparameters=F overrides the other switches for hyperparameter 
+# optimization and turns estimation of alpha_k off.
 
 train_model <- function(instances,num.topics,
-                        alpha.sum=5,beta=0.01,
-                        n.iters=200,n.max.iters=10,
-                        n.hyper.iters=20,n.burn.in=50,
+                        alpha.sum=5,beta=0.01,      # starting values
+                        n.iters=200,
+                        n.max.iters=10,     # at end: iterated conditional modes
+                        optimize_hyperparameters=T,
+                        n.hyper.iters=20,   # how often to do hyperparam. opt.
+                        n.burn.in=50,       # num. iters before starting hyp. o.
+                        symmetric_alpha=F,  # all alpha_k equal?
                         threads=4L) {
     trainer <- MalletLDA(num.topics,alpha.sum,beta)
     trainer$model$setNumThreads(threads)
 
     trainer$loadDocuments(instances)
-    trainer$setAlphaOptimization(n.hyper.iters,n.burn.in)
+
+    if(optimize_hyperparameters) {
+        trainer$model$setSymmetricAlpha(symmetric_alpha)
+        trainer$setAlphaOptimization(n.hyper.iters,n.burn.in)
+    }
+    else {
+        trainer$setAlphaOptimization(0,0)
+    }
 
     trainer$train(n.iters)
     # following from dmimno's mallet-example.R:
