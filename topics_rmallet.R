@@ -532,8 +532,47 @@ write_diagnostics <- function(trainer,output_file="diagnostics.xml",
     cat(xml,file=output_file)
 }
 
-# TODO implement fuller access here 
-diagnostics_list <- function(trainer,diagnostics=get_diagnostics(trainer)) {
+# read_diagnostics
+#
+# Parses mallet diagnostic xml output in xml_file. Requires XML library
+# and libxml
+#
+# returns a list of two dataframes:
+#
+# topics: topic-level diagnostics
+#
+# words: word-level diagnostics of the most probable words in each
+# topics
+
+read_diagnostics <- function(xml_file) {
+    library(XML)
+    d <- xmlParse(file=xml_file)
+    topic_attrs <- xmlSApply(getNodeSet(d,"/model/topic"),xmlAttrs)
+    # topic_attrs is a string matrix with topics in *columns*
+
+    topics <- as.data.frame(t(topic_attrs),stringsAsFactors=F)
+    # standardize to 1-indexed
+    topics <- cbind(topic=as.numeric(topics$id) + 1,topics)
+    topics$id <- NULL
+
+    word_info <- function(node) {
+        w <- xmlValue(node)
+        topic <- as.numeric(xmlGetAttr(xmlParent(node),"id")) + 1
+        attrs <- xmlAttrs(node)
+        c(topic=topic,word=w,attrs)
+    }
+
+    # result of this is a string matrix
+    wm <- xmlSApply(getNodeSet(d,"/model/topic/word"),word_info)
+    
+    words <- as.data.frame(t(wm))
+
+    list(topics=topics,words=words)
+}
+
+diagnostics_list <- function(trainer) {
+    # TODO implement online access
+    stop("online access to diagnostics not implemented.")
     # from TopicModelDiagnostics constructor
 #		diagnostics.add(getTokensPerTopic(model.tokensPerTopic));
 #		diagnostics.add(getDocumentEntropy(model.tokensPerTopic));
@@ -546,8 +585,8 @@ diagnostics_list <- function(trainer,diagnostics=get_diagnostics(trainer)) {
 #		diagnostics.add(getRank1Percent());
 #		diagnostics.add(getDocumentPercentRatio(FIFTY_PERCENT_INDEX, TWO_PERCENT_INDEX));
 #		diagnostics.add(getDocumentPercent(5));
-    
 }
+    
 
 # model_params
 #
