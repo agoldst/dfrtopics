@@ -1,10 +1,19 @@
-# Let's assume we're typically going to need more Java heap space
-# this sets the maximum allocation
+# topics_rmallet_setup
+#
+# Call this before running any other functions here.
+#
+# Needed because we need to set the heap allocation option before rJava
+# gets loaded by Rmallet.
 
-options(java.parameters = "-Xmx2g")
-library(mallet)
-library(plyr)
-source("topics.R")
+topics_rmallet_setup <- function(java_heap="2g") {
+    # Let's assume we're typically going to need more Java heap space;
+    # this sets the maximum allocation
+    heap_param <- paste("-Xmx",java_heap,sep="") 
+    options(java.parameters=heap_param)
+    library(mallet)
+    library(plyr)
+    source("topics.R")
+}
 
 # Using the R mallet API
 #
