@@ -539,3 +539,19 @@ diagnostics_list <- function(trainer,diagnostics=get_diagnostics(trainer)) {
 #		diagnostics.add(getDocumentPercent(5));
     
 }
+
+# model_params
+#
+# Collect together some overall parameters of a model into a one-row
+# data frame.
+#
+# Recall that the topic model is also estimating a beta parameter (just
+# one). Also: reminders of the final log-likelihood of the model and the
+# total number of tokens in the instances mallet operated on.
+
+model_params <- function(trainer) {
+    data.frame(beta=trainer$model$beta,
+               n_tokens=trainer$model$totalTokens,
+               LL=trainer$model$modelLogLikelihood())
+}
+
