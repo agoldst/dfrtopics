@@ -93,9 +93,9 @@ topic_keyword_plot <- function(wkf,topic,
 
     keys <- wkf[wkf$topic==topic,]
     ordered_words <- keys$word[order(keys$weight,decreasing=T)]
-    plot_title=sprintf("Top words in topic %03d %s,\na=%.3f",
+    plot_title=sprintf("Top words in topic %03d %s\na=%.3f",
                         topic,paste(ordered_words[1:3],collapse=" "),
-                        wkf$alpha[1])
+                        keys$alpha[1])
     
     keys$sort_order <- with(keys,order(topic,-weight))
     p <- ggplot(keys) 
