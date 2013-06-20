@@ -123,33 +123,112 @@ topic_keyword_plot <- function(wkf,topic,
     p
 }
 
+# tm_yearly_totals
+#
+# Tot up the total of each topic for each year. Either a long-form or a
+# wide-form data frame may be passed in; the wide form can be handled much
+# (orders of magnitude) faster. 
+#
+# result: a matrix with: rows containing topic totals, columns
+# containing years present in the data, colnames with strings
+# representing dates.
 
-tm_time_averages <- function(tm_long,time_breaks="5 years",
-                             sub_breaks=5,
-                             grouping="journaltitle") {
+tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
 
-    # TODO test and fix
-    stop("This function is not ready for use.")
+    if(!is.null(tm_long)) {
+        # copy on modify
+        tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),breaks="years")
+        tm_long$id <- NULL
+        totals <- ddply(tm_long,c("variable","pubdate"),summarize,
+                        total=sum(value))
+        acast(totals,variable ~ pubdate,value.var="total")
+    }
+    else if(!is.null(tm_wide)) {
+        tm_wide$pubdate <- cut(pubdate_Date(tm_wide$pubdate),breaks="years")
+        tm_wide$id <- NULL
 
-    tm_long$pubdate <- pubdate_Date(tm_long$pubdate)
-    t_start <- min(tm_long$pubdate)
-    t_end <- max(tm_long$pubdate)
+        # Here, assume that the wide matrix has topic scores in all but
+        # the last column, which holds the pubdate. daply will stick the
+        # pubdate back on the front when it splits the frame by years.
+        # The result will have topics in columns, so transpose.
 
-    grouping <- c("pubdate",grouping,"variable")
+        topic_sum <- function (d) {
+            colSums(d[,1:(ncol(d) - 1)])
+        }
+        print(names(tm_wide))
+        t(daply(tm_wide,"pubdate",topic_sum))
+    }
+    else {
+        stop("Supply either long or wide-form document-topic matrix")
+    }
+} 
 
-    incr <- as.difftime(time_breaks) / sub_breaks
-    rolling <= vector("list",sub_breaks)
-    for(i in seq(sub_breaks)) {
-        breaks <- seq(from=t_start + i * incr,to=t_end,by=time_breaks)
-        cuts <- cut(tm_long$pubdate,breaks=breaks)
+# tm_yearly_line_plot
+#
+# plot yearly averages. Supply a long or wide form data frame with
+# document- topic scores. Alternatively, you can precalculate the yearly
+# totals (using tm_yearly_totals() and supply them as .yearly_totals).
+#
+# topics: which topics to consider, as a vector of numbers from 1
+#
+# raw_counts: are topic scores word counts or estimated proportions?
+#
+# facet: faceted plot or multiple lines on one plot?
 
-
-        rolling[[i]] <- ddply(tm_long,grouping,summarize,
-              proportion=mean(value),
-              median=median(value))
+tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
+                                topics=NULL,raw_counts=T,facet=F,
+                                .yearly_totals=NULL) {
+    if(!is.null(.yearly_totals)) {
+        series <- .yearly_totals
+    } else if(!is.null(tm_long)) {
+        series <- tm_yearly_totals(tm_long=tm_long)
+    } else if(!is.null(tm_wide)) {
+        series <- tm_yearly_totals(tm_wide=tm_wide)
+    } else {
+        stop("Supply long, wide, or pre-aggregated document-topic matrix")
     }
 
-    do.call(rbind,rolling)
+    dates <- colnames(series)
+    yearly_totals <- colSums(series)
+    series <- series %*% diag(1 / yearly_totals) 
+    colnames(series) <- dates
+
+    # keep just the specified topics; if none specified, do all
+    if(is.null(topics)) {
+        topics <- 1:nrow(series)
+    }
+
+    tlabels <- paste("topic",topics,sep="")
+    to.plot <- melt(series[tlabels,])
+
+    if(length(topics) == 1) {
+        to.plot$pubdate <- as.Date(rownames(to.plot))
+        result <- ggplot(to.plot,aes(pubdate,value,group=1))
+        result <- result + geom_line() +
+            ggtitle(paste("Proportion of words in topic",topics))
+
+        if(facet) {
+            warning("Ignoring facet=TRUE for single topic")
+        }
+    }
+    else {
+        to.plot <- rename(to.plot,c("Var1"="topic"))
+        result <- ggplot(to.plot,aes(as.Date(Var2),value,group=topic))
+        result <- result +
+            ggtitle("Proportion of words in topics")
+
+        if(facet) { 
+            result <- result + geom_line() + facet_wrap(~ topic)
+        }
+        else  {
+            result <- result + geom_line(aes(color=topic))
+        }
+    }
+
+    result <- result + xlab("publication year") +
+        ylab("proportion of year's words")
+
+    result
 }
 
 # TODO moving averages
@@ -214,37 +293,5 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
         xlab(paste("date (intervals of ",time_breaks,")",sep="")) +
         ylab("document topic proportions") +
         ggtitle(plot_title)
-}
-
-topic_time_series <- function(tm,wkf,topic,
-                              date_window="2 years") {
-    times <- cut.Date(tm$date,date_window)
-    docs <- tm[,paste("topic",topic,sep="")]
-    docs <- cbind(tm,times=times,stringAsFactors=F)
-    means <- ddply(docs,times,colMeans)
-   
-    # TODO finish
-}
-
-plot.topics.yearly <- function(topics,df,keys.frame,w=2) {
-    n <- length(topics) * length(df$id)
-    
-    # TODO better split-apply-combine strategy
-    # TODO allow choice of superimposed lines or facets
-
-    to.plot.list <- lapply(as.list(topics), function (i) { 
-        to.add <- as.data.frame(topic.proportions.by.year(i,df,w))
-        names(to.add) <- c("year","proportion")
-        # The facets will be sorted in alphabetical order
-        # so, until I learn how to order them,
-        # let's just do this kludge, works for n.topics < 1000
-        tnum <- sprintf("%03d",i)
-        to.add$topic <- paste(tnum,topic.shortnames(i,keys.frame))
-        to.add$alpha <- keys.frame$alpha[i]
-        to.add
-    }
-    )
-    to.plot <- do.call(rbind,to.plot.list)
-    qplot(year,proportion,data=to.plot,facets= ~ topic,color=alpha,geom="line")
 }
 
