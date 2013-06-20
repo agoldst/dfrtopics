@@ -1,3 +1,23 @@
+# topics_rmallet.R
+#
+# Functions for creating topic models and manipulating their output.
+# Uses the R API for mallet. The underlying modeling is done by the
+# cc.mallet.topics.ParallelTopicModel java class.
+#
+# Source this, then call topics_rmallet_setup(). model_documents() is
+# a wrapper for the most basic usage, but it is more useful as an
+# explanation of the order in which the other functions here are to be
+# used.
+#
+# A note on using the R mallet API
+# --------------------------------
+#
+# When you make a trainer object with MalletLDA(), the result actually
+# holds the full topic model in the form of the ParallelTopicTrainer
+# java object accessible at trainer$model. N.B. java is strict about
+# typing, which makes for some funtimes. To index into array-like
+# objects, apply as.integer() to parameters.
+
 # topics_rmallet_setup
 #
 # Call this before running any other functions here.
@@ -15,14 +35,8 @@ topics_rmallet_setup <- function(java_heap="2g") {
     source("topics.R")
 }
 
-# Using the R mallet API
+# model_documents()
 #
-# when you make a trainer object with MalletLDA(), the result actually
-# holds the full topic model in the form of the ParallelTopicTrainer
-# java object accessible at trainer$model. N.B. java is strict about
-# typing, which makes for some funtimes. To index into array-like
-# objects, apply as.integer() to parameters
-
 # Basic usage is wrapped up in this convenience function.
 #
 # Returns a list with
@@ -301,15 +315,15 @@ doc_topics_long <- function(doctops,metadata,
 
 # keys_frame
 #
-# for compatibility with my old read.keys function, this throws out the
-# weighting information returned by mallet.topic.words the provided
+# For compatibility with my old read.keys function, this throws out the
+# weighting information returned by mallet.topic.words. The provided
 # mallet.top.words function only works on one topic at a time and rather
 # expensively copies out the whole vocabulary each time you call it so
-# let's at least frontload that step
+# let's at least frontload that step.
 #
-# efficiency: where it counts least!
-
-# renumbers topics from 1
+# Efficiency: where it counts least!
+#
+# Renumbers topics from 1
 
 keys_frame <- function(trainer,num.top.words=20) {
     # matrix of weight assigned to vocabulary item j (cols) in topic i (rows)
@@ -330,15 +344,18 @@ keys_frame <- function(trainer,num.top.words=20) {
 
 # weighted_keys_frame
 #
-# A more informative topic key-words data frame, in "long" format
-# each row is (alpha,topic,word,weight)
-# with num.top.words rows for each of the topics
-# the words are in order by weight for each topic.
-# you can also use reshape or similar to cast this to "wide" format
-# 
-# renumbers topics from 1
+# A more informative topic key-words data frame, in "long" format.
+# each row is (alpha,topic,word,weight),
+# with num.top.words rows for each of the topics.
+# The words are in order by weight for each topic.
+#
+# smoothed, normalized: parameters passed on to RTopicModel, which transforms 
+# the weights accordingly. For raw counts, set both to F (the default)
+#
+# Renumbers topics from 1
 
-weighted_keys_frame <- function(trainer,num.top.words=20,smoothed=F,normalized=F) {
+weighted_keys_frame <- function(trainer,num.top.words=20,
+                                smoothed=F,normalized=F) {
     word_weights <- mallet.topic.words(trainer,
                                        smoothed=smoothed,
                                        normalized=normalized)
@@ -469,13 +486,17 @@ sampling_state_nodisk <- function(trainer) {
 # vocab_file: name of a file to write the vocabulary corresponding to
 # columns of topic_wordfile. one word per line.
 #
+# smoothed, normalized: parameters passed on to RTopicModel. Set both to
+#F to get raw counts.
+#
 # This is the same information, differently organized, output in a
 # single file by mallet's --topic-word-weights-file <outfile.tsv>
 # option. To access that, use:
 #
-# trainer$model$printTopicWordWeights(new(J("java.io.File"),"outfile.tsv"))
+# trainer$model$printTopicWordWeights(new(J("java.io.File"),
+#                                     "outfile.tsv"))
 #
-# TODO TEST
+
 write_topic_words <- function(trainer,
                               topic_words_file="topics_words.csv",
                               vocab_file="vocab.txt",
@@ -644,9 +665,12 @@ model_params <- function(trainer) {
                LL=trainer$model$modelLogLikelihood())
 }
 
+
+# -------------------------------
+# Comparing topics (experimental)
+# -------------------------------
+
 # JS_divergence
-#
-# TODO TEST
 #
 # computes the Jensen-Shannon divergence between two vectors, understood as
 # distributions over the index.
