@@ -4,39 +4,26 @@ library(ggplot2)
 library(scales)
 library(plyr)
 
-# topic_keyword_multi
-#
-# currently deprecated; use topic_report instead.
-#
-# put multiple topic keyword plots on a single page
-
-topic_keyword_multi <- function(wkf,topics,breaks,
-                                filename_base="",
-                                format="png",
-                                w=6,h=4) {
-
-    # TODO given limitations of topic_keyword_plot, use grid to put multiple
-    # plots on each page instead
-    cuts <- cut(topics,breaks=breaks,ordered_result=T)
-    for(c in levels(cuts)) {
-        ts <- topics[cuts==c]
-        p <- topic_keyword_plot(wkf,ts)
-        plotname <- paste(filename_base,min(ts),"_",max(ts),".",format,sep="")
-        message("Saving ",plotname)
-        ggsave(plot=p,filename=plotname,width=w,height=h)
-    } 
-}
-
 # topic_report
 #
-# Visualize some information about a number of topics. Generates one
-# PNG for each topic, with two plots: a plot showing the weights of the
+# Visualize some information about a number of topics. Generates one PNG
+# for each topic, with three plots: a plot showing the weights of the
 # most probable words in each topic, and a plot showing distributions of
-# doc-topic proportions over time (with a smoothing line).
+# doc-topic counts/proportions over time (with a smoothing line), and a
+# plot showing the yearly proportion of words/docs in the topic---which
+# alternative in these latter two depends on whether the doc-topic
+# scores are normalized or not.
 #
-# dt_long: long-form doc-topics data frame
+# dt_long: long-form doc-topics data frame. Assumed to have been made by
+# doc_topics_long(doc_topics,metadata,meta_keep="pubdate"), i.e.,
+# four columns, id, variable (in the form "topicN"), pubdate, value
+# (topic weight).
 #
-# topic: a vector of topics (if NULL, visualizes every topic in dt_long)
+# dt_wide: wide-form doc-topics frame, assumed to have been made by
+# reading in doc_topics, merging by id with metadata, and dropping
+# all but id and pubdate.
+#
+# topic: a vector of topics (if NULL, visualizes every topic)
 #
 # wkf: weighted keys data frame
 #
@@ -44,6 +31,12 @@ topic_keyword_multi <- function(wkf,topics,breaks,
 #
 # log-scale: whether to show topic proportions on a log scale (for
 # unsmoothed models, set to F so as not to take log 0 )
+#
+# raw_counts: are scores normalized? TODO currently unused
+#
+# filename_base: the name of a directory to save PNG files in.
+#
+# w,h: PNG dimensions in pixels.
 
 topic_report <- function(dt_long,dt_wide,wkf,
                          topics=NULL,
@@ -56,7 +49,11 @@ topic_report <- function(dt_long,dt_wide,wkf,
     if(is.null(topics)) {
         topics <- 1:length(unique(wkf$topic))
     }
+
+    # scale so that keyword weight bars are appropriately colored
     color_scale <- scale_color_gradient(limits=range(wkf$alpha))
+
+    # only calculate yearly totals once for all topics
 
     yearly <- tm_yearly_totals(tm_wide=dt_wide)
 
@@ -74,7 +71,6 @@ topic_report <- function(dt_long,dt_wide,wkf,
         print(tm_yearly_line_plot(.yearly_totals=yearly,
                                   topics=topic,raw_counts=raw_counts),
               vp=viewport(layout.pos.row=1,layout.pos.col=2))
-
 
         print(tm_time_boxplots(subset(dt_long,
                                       variable==paste("topic",topic,
@@ -185,6 +181,8 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
 #
 # raw_counts: are topic scores word counts or estimated proportions?
 #
+# TODO title should reflect raw_counts value
+#
 # facet: faceted plot or multiple lines on one plot?
 
 tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
@@ -258,6 +256,9 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
 # TODO moving averages
 tm_time_averages_plot <- function(tm_long,time_breaks="5 years",
                                   grouping="journaltitle") {
+
+    stop("Moving average plots: not currently implemented")
+
     to.plot <- tm_time_averages(tm_long,time_breaks,grouping)
 
     # only works if pubdate has been made into a _factor_ by cut.Date()
