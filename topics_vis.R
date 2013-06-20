@@ -45,9 +45,11 @@ topic_keyword_multi <- function(wkf,topics,breaks,
 # log-scale: whether to show topic proportions on a log scale (for
 # unsmoothed models, set to F so as not to take log 0 )
 
-topic_report <- function(dt_long,wkf,topics=NULL,
+topic_report <- function(dt_long,dt_wide,wkf,
+                         topics=NULL,
                          time_breaks="5 years",
-                         log_scale=T, 
+                         log_scale=F,
+                         raw_counts=F,
                          filename_base="topic_report",
                          w=1200,h=800) {
 
@@ -55,22 +57,31 @@ topic_report <- function(dt_long,wkf,topics=NULL,
         topics <- 1:length(unique(wkf$topic))
     }
     color_scale <- scale_color_gradient(limits=range(wkf$alpha))
+
+    yearly <- tm_yearly_totals(tm_wide=dt_wide)
+
     for(topic in topics) {
         filename <- file.path(filename_base,
                               sprintf("%03d.png",topic))
         png(file=filename,width=w,height=h)
         message("Saving ",filename)
         grid.newpage()
-        pushViewport(viewport(layout=grid.layout(1,2)))
+        pushViewport(viewport(layout=grid.layout(2,2)))
 
         print(topic_keyword_plot(wkf,topic,color_scale),
-              vp=viewport(layout.pos.row=1,layout.pos.col=1))
+              vp=viewport(layout.pos.row=c(1,2),layout.pos.col=1))
+
+        print(tm_yearly_line_plot(.yearly_totals=yearly,
+                                  topics=topic,raw_counts=raw_counts),
+              vp=viewport(layout.pos.row=1,layout.pos.col=2))
+
+
         print(tm_time_boxplots(subset(dt_long,
                                       variable==paste("topic",topic,
                                                       sep="")),
                                time_breaks=time_breaks,
                                log_scale=log_scale),
-              vp=viewport(layout.pos.row=1,layout.pos.col=2)) 
+              vp=viewport(layout.pos.row=2,layout.pos.col=2)) 
         
         dev.off()
     }
@@ -138,6 +149,7 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
     if(!is.null(tm_long)) {
         # copy on modify
         tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),breaks="years")
+        tm_long$pubdate <- droplevels(tm_long$pubdate)
         tm_long$id <- NULL
         totals <- ddply(tm_long,c("variable","pubdate"),summarize,
                         total=sum(value))
@@ -145,6 +157,7 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
     }
     else if(!is.null(tm_wide)) {
         tm_wide$pubdate <- cut(pubdate_Date(tm_wide$pubdate),breaks="years")
+        tm_wide$pubdate <- droplevels(tm_wide$pubdate)
         tm_wide$id <- NULL
 
         # Here, assume that the wide matrix has topic scores in all but
