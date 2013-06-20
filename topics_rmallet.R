@@ -32,6 +32,14 @@ topics_rmallet_setup <- function(java_heap="2g") {
     options(java.parameters=heap_param)
     library(mallet)
     library(plyr)
+
+    # This file's only real dependency is on metadata.R, which is
+    # sourced by topics.R. However, I do use one topics.R function in
+    # model_documents(), which shows how to make the output from R
+    # mallet into a dataframe like that expected by my old visualization
+    # etc. functions in topics.R: use topic.model.df() in cojunction
+    # with keys_frame().
+
     source("topics.R")
 }
 
