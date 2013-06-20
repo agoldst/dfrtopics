@@ -125,15 +125,31 @@ topic_keyword_plot <- function(wkf,topic,
 
 
 tm_time_averages <- function(tm_long,time_breaks="5 years",
+                             sub_breaks=5,
                              grouping="journaltitle") {
-    # copy on modify
-    tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),time_breaks)
-    
+
+    # TODO test and fix
+    stop("This function is not ready for use.")
+
+    tm_long$pubdate <- pubdate_Date(tm_long$pubdate)
+    t_start <- min(tm_long$pubdate)
+    t_end <- max(tm_long$pubdate)
+
     grouping <- c("pubdate",grouping,"variable")
 
-    ddply(tm_long,grouping,summarize,
-          proportion=mean(value),
-          median=median(value))
+    incr <- as.difftime(time_breaks) / sub_breaks
+    rolling <= vector("list",sub_breaks)
+    for(i in seq(sub_breaks)) {
+        breaks <- seq(from=t_start + i * incr,to=t_end,by=time_breaks)
+        cuts <- cut(tm_long$pubdate,breaks=breaks)
+
+
+        rolling[[i]] <- ddply(tm_long,grouping,summarize,
+              proportion=mean(value),
+              median=median(value))
+    }
+
+    do.call(rbind,rolling)
 }
 
 # TODO moving averages
