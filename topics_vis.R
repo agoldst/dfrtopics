@@ -155,7 +155,6 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
         topic_sum <- function (d) {
             colSums(d[,1:(ncol(d) - 1)])
         }
-        print(names(tm_wide))
         t(daply(tm_wide,"pubdate",topic_sum))
     }
     else {
@@ -177,6 +176,7 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
 
 tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
                                 topics=NULL,raw_counts=T,facet=F,
+                                smoothing_line=F,
                                 .yearly_totals=NULL) {
     if(!is.null(.yearly_totals)) {
         series <- .yearly_totals
@@ -210,6 +210,10 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
         if(facet) {
             warning("Ignoring facet=TRUE for single topic")
         }
+
+        if(smoothing_line) {
+            result <- result + geom_smooth(method="loess")
+        }
     }
     else {
         to.plot <- rename(to.plot,c("Var1"="topic"))
@@ -219,9 +223,16 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
 
         if(facet) { 
             result <- result + geom_line() + facet_wrap(~ topic)
+            if(smoothing_line) {
+                result <- result + geom_smooth(method="loess")
+            }
         }
         else  {
             result <- result + geom_line(aes(color=topic))
+            if(smoothing_line) {
+                result <- result + geom_smooth(aes(color=topic),
+                                               method="loess")
+            }
         }
     }
 
