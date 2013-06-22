@@ -239,12 +239,20 @@ write_instances <- function(instances,output.file) {
   instances$save(new(J("java.io.File"),output.file))
 }
 
+# read_instances
+#
+# read a mallet InstanceList object from a file
+
+read_instances <- function(filename) {
+    J("cc.mallet.types.InstanceList","load",new(J("java.io.File"),filename))
+}
+
 # train_model
 #
 # train the topic model
 #
-# instances: can either be a mallet instance object or the name of a
-# mallet instance file
+# instances: can either be a mallet instances object or the name of a
+# mallet instances file
 #
 # returns the trainer object, which holds a reference to the RTopicModel
 # object (which in turns points to the actual modeling object of class
@@ -785,4 +793,90 @@ topic_divergences <- function(tw_wide=NULL,trainer=NULL) {
     }
 }
 
+# -----------------------------------------
+# Probing a corpus via the mallet instances
+# -----------------------------------------
 
+# instances_tdm
+#
+# Given an instance list, return a term-document matrix.
+#
+# Documents are in columns, terms are in rows. The ordering of the terms
+# is as in the vocabulary, and the ordering of documents is as in the
+# instance list; retrieve the ids in this order with instances_ids().
+#
+# N.B. Instances typically hold processed text (no stopwords,
+# lowercased, etc.)
+
+instances_tdm <- function(instances,
+                          nwords=instances$getAlphabet()$size()) {
+
+    if (class(instances)=="character") {
+        instances <- read_instances(instances)
+    }
+
+    instances <- .jevalArray(instances$toArray(),simplify=T) 
+    instance_tf <- function(inst) {
+        tabulate(instance_vector(inst),nbins=nwords)
+    }
+    vapply(instances,instance_tf,integer(nwords))
+}
+
+# instances_ids
+#
+# return a vector of id's ("names") of instances,
+# in the order mallet keeps them in
+
+instances_ids <- function(instances) {
+    iter <- instances$iterator()
+
+    instance_name <- function() {
+        inst <- .jcall(iter,"Ljava/lang/Object;","next")
+        .jstrVal(.jcall(inst,"Ljava/lang/Object;","getName"))
+    }
+
+    replicate(instances$size(),instance_name())
+}
+
+# get_instance
+#
+# retrieve an instance from the instance list by id
+
+get_instance <- function(instances,id,id_map=instances_ids(instances)) {
+    j <- match(id,id_map) - 1
+    .jcall(instances,"Ljava/lang/Object;","get",as.integer(j))
+}
+
+# instance_vector
+#
+# An instance holds a vector giving the _sequence_ of features,
+# zero-indexed. To get a vector we can read off against
+# trainer$getVocabulary() in R, we add 1.
+
+instance_vector <- function(instance) {
+    fs <- .jcall(instance,"Ljava/lang/Object;","getData")
+    .jcall(fs,"[I","getFeatures") + 1
+}
+
+# instance_text
+#
+# The instance is a sequence, so this is how you read it
+#
+# Repeated calls: this will be much faster if you retrieve the
+# vocabulary separately and pass that in. An InstanceList guarantees
+# that all Instances have the same vocabulary.
+
+instance_text <- function(instance,
+                          vocab=instances_vocabulary(instance),
+                          collapse=" ") {
+    paste(vocab[instance_vector(instance)],collapse=collapse)
+}
+
+
+# The vocabulary, from the raw instance. If you have the topic model
+# trainer object, the vocabulary is retrievable more quickly with an
+# RTopicModel method: trainer$getVocabulary().
+
+instances_vocabulary <- function(instances) {
+    sapply(.jevalArray(instances$getAlphabet()$toArray()),.jstrVal)
+}
