@@ -827,6 +827,7 @@ instances_tdm <- function(instances,big=T) {
 
     if(big) {
         library(Matrix)
+        library(foreach)
         result <- foreach(i=instances,
                           .combine=cBind) %do%
             Matrix(instance_tf(i),ncol=1,sparse=T)
