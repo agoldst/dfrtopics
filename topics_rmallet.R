@@ -244,7 +244,8 @@ write_instances <- function(instances,output.file) {
 # read a mallet InstanceList object from a file
 
 read_instances <- function(filename) {
-    J("cc.mallet.types.InstanceList","load",new(J("java.io.File"),filename))
+    J("cc.mallet.types.InstanceList","load",new(J("java.io.File"),
+                                                path.expand(filename)))
 }
 
 # train_model
@@ -805,13 +806,17 @@ topic_divergences <- function(tw_wide=NULL,trainer=NULL) {
 # is as in the vocabulary, and the ordering of documents is as in the
 # instance list; retrieve the ids in this order with instances_ids().
 #
+# big: if true, try to build up a sparseMatrix instead of a regular matrix.
+# On your head be it. 
+# 
 # N.B. Instances typically hold processed text (no stopwords,
 # lowercased, etc.)
+#
 
-instances_tdm <- function(instances,
-                          nwords=instances$getAlphabet()$size()) {
-
+instances_tdm <- function(instances,big=T) {
+    nwords <- instances$getAlphabet()$size()
     if (class(instances)=="character") {
+        message("Loading instances from ",instances)
         instances <- read_instances(instances)
     }
 
@@ -819,7 +824,17 @@ instances_tdm <- function(instances,
     instance_tf <- function(inst) {
         tabulate(instance_vector(inst),nbins=nwords)
     }
-    vapply(instances,instance_tf,integer(nwords))
+
+    if(big) {
+        library(Matrix)
+        result <- foreach(i=instances,
+                          .combine=cBind) %do%
+            Matrix(instance_tf(i),ncol=1,sparse=T)
+    }
+    else { 
+        result <- vapply(instances,instance_tf,integer(nwords))
+    }
+    result
 }
 
 # instances_ids
@@ -879,4 +894,56 @@ instance_text <- function(instance,
 
 instances_vocabulary <- function(instances) {
     sapply(.jevalArray(instances$getAlphabet()$toArray()),.jstrVal)
+}
+
+# term_year_matrix
+#
+# Aggregate word counts by years. Pass in a term-document matrix created
+# by instances_tdm, as well as the instances object or precalculated
+# versions of the remaining parameters
+#
+# returns a two-element list:
+#
+# tym: the term-year-matrix (possibly sparse)
+#
+# yseq: the year sequence represented by the columns. Should be sequential but 
+# may not be evenly spaced.
+#
+# Further parameters:
+#
+# big: if tdm is a sparseMatrix, set to T and the resulting
+# term-year-matrix will be sparse too.
+#
+# id_map: ids in InstanceList order
+#
+# vocabulary: the vocabulary, as known to the instances
+
+term_year_matrix <- function(metadata,
+                             tdm,
+                             instances=NULL,
+                             id_map=instances_ids(instances),
+                             vocabulary=instances_vocabulary(instances),
+                             big=T) {
+    metadata <- metadata[metadata$id %in% id_map,]
+    dates <- pubdate_Date(metadata$pubdate)
+    names(dates) <- metadata$id
+    dates <- dates[id_map]
+
+    years <- cut(dates,breaks="years",ordered=T)
+    years <- droplevels(years)
+
+    # indicator-matrix version of years
+    if(big) {
+        library(Matrix)
+        Y <- Matrix(0,nrow=length(years),ncol=nlevels(years))
+    }
+    else {
+        Y <- matrix(0,nrow=length(years),ncol=nlevels(years))
+    }
+
+    Y[cbind(seq_along(years),years)] <- 1
+
+    result <- tdm %*% Y
+
+    list(tym=result,yseq=levels(years))
 }
