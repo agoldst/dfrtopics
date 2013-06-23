@@ -326,23 +326,47 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
 
 # The MALLET 1-gram viewer!
 
-mallet_word_plot <- function(word,term_year,year_seq,vocab,
-                             plot_freq=T) {
-    w <- match(word,vocab)
-    series <- data.frame(weight=term_year[w,],year=as.Date(year_seq))
+mallet_word_plot <- function(words,term_year,year_seq,vocab,
+                             plot_freq=T,
+                             smoothing=F) {
+    w <- match(words,vocab)
+    if(any(is.na(w))) {
+        message("Dropping words missing from vocabulary: ",
+                 paste(words[is.na(w)],collapse=" "))
+        words <- words[!is.na(w)]
+        w <- w[!is.na(w)]
+     }
 
+    wts <- term_year[w,,drop=F]
     if(plot_freq) {
-        series$weight <- series$weight / colSums(term_year)
+        wts <- wts %*% diag(1 / colSums(term_year)) 
         label <- "yearly word frequency"
     }
     else {
         label <- "yearly word count"
     }
 
-    result <- ggplot(series,aes(year,weight))
+    rownames(wts) <- words
+    colnames(wts) <- year_seq
+    series <- melt(wts)
+    names(series) <- c("word","year","weight")
+    series$year <- as.Date(series$year)
 
-    result + geom_line() + geom_smooth() +
+    if(length(w) > 1) { 
+        result <- ggplot(series,aes(year,weight,color=word,group=word))
+        plot_title <- "Words over time (filtered corpus)"
+    }
+    else {
+        result <- ggplot(series,aes(year,weight,group=1))
+        plot_title <- paste('"',words,'" over time (filtered corpus)',sep="")
+    }
+
+    result <- result + geom_line()
+    if(smoothing) {
+        result <- result + geom_smooth()
+    }
+
+    result +
         ylab(label) +
-        ggtitle(paste('"',word,'" over time (filtered corpus)',
-                      sep=""))
+        ggtitle(plot_title)
 }
