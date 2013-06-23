@@ -320,3 +320,29 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
         ggtitle(plot_title)
 }
 
+# ----------------
+# Individual words
+# ----------------
+
+# The MALLET 1-gram viewer!
+
+mallet_word_plot <- function(word,term_year,year_seq,vocab,
+                             plot_freq=T) {
+    w <- match(word,vocab)
+    series <- data.frame(weight=term_year[w,],year=as.Date(year_seq))
+
+    if(plot_freq) {
+        series$weight <- series$weight / colSums(term_year)
+        label <- "yearly word frequency"
+    }
+    else {
+        label <- "yearly word count"
+    }
+
+    result <- ggplot(series,aes(year,weight))
+
+    result + geom_line() + geom_smooth() +
+        ylab(label) +
+        ggtitle(paste('"',word,'" over time (filtered corpus)',
+                      sep=""))
+}
