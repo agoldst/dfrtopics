@@ -330,6 +330,47 @@ doc_topics_long <- function(doctops,metadata,
     melt(wide,id.vars=meta)
 }
 
+# tm_yearly_totals
+#
+# Tot up the total of each topic for each year. Either a long-form or a
+# wide-form data frame may be passed in; the wide form can be handled much
+# (orders of magnitude) faster. 
+#
+# result: a matrix with: rows containing topic totals, columns
+# containing years present in the data, colnames with strings
+# representing dates.
+
+tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
+
+    if(!is.null(tm_long)) {
+        # copy on modify
+        tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),breaks="years")
+        tm_long$pubdate <- droplevels(tm_long$pubdate)
+        tm_long$id <- NULL
+        totals <- ddply(tm_long,c("variable","pubdate"),summarize,
+                        total=sum(value))
+        acast(totals,variable ~ pubdate,value.var="total")
+    }
+    else if(!is.null(tm_wide)) {
+        tm_wide$pubdate <- cut(pubdate_Date(tm_wide$pubdate),breaks="years")
+        tm_wide$pubdate <- droplevels(tm_wide$pubdate)
+        tm_wide$id <- NULL
+
+        # Here, assume that the wide matrix has topic scores in all but
+        # the last column, which holds the pubdate. daply will stick the
+        # pubdate back on the front when it splits the frame by years.
+        # The result will have topics in columns, so transpose.
+
+        topic_sum <- function (d) {
+            colSums(d[,1:(ncol(d) - 1)])
+        }
+        t(daply(tm_wide,"pubdate",topic_sum))
+    }
+    else {
+        stop("Supply either long or wide-form document-topic matrix")
+    }
+} 
+
 # keys_frame
 #
 # For compatibility with my old read.keys function, this throws out the
@@ -429,6 +470,85 @@ read_mallet_state <- function(infile) {
                col.names=c("doc","source","pos","typeindex","type","topic"),
                sep=" ",as.is=T) 
     result
+}
+
+# read_simplified_state
+#
+# Read in a Gibbs sampling state and return a dataframe of <document,
+# word, topic, count> rows. The former three are represented as
+# integers, corrected to be indexed from 1, against the list of
+# documents and word types in the mallet instances. Thus you can recover
+# the table of words and documents using the instance-reading functions
+# below.
+#
+# simplify: The Gibbs sampling state is written in a highly redundant
+# form which R is not very happy to read in as is. simplify_state.py is
+# a python script to toss out the redundant columns (basically, it's
+# just gunzip -c | cut -f) which you can use to generate a simplified
+# statefile. This function will call that script for you if you pass
+# simplify=T and set statefile to the original gzipped mallet state.
+
+read_simplified_state <- function(infile,simplify=F,statefile=NULL,
+                                  simplifier="tmhls/python/simplify_state.py",
+                                  progress_bar="text") {
+    if(simplify) {
+        cmd <- paste("python",simplifier,statefile,">",infile)
+        message("Executing ",cmd)
+        system(cmd)
+    }
+    # TODO big.matrix?
+    result <- read.table(infile,header=F,sep=",",
+                         col.names=c("doc","type","topic"),
+                         colClasses=rep(integer(),3))
+
+    result <- result + 1L
+
+    #bigsplit?
+    ddply(result,.(doc,type,topic),summarize,count=length(topic),
+          .progress=progress_bar)
+}
+
+# term_year_topic_matrix
+#
+# Find the term counts per year for a given topic.
+#
+# The result is, like that of term_year_matrix() below, a list:
+#     tym, a sparseMatrix with terms in vocab order in rows and years in cols
+#     yseq, the ordering of years in the columns
+#     topic, the topic that this slice represents
+#
+# ss: the "simplified state" returned by read_simplified_state
+#
+# id_map: the list of doc id's as mallet knows them.
+#
+# vocab: the list of word types as mallet knows them.
+#
+# metadata: returned from read_metadata
+
+term_year_topic_matrix <- function(topic,ss,id_map,metadata,vocab) {
+    library(Matrix)
+
+    # subsetting...you hope this works
+    tw <- ss[ss$topic==topic,]
+
+    tdm_topic <- sparseMatrix(i=ss$type,j=ss$doc,x=ss$count)
+
+    result <- term_year_matrix(metadata=metadata,
+                               tdm=tdm_topic,
+                               id_map=id_map,
+                               vocabulary=vocab,
+                               big=T)
+
+    result$topic <- topic
+    result
+}
+
+# TODO TEST
+# tytm: the matrix in the results from term_year_topic_matrix
+
+topic_term_time_series <- function(word,tytm,vocab) {
+    w <- which(word,vocab)
+    tytm[w,,drop=F]
 }
 
 # sampling_state
@@ -810,8 +930,8 @@ topic_divergences <- function(tw_wide=NULL,trainer=NULL) {
 # On your head be it. For the idea of going sparse, h/t Ben Marwick.
 #
 # parallel: if true (when big is true), try to run in parallel using    
-# doMC. Not # actually workable the way I've written it at scale, so    
-# this option is # deprecated, and the function will error out instead. 
+# doMC. Not actually workable at scale the way I've written it, so    
+# this option is deprecated, and the function will error out instead. 
 #
 # N.B. Instances typically hold processed text (no stopwords,
 # lowercased, etc.)
@@ -907,7 +1027,7 @@ instances_tdm <- function(instances,big=T,parallel=F,verbose=F) {
 
             log("Constructing sparseMatrix")
 
-            result <- sparseMatrix(i=rs,j=cs,x=xs);
+            result <- sparseMatrix(i=rs,j=cs,x=xs)
         }
     }
     else { 
@@ -1029,3 +1149,22 @@ term_year_matrix <- function(metadata,
 
     list(tym=result,yseq=levels(years))
 }
+
+# TODO TEST
+term_year_matrix_journal <- function(journal,
+                                     metadata,
+                                     tdm,
+                                     id_map,
+                                     vocabulary) {
+
+    metadata <- metadata[metadata$id %in% id_map]
+    kill_cols <- id_map[metadata$id[metadata$journaltitle==journal]]
+    tdm[,kill_cols] <- 0
+
+    term_year_matrix(metadata=metadata,
+                     tdm=tdm,
+                     id_map=id_map,
+                     vocabulary=vocabulary,
+                     big=T)
+}
+

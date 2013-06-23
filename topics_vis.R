@@ -130,46 +130,6 @@ topic_keyword_plot <- function(wkf,topic,
     p
 }
 
-# tm_yearly_totals
-#
-# Tot up the total of each topic for each year. Either a long-form or a
-# wide-form data frame may be passed in; the wide form can be handled much
-# (orders of magnitude) faster. 
-#
-# result: a matrix with: rows containing topic totals, columns
-# containing years present in the data, colnames with strings
-# representing dates.
-
-tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
-
-    if(!is.null(tm_long)) {
-        # copy on modify
-        tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),breaks="years")
-        tm_long$pubdate <- droplevels(tm_long$pubdate)
-        tm_long$id <- NULL
-        totals <- ddply(tm_long,c("variable","pubdate"),summarize,
-                        total=sum(value))
-        acast(totals,variable ~ pubdate,value.var="total")
-    }
-    else if(!is.null(tm_wide)) {
-        tm_wide$pubdate <- cut(pubdate_Date(tm_wide$pubdate),breaks="years")
-        tm_wide$pubdate <- droplevels(tm_wide$pubdate)
-        tm_wide$id <- NULL
-
-        # Here, assume that the wide matrix has topic scores in all but
-        # the last column, which holds the pubdate. daply will stick the
-        # pubdate back on the front when it splits the frame by years.
-        # The result will have topics in columns, so transpose.
-
-        topic_sum <- function (d) {
-            colSums(d[,1:(ncol(d) - 1)])
-        }
-        t(daply(tm_wide,"pubdate",topic_sum))
-    }
-    else {
-        stop("Supply either long or wide-form document-topic matrix")
-    }
-} 
 
 # tm_yearly_line_plot
 #
@@ -324,11 +284,30 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
 # Individual words
 # ----------------
 
+# mallet_word_plot
+#
 # The MALLET 1-gram viewer!
+#
+# words: a vector of words
+#
+# term_year: the term_year_matrix
+#
+# year_seq: the year sequence corresponding to columns in the term_year_matrix. 
+# Expected to be a factor or vector of ISO dates.
+#
+# the vocabulary corresponding to rows of the term_year_matrix
+#
+# plot_freq: plot raw counts or yearly ratios?
+#
+# smoothing: add a smoothing line to the plot?
+#
+# gg_only: if T, don't add geoms to plot object (so the caller can do it 
+# instead)
 
 mallet_word_plot <- function(words,term_year,year_seq,vocab,
                              plot_freq=T,
-                             smoothing=F) {
+                             smoothing=F,
+                             gg_only=F) {
     w <- match(words,vocab)
     if(any(is.na(w))) {
         message("Dropping words missing from vocabulary: ",
@@ -361,12 +340,27 @@ mallet_word_plot <- function(words,term_year,year_seq,vocab,
         plot_title <- paste('"',words,'" over time (filtered corpus)',sep="")
     }
 
-    result <- result + geom_line()
-    if(smoothing) {
-        result <- result + geom_smooth()
+    if(!gg_only) {
+        result <- result + geom_line()
+        if(smoothing) {
+            result <- result + geom_smooth()
+        }
     }
 
     result +
         ylab(label) +
         ggtitle(plot_title)
+}
+
+# TODO TEST
+words_topic_yearly_plot <- function(words,topic_desc,
+                                    tytm,yseq,vocab,...) {
+    result <- mallet_word_plot(words=words,
+                               term_year=tytm,
+                               year_seq=yseq,
+                               vocab=vocab,
+                               ...)
+    plot_title <- ifelse(length(words)==1,words,"Words")
+    plot_title <- paste(plot_title,"in\n",topic_desc)
+    result + ggtitle(plot_title)
 }
