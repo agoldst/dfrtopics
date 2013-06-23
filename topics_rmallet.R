@@ -813,24 +813,46 @@ topic_divergences <- function(tw_wide=NULL,trainer=NULL) {
 # lowercased, etc.)
 #
 
-instances_tdm <- function(instances,big=T) {
+instances_tdm <- function(instances,big=T,verbose=F) {
+    if(verbose) {
+        log <- message
+    }
+    else {
+        log <- function(...) {NULL}
+    }
+
     nwords <- instances$getAlphabet()$size()
     if (class(instances)=="character") {
-        message("Loading instances from ",instances)
+        log("Loading instances from ",instances)
         instances <- read_instances(instances)
     }
 
     instances <- .jevalArray(instances$toArray(),simplify=T) 
+
+    log("Retrieved instances from mallet.")
+    log("Compiling tdm...")
+
     instance_tf <- function(inst) {
         tabulate(instance_vector(inst),nbins=nwords)
     }
 
     if(big) {
         library(Matrix)
-        library(foreach)
-        result <- foreach(i=instances,
-                          .combine=cBind) %do%
-            Matrix(instance_tf(i),ncol=1,sparse=T)
+        #library(foreach)
+
+        # TODO parallelize?
+        ndoc <- length(instances)
+        result <- Matrix(0,ncol=ndoc,nrow=nwords)
+
+        for(i in seq_along(instances)) {
+            log(i," of ",ndoc)
+            result[,i] <- instance_tf(instances[[i]])
+        }
+
+
+        #result <- foreach(i=instances,
+        #                  .combine=cBind) %do%
+        #    Matrix(instance_tf(i),ncol=1,sparse=T)
     }
     else { 
         result <- vapply(instances,instance_tf,integer(nwords))
