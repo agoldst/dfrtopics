@@ -3,6 +3,7 @@ library(grid)
 library(ggplot2)
 library(scales)
 library(plyr)
+library(reshape2)
 
 # topic_report
 #
@@ -327,7 +328,7 @@ mallet_word_plot <- function(words,term_year,year_seq,vocab,
 
     rownames(wts) <- words
     colnames(wts) <- year_seq
-    series <- melt(wts)
+    series <- melt(as.matrix(wts))
     names(series) <- c("word","year","weight")
     series$year <- as.Date(series$year)
 
@@ -352,7 +353,26 @@ mallet_word_plot <- function(words,term_year,year_seq,vocab,
         ggtitle(plot_title)
 }
 
-# TODO TEST
+# words_topic_yearly_plot
+#
+# Given the results of term_year_topic_matrix, make a line plot showing
+# the occurrence of individual words IN A TOPIC over time. Whether you
+# plot counts or ratios, this is not the same as the corpus frequency of
+# the individual words; this is the time track of words assigned to the
+# given topic.
+#
+# words: a vector of words
+#
+# topic_desc: a short label for the topic, to go in the plot title
+#
+# tytm: the sparse matrix returned in the results of
+# term_year_topic_matrix
+#
+# yseq: the years corresponding to the columns of the tytm (also in
+# results of term_year_topic_matrix)
+#
+# vocab: the mallet vocabulary, corresponding to the rows of the tytm
+
 words_topic_yearly_plot <- function(words,topic_desc,
                                     tytm,yseq,vocab,...) {
     result <- mallet_word_plot(words=words,
