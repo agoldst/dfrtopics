@@ -489,23 +489,33 @@ read_mallet_state <- function(infile) {
 # simplify=T and set statefile to the original gzipped mallet state.
 
 read_simplified_state <- function(infile,simplify=F,statefile=NULL,
-                                  simplifier="tmhls/python/simplify_state.py",
-                                  progress_bar="text") {
+                                  simplifier="python/simplify_state.py",
+                                  big=T,
+                                  big_workdir=tempdir()) {
     if(simplify) {
         cmd <- paste("python",simplifier,statefile,">",infile)
         message("Executing ",cmd)
         system(cmd)
     }
-    # TODO big.matrix?
-    result <- read.table(infile,header=F,sep=",",
-                         col.names=c("doc","type","topic"),
-                         colClasses=rep(integer(),3))
+    # TODO test big.matrix
+    if(big) {
+        library(bigmemory)
+        state <- read.big.matrix(infile,type="short",header=T,sep=",",
+                                 backingpath=big_workdir,
+                                 backingfile="state.bin",
+                                 descriptorfile="state.desc")
+    }
+    else {
+        state <- read.table(infile,header=T,sep=",",
+                             colClasses=rep(integer(),3))
+    }
 
-    result <- result + 1L
+    # change mallet's 0-based indices to 1-based
+    state[,1] <- state[,1] + 1L     # docs
+    state[,2] <- state[,2] + 1L     # types
+    state[,3] <- state[,3] + 1L     # topics
 
-    #bigsplit?
-    ddply(result,.(doc,type,topic),summarize,count=length(topic),
-          .progress=progress_bar)
+    state
 }
 
 # term_year_topic_matrix
@@ -517,7 +527,8 @@ read_simplified_state <- function(infile,simplify=F,statefile=NULL,
 #     yseq, the ordering of years in the columns
 #     topic, the topic that this slice represents
 #
-# ss: the "simplified state" returned by read_simplified_state
+# ss: the "simplified state" returned by read_simplified_state. Operated on 
+# using the mwhich function from the bigmemory package.
 #
 # id_map: the list of doc id's as mallet knows them.
 #
@@ -528,10 +539,13 @@ read_simplified_state <- function(infile,simplify=F,statefile=NULL,
 term_year_topic_matrix <- function(topic,ss,id_map,metadata,vocab) {
     library(Matrix)
 
-    # subsetting...you hope this works
-    tw <- ss[ss$topic==topic,]
+    indices <- mwhich(ss,"topic",topic,"eq")
 
-    tdm_topic <- sparseMatrix(i=ss$type,j=ss$doc,x=ss$count)
+    tdm_topic <- sparseMatrix(i=ss[indices,"type"],
+                              j=ss[indices,"doc"],
+                              x=ss[indices,"count"],
+                              dims=c(length(vocab),
+                                     length(id_map)))
 
     result <- term_year_matrix(metadata=metadata,
                                tdm=tdm_topic,
