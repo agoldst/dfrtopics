@@ -472,6 +472,23 @@ read_mallet_state <- function(infile) {
     result
 }
 
+# sampling_state
+#
+# Sad wrapper for the previous two: get a dataframe with the sampling
+# state. Uses a temporary file and wastes time gzipping and gunzipping.
+#
+# not particularly easy to do this without going to a file--cf.
+# ParallelTopicModel.printState()
+
+sampling_state <- function(trainer,tmpfile="state.gz",rm.tmpfile=F) {
+    write_mallet_state(trainer,tmpfile)
+    result <- read_mallet_state(tmpfile)
+    if(rm.tmpfile) {
+        unlink(tmpfile)
+    }
+    result
+}
+
 # read_simplified_state
 #
 # Read in a Gibbs sampling state and return a dataframe of <document,
@@ -502,7 +519,6 @@ read_simplified_state <- function(infile,generate_file=F,state_file=NULL,
         message("Executing ",cmd)
         system(cmd)
     }
-    # TODO test big.matrix
     if(big) {
         library(bigmemory)
         message("Loading ",infile," to a big.matrix...")
@@ -572,68 +588,6 @@ topic_term_time_series <- function(word,tytm,vocab) {
     tytm[w,,drop=F]
 }
 
-# sampling_state
-#
-# wrapper for the previous two: get a dataframe with the sampling state
-#
-# obviously you could do this all in memory, but: rJava = annoying
-
-sampling_state <- function(trainer,tmpfile="state.gz",rm.tmpfile=F) {
-    write_mallet_state(trainer,tmpfile)
-    result <- read_mallet_state(tmpfile)
-    if(rm.tmpfile) {
-        unlink(tmpfile)
-    }
-    result
-}
-
-# sampling_state_nodisk: DO NOT USE
-#
-# TODO this attempt to clone ParallelTopicModel.printState doesn't work
-#
-# TODO for speed, must rewrite rJava $ operator with low-level .jcall()
-# and probably also build up each column separately to get away from the
-# nightmares associated with indexing into dataframes
-
-sampling_state_nodisk <- function(trainer) {
-    warning("Function not implemented. Use sampling_state() instead.")
-    return(NULL)
-
-    dat <- trainer$model$data
-    maxsize <- trainer$model$totalTokens
-    result <- data.frame(doc=numeric(maxsize),
-                         source=character(maxsize),
-                         pos=numeric(maxsize),
-                         typeindex=numeric(maxsize),
-                         type=character(maxsize),
-                         topic=numeric(maxsize),
-                         stringsAsFactors=F) 
-
-    alph <- trainer$model$alphabet
-    p0 <- 1
-    for(d in (seq_len(dat$size()) - 1)) {
-        doc <- dat$get(as.integer(d))
-        tops <- doc$topicSequence
-        toks <- doc$instance$getData()
-        src <- doc$instance$getSource()
-        src <- ifelse(is.null(src),NA,src$toString())
-
-        doclen <- tops$getLength()
-        result$doc[p0:(p0 + doclen - 1)] <- d
-        result$source[p0:(p0 + doclen - 1)] <- src
-
-        for(p in seq_len(doclen)) {
-            pj <- as.integer(p - 1) # java 0-index
-            result[p0 + pj,3:6] <- c(pj,
-                                      toks$getIndexAtPosition(pj),
-                                      alph$lookupObject(pj),
-                                      tops$getIndexAtPosition(pj))
-        }
-        p0 <- p0 + doclen
-    }
-    result <- result[1:p0,]     # truncate to length of actual data
-    result
-}
 
 # Save the "topic word weights," i.e. the estimated weights of each word
 # for each topic
@@ -1129,8 +1083,9 @@ instances_vocabulary <- function(instances) {
 #
 # tym: the term-year-matrix (possibly sparse)
 #
-# yseq: the year sequence represented by the columns. Should be sequential but 
-# may not be evenly spaced.
+# yseq: the year sequence represented by the columns. Should be
+# sequential (ordered factor) but may not be evenly spaced if any year
+# is missing from the data.
 #
 # Further parameters:
 #
@@ -1171,21 +1126,77 @@ term_year_matrix <- function(metadata,
     list(tym=result,yseq=levels(years))
 }
 
-# TODO TEST
+# term_year_matrix_journal
+#
+# like term_year_matrix, but sum words only in one journal
+#
+# journal: a string, to match against metadata$journaltitle (so be careful 
+# about those trailing "\t"s)
+
 term_year_matrix_journal <- function(journal,
                                      metadata,
                                      tdm,
                                      id_map,
                                      vocabulary) {
 
-    metadata <- metadata[metadata$id %in% id_map]
-    kill_cols <- id_map[metadata$id[metadata$journaltitle==journal]]
-    tdm[,kill_cols] <- 0
+    metadata <- metadata[metadata$id %in% id_map,]
+    journals <- metadata$journaltitle
+    names(journals) <- metadata$id
+    journals <- journals[id_map]
+    journals <- factor(journals,ordered=T)
 
-    term_year_matrix(metadata=metadata,
-                     tdm=tdm,
+    jm <- Diagonal(n=ncol(tdm),x=(journals==journal))
+
+    term_year_matrix(metadata,
+                     tdm=tdm %*% jm,
                      id_map=id_map,
                      vocabulary=vocabulary,
                      big=T)
+}
+
+# journal_year_matrix
+#
+# total wordcounts per journal per year 
+
+journal_year_matrix <- function(tdm,metadata,id_map) {
+    metadata <- metadata[metadata$id %in% id_map,]
+
+    dates <- pubdate_Date(metadata$pubdate)
+    names(dates) <- metadata$id
+    dates <- dates[id_map]
+
+    years <- cut(dates,breaks="years",ordered=T)
+    years <- droplevels(years)
+
+    journals <- metadata$journaltitle
+    names(journals) <- metadata$id
+    journals <- journals[id_map]
+    journals <- factor(journals,ordered=T)
+
+    library(Matrix)
+    Y <- Matrix(0,nrow=length(years),ncol=nlevels(years)) 
+    Y[cbind(seq_along(years),years)] <- 1
+
+    result <- matrix(nrow=nlevels(journals),ncol=nlevels(years))
+
+    # The fully algebraic way would be to construct some block matrices
+    # to do these sums, but since the number of journals is small, it's
+    # not worth it
+
+    Csum <- Matrix(rep(1,nrow(tdm)),nrow=1)
+
+    for(i in seq_along(levels(journals))) {
+        jrnl <- levels(journals)[i]
+
+        jm <- Diagonal(n=ncol(tdm),x=(journals==jrnl))
+        m <- tdm %*% jm
+        tym <- m %*% Y
+
+        result[i,] <- drop(Csum %*% tym)
+    }
+
+    rownames(result) <- levels(journals)
+    colnames(result) <- levels(years)
+    result
 }
 
