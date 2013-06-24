@@ -481,29 +481,36 @@ read_mallet_state <- function(infile) {
 # the table of words and documents using the instance-reading functions
 # below.
 #
-# simplify: The Gibbs sampling state is written in a highly redundant
+# generate_file: The Gibbs sampling state is written in a highly redundant
 # form which R is not very happy to read in as is. simplify_state.py is
 # a python script to toss out the redundant columns (basically, it's
 # just gunzip -c | cut -f) which you can use to generate a simplified
 # statefile. This function will call that script for you if you pass
 # simplify=T and set statefile to the original gzipped mallet state.
+#
+# data_type: the C++ type to store the data in. If all values have magnitude 
+# less than 2^15, you can get away with "short", but guess what? Linguistic
+# data hates you, and a typical vocabulary includes more word types than that.
 
-read_simplified_state <- function(infile,simplify=F,statefile=NULL,
+read_simplified_state <- function(infile,generate_file=F,state_file=NULL,
                                   simplifier="python/simplify_state.py",
                                   big=T,
+                                  data_type="integer",
                                   big_workdir=tempdir()) {
-    if(simplify) {
-        cmd <- paste("python",simplifier,statefile,">",infile)
+    if(generate_file) {
+        cmd <- paste("python",simplifier,state_file,">",infile)
         message("Executing ",cmd)
         system(cmd)
     }
     # TODO test big.matrix
     if(big) {
         library(bigmemory)
-        state <- read.big.matrix(infile,type="short",header=T,sep=",",
+        message("Loading ",infile," to a big.matrix...")
+        state <- read.big.matrix(infile,type=data_type,header=T,sep=",",
                                  backingpath=big_workdir,
                                  backingfile="state.bin",
                                  descriptorfile="state.desc")
+        message("Done.")
     }
     else {
         state <- read.table(infile,header=T,sep=",",
