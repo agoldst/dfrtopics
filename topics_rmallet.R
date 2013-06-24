@@ -580,11 +580,35 @@ term_year_topic_matrix <- function(topic,ss,id_map,metadata,vocab) {
     result
 }
 
-# TODO TEST
+# topic_yearly_top_words
+#
+# Which are the top words in a given topic per year?
+#
+# returns a vector of pasted-together words, with the dates as names
+# 
+# tytm, yseq: returned from the term_year_topic_matrix
+#
+# n_words: how many words?
+
+topic_yearly_top_words <- function(tytm,yseq,vocab,n_words=5) {
+    result <- character(length(yseq))
+    for (y in seq_along(yseq)) {
+        words <- vocab[order(tytm[,y],decreasing=T)[1:n_words]]
+        result[y] <- paste(words,collapse=" ")
+    }
+    names(result) <- yseq
+    result
+}
+
+# topic_term_time_series
+#
+# yearly totals of a given word (or words) within a topic: just a
+# convenience function to pull out the right row(s) of the tytm.
+#
 # tytm: the matrix in the results from term_year_topic_matrix
 
 topic_term_time_series <- function(word,tytm,vocab) {
-    w <- which(word,vocab)
+    w <- match(word,vocab)
     tytm[w,,drop=F]
 }
 
