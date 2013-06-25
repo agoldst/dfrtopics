@@ -32,6 +32,7 @@ topics_rmallet_setup <- function(java_heap="2g") {
     options(java.parameters=heap_param)
     library(mallet)
     library(plyr)
+    library(Matrix)
 
     # This file's only real dependency is on metadata.R, which is
     # sourced by topics.R. However, I do use one topics.R function in
@@ -39,6 +40,8 @@ topics_rmallet_setup <- function(java_heap="2g") {
     # mallet into a dataframe like that expected by my old visualization
     # etc. functions in topics.R: use topic.model.df() in cojunction
     # with keys_frame().
+    #
+    # TODO get rid of topics.R dependency
 
     source("topics.R")
 }
@@ -294,10 +297,10 @@ train_model <- function(instances,num.topics,
 
 # doc_topics_frame
 #
-# create a data frame with topic proportions for each document rows
-# are in the order they were passed in to mallet renumbers topics
-# from 1. The result is suitable for joining with metadata using
-# topic.model.df() (see "topics.R")
+# Create a data frame with topic proportions for each document in the
+# first n columns and document ids in the last column. The rows are in
+# the order of documents passed into mallet. This function renumbers
+# topics from 1. The result is suitable for joining with metadata. 
 
 doc_topics_frame <- function(trainer,smoothed=T,normalized=T) { 
     # matrix of topic proportions (cols) in docs (rows)
@@ -309,6 +312,25 @@ doc_topics_frame <- function(trainer,smoothed=T,normalized=T) {
     doc.frame <- as.data.frame(doc.topics) 
     names(doc.frame) <- paste("topic",sep="",seq(trainer$model$numTopics))
     cbind(doc.frame,id=trainer$getDocumentNames(),stringsAsFactors=F)
+}
+
+# doc_topics_matrix
+#
+# Extract just the numerical part of a doc_topics frame. If you are using the 
+# output of the above, you can assume topics in numerical order and documents
+# in the order of the instances passed to mallet.
+
+doc_topics_matrix <- function(doctopics) {
+    as.matrix(doctopics[,-ncol(doctopics)])
+}
+
+# normalize_doc_topics
+#
+# by convention, I'll call the parameter dtm when I use just the doc-topic 
+# matrix, with no metadata in it.
+
+normalize_doc_topics <- function(dtm) {
+    dtm <- dtm %*% diag(1 / colSums(dtm))
 }
 
 # doc_topics_long

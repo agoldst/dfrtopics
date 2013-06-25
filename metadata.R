@@ -160,18 +160,36 @@ read.sqlite <- function(database.filename=file.choose(),
 # plots, descriptive output, etc.
 # --------
 
+# cite_articles
+# formerly known as cite.articles
+#
 # return a list of strings citing the articles identified by ids
-# or citing all articles in tm if no ids supplied
-cite.articles <- function(tm,ids=NA)  {
-    df <- tm
-    if(!is.na(ids)) {
-        df <- tm[tm$id %in% ids,] 
+# or citing all articles in metadata if no ids supplied
+
+cite_articles <- function(metadata,ids=NULL)  {
+    if(!is.null(ids)) {
+        metadata <- metadata[metadata$id %in% ids,] 
+        metadata <- metadata[match(metadata$id,ids),]
     }
-    result <- paste(df$author,", \"",df$title,",\" ",df$journaltitle," ",df$volume,
-          " no. ",df$issue," (",df$pubdate,"): ",df$pagerange,sep="")
+    authors <- strsplit(metadata$author,"\t")
+    authors <- sapply(authors,paste,collapse=" and ")
+    authors[authors==""] <- "[Anonymous]"
+
+    dates <- pubdate_Date(metadata$pubdate)
+    dates <- strftime(dates,"%B %Y")
+    pp <- gsub("^p?p\\. ","",metadata$pagerange)
+    result <- with(metadata,
+                   paste(authors,', "',title,'," *',
+                         journaltitle,'* ',volume,", no. ",
+                         issue," (",dates,"): ",pp,".",
+                         sep=""))
+
     result <- gsub("_",",",result)
-    gsub("\t","",result)
+    result <- gsub("\t","",result)
+    result
 }
+
+
 
 # How many of each item type appear in each temporal interval?
 #
@@ -201,3 +219,4 @@ view_on_jstor <- function(id) {
     cmd <- paste("open",dfr_id_url(id))
     system(cmd)
 }
+

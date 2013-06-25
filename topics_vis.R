@@ -141,8 +141,10 @@ topic_keyword_plot <- function(wkf,topic,
 # topics: which topics to consider, as a vector of numbers from 1
 #
 # raw_counts: are topic scores word counts or estimated proportions?
-#
-# TODO title should reflect raw_counts value
+# Does not effect the actual plot, but if the topic scores have been
+# normalized then we are looking at frequency of the topic in documents
+# rather than freq. of the topic in words, so the title of the plot is
+# changed accordingly
 #
 # facet: faceted plot or multiple lines on one plot?
 
@@ -160,6 +162,10 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
         stop("Supply long, wide, or pre-aggregated document-topic matrix")
     }
 
+    plot_title <- ifelse(raw_counts,
+                         "Proportion of words in topic",
+                         "Proportion of documents in topic")
+
     dates <- colnames(series)
     yearly_totals <- colSums(series)
     series <- series %*% diag(1 / yearly_totals) 
@@ -176,8 +182,9 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
     if(length(topics) == 1) {
         to.plot$pubdate <- as.Date(rownames(to.plot))
         result <- ggplot(to.plot,aes(pubdate,value,group=1))
-        result <- result + geom_line() +
-            ggtitle(paste("Proportion of words in topic",topics))
+        result <- result + geom_line()
+
+        plot_title <- paste(plot_title,topics)
 
         if(facet) {
             warning("Ignoring facet=TRUE for single topic")
@@ -189,9 +196,12 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
     }
     else {
         to.plot <- rename(to.plot,c("Var1"="topic"))
+        tnums <- as.character(to.plot$topic)
+        tnums <- as.integer(substr(tnums,6,nchar(tnums)))
+        to.plot$topic <- sprintf("topic %03d",tnums)
         result <- ggplot(to.plot,aes(as.Date(Var2),value,group=topic))
-        result <- result +
-            ggtitle("Proportion of words in topics")
+
+        plot_title <- paste(plot_title,"s",sep="")
 
         if(facet) { 
             result <- result + geom_line() + facet_wrap(~ topic)
@@ -209,7 +219,8 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
     }
 
     result <- result + xlab("publication year") +
-        ylab("proportion of year's words")
+        ylab("proportion of year's words") +
+        ggtitle(plot_title)
 
     result
 }
@@ -307,6 +318,7 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
 
 mallet_word_plot <- function(words,term_year,year_seq,vocab,
                              plot_freq=T,
+                             plot_total=F,
                              smoothing=F,
                              gg_only=F) {
     w <- match(words,vocab)
@@ -326,6 +338,19 @@ mallet_word_plot <- function(words,term_year,year_seq,vocab,
         label <- "yearly word count"
     }
 
+    if (plot_total) {
+        wts <- matrix(colSums(wts),nrow=1)
+        if(length(words) > 5) {
+            words <- paste(words[1:5],collapse=" ")
+            words <- paste('Total of "',words,'," etc.',sep="")
+        } else {
+            words <- paste(words,collapse=" ")
+            words <- paste("Total of ",words,sep="")
+        }
+
+        w <- 1
+    }
+
     rownames(wts) <- words
     colnames(wts) <- year_seq
     series <- melt(as.matrix(wts))
@@ -338,7 +363,7 @@ mallet_word_plot <- function(words,term_year,year_seq,vocab,
     }
     else {
         result <- ggplot(series,aes(year,weight,group=1))
-        plot_title <- paste('"',words,'" over time (filtered corpus)',sep="")
+        plot_title <- paste(words,' over time (filtered corpus)',sep="")
     }
 
     if(!gg_only) {
@@ -383,4 +408,55 @@ words_topic_yearly_plot <- function(words,topic_desc,
     plot_title <- ifelse(length(words)==1,words,"Words")
     plot_title <- paste(plot_title,"in\n",topic_desc)
     result + ggtitle(plot_title)
+}
+
+# ---------------
+# About documents
+# ---------------
+
+top_documents <- function(topic,id_map,dtm,n=5) {
+    indices <- order(dtm[,topic],decreasing=T)[1:n]
+    
+    ids <- id_map[indices]
+    wts <- dtm[indices,topic]
+
+    data.frame(id=ids,weight=wts)
+}
+
+# This one means different things, depending on whether dtm is
+# normalized per topic. If dtm is raw counts, one gets the topics that
+# have been assigned the largest number of words in a document. But
+# if dtm is column-normalized, then one gets the topics for which the
+# document is comparatively most prominent within that topic.
+
+top_topics <- function(id,id_map,dtm,n=5) {
+    i <- match(id,id_map)
+    indices <- order(dtm[i,],decreasing=T)[1:n]
+
+    data.frame(topic=indices,weight=dtm[i,indices])
+}
+
+# ------------
+# About topics
+# ------------
+
+topic_name <- function(topic,wkf,n=0,threshold=0.5) {
+    words <- topic_top_words(topic,wkf,n,threshold)
+
+    words_str <- paste(words, collapse=" ")
+
+    sprintf("%03d %s",topic,words_str)
+}
+
+topic_top_words <- function(topic,wkf,n=0,threshold=0.5) {
+    wkf <- wkf[wkf$topic==topic,]
+    if(n <= 0) {
+        threshold <- max(wkf$weight) * 0.5
+        wkf <- wkf[wkf$weight >= threshold,]
+        words <- wkf$word[order(wkf$weight,decreasing=T)]
+    } else {
+        words <- wkf$word[order(wkf$weight,decreasing=T)[1:n]]
+    }
+
+    words
 }
