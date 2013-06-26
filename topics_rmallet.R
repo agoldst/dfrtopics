@@ -634,7 +634,6 @@ topic_term_time_series <- function(word,tytm,vocab) {
     tytm[w,,drop=F]
 }
 
-
 # Save the "topic word weights," i.e. the estimated weights of each word
 # for each topic
 #

@@ -298,14 +298,18 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
 
 # mallet_word_plot
 #
-# The MALLET 1-gram viewer!
+# The MALLET 1-gram viewer! Also useful in conjunction with topic
+# frequencies over time. Compare tm_yearly_line_plot(topic,...) with
+# the results of mallet_word_plot(topic_top_words(topic,n=50,...)) to
+# discover whether corpus frequencies and topic frequencies diverge
+# (which may or may not be significant!)
 #
 # words: a vector of words
 #
 # term_year: the term_year_matrix
 #
-# year_seq: the year sequence corresponding to columns in the term_year_matrix. 
-# Expected to be a factor or vector of ISO dates.
+# year_seq: the year sequence corresponding to columns in the
+# term_year_matrix. Expected to be a factor or vector of ISO dates.
 #
 # the vocabulary corresponding to rows of the term_year_matrix
 #
@@ -313,7 +317,7 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
 #
 # smoothing: add a smoothing line to the plot?
 #
-# gg_only: if T, don't add geoms to plot object (so the caller can do it 
+# gg_only: if T, don't add geoms to plot object (so the caller can do it
 # instead)
 
 mallet_word_plot <- function(words,term_year,year_seq,vocab,
