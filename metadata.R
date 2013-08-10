@@ -121,8 +121,13 @@ pubdate_Date <- function(pubdate) {
 #
 # FIXME this works often, but not always
 
-dfr_id_url <- function(id) {
-    sub("^.*\\/","http://www.jstor.org/stable/",id)
+dfr_id_url <- function(id,jstor_direct=F,
+                       proxy=".proxy.libraries.rutgers.edu") {
+    if(jstor_direct) {
+        sub("^.*\\/","http://www.jstor.org/stable/",id)
+    } else {
+        paste("http://dx.doi.org",proxy,"/",id,sep="")
+    }
 }
                     
 
@@ -215,8 +220,17 @@ plot_items_by_year <- function(metadata,time_interval="year") {
 #
 # FIXME N.B. this doesn't always work
 
-view_on_jstor <- function(id) {
-    cmd <- paste("open",dfr_id_url(id))
+view_on_jstor <- function(id,...) {
+    cmd <- paste("open",dfr_id_url(id,...))
     system(cmd)
 }
 
+copublication_matrix <- function(metadata) {
+    stop("Unimplemented.")
+
+    # TODO implemement
+    # split author fields on tabs to get multiple authors
+    # determine issues by journaltitle + volume + issue
+    # M_ij = 1 iff author_i and author_j copublish in an issue
+    # return M and author index
+}

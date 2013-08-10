@@ -41,20 +41,26 @@ topics_rmallet_setup <- function(java_heap="2g") {
     # etc. functions in topics.R: use topic.model.df() in cojunction
     # with keys_frame().
     #
-    # TODO get rid of topics.R dependency
 
-    source("topics.R")
+    source("metadata.R")
 }
 
 # model_documents()
 #
 # Basic usage is wrapped up in this convenience function.
 #
-# Returns a list with
-# tm: data frame with document topic proportions and metadata together
-# kf: data frame with topic "key words" and alpha parameters
-# topics: data frame with list of weights of all words in all topics
-# trainer: the RTopicModel object, after running LDA
+# Returns a list of:
+#
+# metadata: dataframe of metadata
+#
+# doc_topics: document-topic weights, with an id column on the right
+#
+# wkf: data frame with the weightiest words in each topic, plus topic alphas
+#
+# topic_words: data frame with list of weights of all words in all topics (big)
+#
+# trainer: the RTopicModel object, after running LDA, holding the sampling 
+# state and references to the instance-list.
 #
 # To tweak modeling parameters, keep the instances, or work on the documents,
 # run these steps individually.
@@ -64,11 +70,15 @@ model_documents <- function(citations.file,dirs,stoplist.file,num.topics) {
     texts <- read_dfr_wordcounts(dirs=dirs)
     instances <- make_instances(texts,stoplist.file)
     model <- train_model(instances,num.topics=num.topics)
-    doc_topics <- topic.model.df(doc_topics_frame(model),mf)
-    kf <- keys_frame(model)
-    topics <- topic_words(model)
+    doc_topics <- doc_topics_frame(model,smoothed=F,normalized=F)
+    keys <- weighted_keys_frame(model,smoothed=F,normalized=F)
+    topics <- topic_words(model,smoothed=F,normalized=F)
 
-    list(tm=doc_topics,kf=kf,topics=topics,trainer=model)
+    list(metadata=mf,
+         doc_topics=doc_topics,
+         wkf=keys,
+         topic_words=topics,
+         trainer=model)
 }
 
 # read_dfr_wordcounts
@@ -350,6 +360,23 @@ doc_topics_long <- function(doctops,metadata,
     meta <- unique(c("id",meta_keep))
     wide <- merge(doctops,metadata[,meta],by="id")
     melt(wide,id.vars=meta)
+}
+
+# doc_topics_wide
+#
+# synthesize the above doc_topics frame with metadata into a "wide" format
+#
+# meta_keep: vector of names of columns of metadata to keep
+#
+# the result will look like:
+#
+# "id"      topic1  topic2  topic3  ... meta_keep[1]    meta_keep[2] ...
+# <docid>   <topic proportions...>      <metadata vals...>
+
+doc_topics_wide <- function(doctops,metadata,
+                            meta_keep="pubdate") {
+    meta_keep <- unique(c("id",meta_keep))
+    merge(doctops,metadata[,meta_keep],by="id")
 }
 
 # tm_yearly_totals
@@ -1244,4 +1271,29 @@ journal_year_matrix <- function(tdm,metadata,id_map) {
     colnames(result) <- levels(years)
     result
 }
+
+# tdm_tm
+#
+# Convert a term-document sparseMatrix to the tm package's format.
+#
+# If tf_idf is TRUE, also replaces entries with tf-idf scores.
+
+tdm_tm <- function(tdm,tf_idf=T) {
+    library(tm)
+    if(tf_idf) {
+        result <- as.TermDocumentMatrix(tdm,weighting=weightTfIdf)
+    } else  {
+        # weightTf is just the identity function
+        result <- as.TermDocumentMatrix(tdm,weighting=weightTf)
+    }
+    result
+}
+
+# Converting the tm package object back down to a regular sparseMatrix
+# Because they don't provide an "as" method themselves
+
+TermDocument_sparse <- function(tdm) {
+    sparseMatrix(i=tdm$i,j=tdm$j,x=tdm$v,dims=c(tdm$nrow,tdm$ncol))
+}
+
 
