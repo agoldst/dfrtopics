@@ -420,6 +420,46 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
     }
 } 
 
+# tm_yearly_totals_meta
+#
+# tally up document topic proportions, keeping some metadata categories
+#
+# A convenience version of tm_yearly_totals that allows you 
+# to split out the yearly totals by, e.g., journaltitle
+#
+# doctops: the document-topic matrix, assumed to be in a form like that 
+# returned by doc_topics_wide
+#
+# metadata: the metadata frame, or a subset of its columns
+#
+# yearly_totals: the result of tm_yearly_totals, used for normalizing within 
+# each year.
+#
+# vars: metadata columns to split by; by default, use all metadata columns
+#
+# result: a data frame suitable for plotting, where each row gives yearly 
+# totals for each topic within for a given metadata combination. The topic 
+# proportion columns are called "topic1", "topic2", etc.
+
+tm_yearly_totals_meta <- function(doctops,metadata,yearly_totals,vars=NULL) { 
+    if(is.null(vars)) {
+        vars <- names(metadata)
+    }
+    vars <- unique(c("id","pubdate",vars))
+    doctops <- merge(doctops,metadata[,vars],by="id")
+    doctops$pubdate <- cut(pubdate_Date(doctops$pubdate),breaks="years")
+    doctops$pubdate <- droplevels(doctops$pubdate)
+    doctops$id <- NULL
+    vars <- vars[vars != "id"]
+
+    ddply(dt_j,vars,function (d) {
+              yr_col <- match(d$pubdate[1],colnames(m$yrly))
+              colSums(d[,1:m$n]) / sum(m$yrly[,yr_col])
+         })
+
+}
+
+
 # keys_frame
 #
 # For compatibility with my old read.keys function, this throws out the

@@ -141,7 +141,7 @@ topic_keyword_plot <- function(wkf,topic,
 # topics: which topics to consider, as a vector of numbers from 1
 #
 # raw_counts: are topic scores word counts or estimated proportions?
-# Does not effect the actual plot, but if the topic scores have been
+# Does not affect the actual plot, but if the topic scores have been
 # normalized then we are looking at frequency of the topic in documents
 # rather than freq. of the topic in words, so the title of the plot is
 # changed accordingly
