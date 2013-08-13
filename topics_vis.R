@@ -414,6 +414,21 @@ words_topic_yearly_plot <- function(words,topic_desc,
     result + ggtitle(plot_title)
 }
 
+# words_topic_yearly_plot_overall
+#
+# if you want the occurrence of the top words for a topic IN THE CORPUS,
+# you can use this convenience function to pass topic_top_words to
+# mallet_word_plot
+#
+# n: number of top words
+#
+# n = 0 to instead accept the default threshold for topic top words
+
+words_topic_yearly_plot_overall <- function(topic,wkf,n,...) {
+    words <- topic_top_words(topic,wkf,n)
+    mallet_word_plot(words,...)
+}
+
 # ---------------
 # About documents
 # ---------------
