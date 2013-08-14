@@ -701,6 +701,44 @@ topic_term_time_series <- function(word,tytm,vocab) {
     tytm[w,,drop=F]
 }
 
+term_year_series_frame <- function(words,term_year,year_seq,vocab,
+                                   raw_counts=F,
+                                   total=F) {
+    w <- match(words,vocab)
+    if(any(is.na(w))) {
+        message("Dropping words missing from vocabulary: ",
+                 paste(words[is.na(w)],collapse=" "))
+        words <- words[!is.na(w)]
+        w <- w[!is.na(w)]
+     }
+
+    wts <- term_year[w,,drop=F]
+    if(!raw_counts) {
+        wts <- wts %*% diag(1 / colSums(term_year)) 
+    }
+
+    if (total) {
+        wts <- matrix(colSums(wts),nrow=1)
+        if(length(words) > 5) {
+            words <- paste(words[1:5],collapse=" ")
+            words <- paste('Total of "',words,'," etc.',sep="")
+        } else {
+            words <- paste(words,collapse=" ")
+            words <- paste("Total of ",words,sep="")
+        }
+    }
+
+    rownames(wts) <- words
+    colnames(wts) <- year_seq
+    series <- melt(as.matrix(wts))
+    names(series) <- c("word","year","weight")
+    series$year <- as.Date(series$year)
+
+    series
+}    
+
+
+
 # Save the "topic word weights," i.e. the estimated weights of each word
 # for each topic
 #

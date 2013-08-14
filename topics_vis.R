@@ -377,49 +377,21 @@ mallet_word_plot <- function(words,term_year,year_seq,vocab,
                              plot_total=F,
                              smoothing=F,
                              gg_only=F) {
-    w <- match(words,vocab)
-    if(any(is.na(w))) {
-        message("Dropping words missing from vocabulary: ",
-                 paste(words[is.na(w)],collapse=" "))
-        words <- words[!is.na(w)]
-        w <- w[!is.na(w)]
-     }
+    words <- words[words %in% vocab]
 
-    wts <- term_year[w,,drop=F]
-    if(plot_freq) {
-        wts <- wts %*% diag(1 / colSums(term_year)) 
-        label <- "yearly word frequency"
-    }
-    else {
-        label <- "yearly word count"
-    }
+    series <- term_year_series_frame(words,term_year,year_seq,vocab,
+                                     raw_counts=!plot_freq,
+                                     total=plot_total)
 
-    if (plot_total) {
-        wts <- matrix(colSums(wts),nrow=1)
-        if(length(words) > 5) {
-            words <- paste(words[1:5],collapse=" ")
-            words <- paste('Total of "',words,'," etc.',sep="")
-        } else {
-            words <- paste(words,collapse=" ")
-            words <- paste("Total of ",words,sep="")
-        }
-
-        w <- 1
-    }
-
-    rownames(wts) <- words
-    colnames(wts) <- year_seq
-    series <- melt(as.matrix(wts))
-    names(series) <- c("word","year","weight")
-    series$year <- as.Date(series$year)
-
-    if(length(w) > 1) { 
+    if(length(words) > 1 & !plot_total) { 
         result <- ggplot(series,aes(year,weight,color=word,group=word))
         plot_title <- "Words over time (filtered corpus)"
     }
     else {
+        # Otherwise, we are just plotting the one time series
+        # and the label has been stuck in the single "word" entry
         result <- ggplot(series,aes(year,weight,group=1))
-        plot_title <- paste(words,' over time (filtered corpus)',sep="")
+        plot_title <- paste(series$word,' over time (filtered corpus)',sep="")
     }
 
     if(!gg_only) {
@@ -430,7 +402,8 @@ mallet_word_plot <- function(words,term_year,year_seq,vocab,
     }
 
     result +
-        ylab(label) +
+        ylab(ifelse(plot_freq,"yearly word frequency",
+                    "yearly word count")) +
         ggtitle(plot_title)
 }
 
