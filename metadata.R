@@ -174,7 +174,7 @@ read.sqlite <- function(database.filename=file.choose(),
 cite_articles <- function(metadata,ids=NULL)  {
     if(!is.null(ids)) {
         metadata <- metadata[metadata$id %in% ids,] 
-        metadata <- metadata[match(metadata$id,ids),]
+        metadata <- metadata[match(ids,metadata$id),]
     }
     authors <- strsplit(metadata$author,"\t")
     authors <- sapply(authors,paste,collapse=" and ")
