@@ -411,7 +411,7 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
         # The result will have topics in columns, so transpose.
 
         topic_sum <- function (d) {
-            colSums(d[,1:(ncol(d) - 1)])
+            colSums(subset(d,select=-pubdate))
         }
         t(daply(tm_wide,"pubdate",topic_sum))
     }
