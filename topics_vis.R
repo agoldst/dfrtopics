@@ -146,12 +146,22 @@ topic_keyword_plot <- function(wkf,topic,
 # rather than freq. of the topic in words, so the title of the plot is
 # changed accordingly
 #
-# facet: faceted plot or multiple lines on one plot?
+# facet: faceted plot or multiple lines on one plot? If yes, you can use
+# the .faceting parameter to tweak the facet by passing a facet_wrap()
+# call
+#
+# .yearly_overall: if the denominator for a yearly average is not simply
+# the sum of all the entries (say because you are suppling a subset of
+# the full topic matrix) you can supply this parameter
+
 
 tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
                                 topics=NULL,raw_counts=T,facet=F,
                                 smoothing_line=F,
-                                .yearly_totals=NULL) {
+                                .yearly_totals=NULL,
+                                .yearly_overall=NULL,
+                                .faceting=facet_wrap(~ topic),
+                                tnames=NULL) {
     if(!is.null(.yearly_totals)) {
         series <- .yearly_totals
     } else if(!is.null(tm_long)) {
@@ -167,8 +177,14 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
                          "Proportion of documents in topic")
 
     dates <- colnames(series)
-    yearly_totals <- colSums(series)
-    series <- series %*% diag(1 / yearly_totals) 
+
+    if(is.null(.yearly_overall)) { 
+        yearly_overall <- colSums(series)
+    }
+    else {
+        yearly_overall <- .yearly_overall
+    }
+    series <- series %*% diag(1 / yearly_overall) 
     colnames(series) <- dates
 
     # keep just the specified topics; if none specified, do all
@@ -194,17 +210,22 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
             result <- result + geom_smooth(method="loess")
         }
     }
-    else {
+    else { 
         to.plot <- rename(to.plot,c("Var1"="topic"))
         tnums <- as.character(to.plot$topic)
         tnums <- as.integer(substr(tnums,6,nchar(tnums)))
-        to.plot$topic <- sprintf("topic %03d",tnums)
+
+        if(!is.null(tnames)) {
+            to.plot$topic <- tnames[tnums]
+        } else { 
+            to.plot$topic <- sprintf("%03d",tnums)
+        }
         result <- ggplot(to.plot,aes(as.Date(Var2),value,group=topic))
 
         plot_title <- paste(plot_title,"s",sep="")
 
         if(facet) { 
-            result <- result + geom_line() + facet_wrap(~ topic)
+            result <- result + geom_line() + .faceting
             if(smoothing_line) {
                 result <- result + geom_smooth(method="loess")
             }
@@ -291,6 +312,37 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
         ylab("document topic proportions") +
         ggtitle(plot_title)
 }
+
+# tm_yearly_journals_plot
+#
+# Plot a topic's yearly average in individual journals in an area plot
+#
+# doctops,metadata,yearly_overall: as in tm_yearly_totals_meta
+#
+# or pass .yrly_j, a dataframe of yearly totals by journal and topic
+
+tm_yearly_journals_plot <- function(topic,
+                                    doctops=NULL,
+                                    metadata=NULL,
+                                    yearly_overall=NULL,
+                                    .yrly_j=NULL) { 
+    if(is.null(.yrly_j)) {
+        yrly_j <- tm_yearly_totals_meta(doctops,metadata,yearly_overall,
+                                        vars="journaltitle")
+    } else {
+        yrly_j <- .yrly_j
+    }
+
+    topic_name <- paste("topic",topic,sep="")
+    ggplot(yrly_j,aes_string(x="as.Date(pubdate)",
+                             y=topic_name,
+                             group="journaltitle",
+                             fill="journaltitle")) +
+        geom_area() +
+        ggtitle(paste("Proportion of words in topic",topic_name(topic)))
+}
+
+
 
 # ----------------
 # Individual words
@@ -465,6 +517,15 @@ topic_name <- function(topic,wkf,n=0,threshold=0.5) {
     words_str <- paste(words, collapse=" ")
 
     sprintf("%03d %s",topic,words_str)
+}
+
+# or the above applied to many topics at once
+topic_names <- function(wkf,n=2,topics=NULL) {
+    if(length(topics) == 0) {
+        topics <- 1:length(unique(wkf$topic))
+    }
+    ws <- lapply(topics,topic_name,wkf=wkf,n=2)
+    sapply(ws,paste,collapse=" ")
 }
 
 topic_top_words <- function(topic,wkf,n=0,threshold=0.5) {
