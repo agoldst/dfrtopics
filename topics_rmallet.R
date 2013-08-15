@@ -701,9 +701,37 @@ topic_term_time_series <- function(word,tytm,vocab) {
     tytm[w,,drop=F]
 }
 
+# term_year_series_frame
+#
+# make a dataframe, suitable for plotting, of entries from a term-year
+# matrix
+#
+# words: which words to pick out
+#
+# term_year: the term-year spareMatrix (included in list returned by
+# term_year_matrix)
+#
+# year_seq: the years corresponding to columns of term_year, as strings
+# in ISO format (in list from term_year_matrix)
+#
+# vocab: the vocabulary corresponding to rows of term_year
+#
+# raw_counts: return counts, or yearly proportions?
+#
+# total: if true, tally up the total incidences of all words in words
+#
+# denominator: if raw_counts=F, you can divide through by this
+# instead of by the column totals of term_year (useful if you
+# are passing in a term_year_topic_matrix but you still want the
+# yearly proportion out of all words in the corpus, in which case
+# denominator=term_year_matrix()$tym. WARNING: assumes the columns of
+# denominator correspond to the same years as those of term_year
+
+
 term_year_series_frame <- function(words,term_year,year_seq,vocab,
                                    raw_counts=F,
-                                   total=F) {
+                                   total=F,
+                                   denominator=NULL) {
     w <- match(words,vocab)
     if(any(is.na(w))) {
         message("Dropping words missing from vocabulary: ",
@@ -714,7 +742,10 @@ term_year_series_frame <- function(words,term_year,year_seq,vocab,
 
     wts <- term_year[w,,drop=F]
     if(!raw_counts) {
-        wts <- wts %*% diag(1 / colSums(term_year)) 
+        if(is.null(denominator)) {
+            denominator <- colSums(term_year)
+        }
+        wts <- wts %*% diag(1 / denominator) 
     }
 
     if (total) {
