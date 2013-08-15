@@ -339,7 +339,7 @@ tm_yearly_journals_plot <- function(topic,
                              group="journaltitle",
                              fill="journaltitle")) +
         geom_area() +
-        ggtitle(paste("Proportion of words in topic",topic_name(topic)))
+        ggtitle(paste("Proportion of words in topic",topic))
 }
 
 
