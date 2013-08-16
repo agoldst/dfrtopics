@@ -151,7 +151,7 @@ topic_keyword_plot <- function(wkf,topic,
 # call
 #
 # .yearly_overall: if the denominator for a yearly average is not simply
-# the sum of all the entries (say because you are suppling a subset of
+# the sum of all the entries (because you are supplying a subset of
 # the full topic matrix) you can supply this parameter
 
 

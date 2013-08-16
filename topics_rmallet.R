@@ -433,15 +433,16 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
 # metadata: the metadata frame, or a subset of its columns
 #
 # yearly_totals: the result of tm_yearly_totals, used for normalizing within 
-# each year.
+# each year. Pass NULL if you want raw counts instead.
 #
 # vars: metadata columns to split by; by default, use all metadata columns
 #
 # result: a data frame suitable for plotting, where each row gives yearly 
-# totals for each topic within for a given metadata combination. The topic 
+# totals for each topic for a given metadata combination. The topic 
 # proportion columns are called "topic1", "topic2", etc.
 
-tm_yearly_totals_meta <- function(doctops,metadata,yearly_totals,vars=NULL) { 
+tm_yearly_totals_meta <- function(doctops,metadata,
+                                  yearly_totals=NULL,vars=NULL) { 
     if(is.null(vars)) {
         vars <- names(metadata)
     }
@@ -452,11 +453,23 @@ tm_yearly_totals_meta <- function(doctops,metadata,yearly_totals,vars=NULL) {
     doctops$id <- NULL
     vars <- vars[vars != "id"]
 
-    ddply(dt_j,vars,function (d) {
-              yr_col <- match(d$pubdate[1],colnames(m$yrly))
-              colSums(d[,1:m$n]) / sum(m$yrly[,yr_col])
-         })
+    drop_cols <- match(vars,names(doctops))
 
+    tally <- function (d) {
+        colSums(d[,-drop_cols])
+    }
+
+    if(is.null(yearly_totals)) {
+        ply_fun <- tally
+    }
+    else {
+        ply_fun <- function(d) {
+            yr_col <- match(d$pubdate[1],colnames(yearly_totals))
+            tally(d) / sum(yearly_totals[,yr_col])
+        }
+    }
+
+    ddply(doctops,vars,.fun=ply_fun)
 }
 
 
