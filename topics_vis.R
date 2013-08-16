@@ -131,6 +131,45 @@ topic_keyword_plot <- function(wkf,topic,
     p
 }
 
+# corpus_dist_plot
+#
+# a quick way to visualize a useful diagnostic calculated by mallet:
+# the KL divergence between a topic and the corpus itself. These is
+# calculated by mallet's diagnostics output. Use read_diagnostics() to
+# get dataframes from the XML. Or you *could* calculate it yourself if
+# you insist.
+#
+# topic_diagnostics: a dataframe
+#
+# wkf: the weighted keys frame (for naming topics)
+#
+# Pass in subsets of these by topics if you wish to plot only some
+# topics. > 100 topics makes the labels hard to fit in a vertical stack.
+
+corpus_dist_plot <- function(topic_diagnostics,wkf) {
+    topic_order <- order(topic_diagnostics$corpus_dist,decreasing=T)
+    to_plot <- data.frame(topic=topic_names(wkf),
+                          distance=as.numeric(topic_diagnostics$corpus_dist))
+
+    p <- ggplot(to_plot)
+    p <- p + 
+        geom_segment(aes(x=0,xend=distance,
+                         y=topic,
+                         yend=topic),
+                     size=2)
+
+    p <- p + scale_y_discrete(limits=to_plot$topic[topic_order])
+    p <- p + theme(axis.title.y=element_blank(),
+                   axis.ticks.y=element_blank(),
+                   axis.text.y=element_text(color="black",size=10),
+                   legend.position="none") +
+        xlab("KL divergence from corpus") +
+        ggtitle("Distances of topics from corpus")
+
+    p
+}
+
+
 
 # tm_yearly_line_plot
 #
@@ -497,7 +536,7 @@ topic_names <- function(wkf,n=2,topics=NULL) {
     if(length(topics) == 0) {
         topics <- 1:length(unique(wkf$topic))
     }
-    ws <- lapply(topics,topic_name,wkf=wkf,n=2)
+    ws <- lapply(topics,topic_name,wkf=wkf,n=n)
     sapply(ws,paste,collapse=" ")
 }
 
