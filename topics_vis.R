@@ -285,36 +285,34 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
     result
 }
 
-# TODO moving averages
-tm_time_averages_plot <- function(tm_long,time_breaks="5 years",
-                                  grouping="journaltitle") {
+tm_time_averages_plot <- function(topics,yearly_matrix,
+                                  years=5,
+                                  facet=F) {
+    series <- topic_proportions_series_frame(yearly=yearly_matrix,
+                                             topics=topics,
+                                             rolling_window=years)
 
-    stop("Moving average plots: not currently implemented")
+    series$topic <- sprintf("%03d",series$topic)
+    
+    result <- ggplot(series,aes(year,weight))
 
-    to.plot <- tm_time_averages(tm_long,time_breaks,grouping)
-
-    # only works if pubdate has been made into a _factor_ by cut.Date()
-
-    # "variable" is topic1,topic2,etc
-    # "proportion" is the mean proportion
-    result <- ggplot(to.plot,aes(as.Date(pubdate),proportion))
-    if(!is.null(grouping)) {
-        geom <- geom_line(aes_string(fill=grouping))
-
+    if(length(topics) > 1) {
+        if(facet) {
+            result <- result + geom_line(aes(group=1)) + facet_wrap(~ topic)
+        }
+        else {
+            result <- result + geom_line(aes(group=topic,color=topic))
+        }
     }
     else {
-        geom <- geom_line()
+        result <- result + geom_line(aes(group=1)) +
+            theme(legend.position="none")
     }
 
-    result <- result + geom + facet_wrap(~ variable)
-
-    # add a median line to give some clue to distorted averages
-    result <- result + geom_line(aes(as.Date(pubdate),median),
-                                 color="blue",alpha=I(0.5))
     result +
-        xlab(paste("date (intervals of ",time_breaks,")",sep="")) +
-        ylab("overall topic proportion")
-        
+        ylab("overall topic proportion") +
+        ggtitle(paste("Topic proportion (moving intervals of",
+                      years,"years)"))
 }
 
 # tm_time_boxplots

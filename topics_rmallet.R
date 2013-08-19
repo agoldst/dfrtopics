@@ -33,6 +33,7 @@ topics_rmallet_setup <- function(java_heap="2g") {
     library(mallet)
     library(plyr)
     library(Matrix)
+    library(zoo)
 
     # This file's only real dependency is on metadata.R, which is
     # sourced by topics.R. However, I do use one topics.R function in
@@ -420,6 +421,77 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
     }
 } 
 
+topic_proportions_series_frame <- function(yearly,
+                                           topics=1:nrow(yearly),
+                                           denominator=NULL,
+                                           rolling_window=1) {
+    yseq <- colnames(yearly)
+
+    if(is.null(denominator)) {
+        denominator <- colSums(yearly)
+    }
+
+    z <- series_rolling(series=yearly_zoo(yearly[topics,,drop=F]),
+                       totals=zoo(denominator,as.Date(yseq)),
+                       k=rolling_window)
+
+    yearly_series_frame(yearly=zoo_yearly(z),
+                        var_seq=topics,
+                        series_names=c("topic","year","weight"))
+
+}
+
+# yearly: the matrix
+yearly_series_frame <- function(yearly,
+                                total=F,
+                                year_seq=colnames(yearly),
+                                var_seq=rownames(yearly),
+                                series_names=c("word","year","weight")) {
+
+    if (total) {
+        yearly <- matrix(colSums(yearly),nrow=1)
+        if(length(var_seq) != 1) {
+            message('Name for total not well-specified; using "total"')
+            var_seq <- "total"
+        }
+    }
+
+    rownames(yearly) <- var_seq
+    colnames(yearly) <- year_seq
+    series <- melt(as.matrix(yearly)) # Force conversion from any sparseMatrix
+    names(series) <- series_names
+    series$year <- as.Date(series[,2])
+
+    series
+}
+
+series_frame_zoo <- function(s,date_col=2,value_col=3) {
+    val_var <- names(s)[value_col]
+    date_var <- names(s)[date_col]
+    category_var <- names(s)[-c(value_col,date_col)]
+
+    s_m <- acast(s,as.formula(paste(category_var,"~",date_var)),
+                 value.var=val_var)
+    
+    zoo(t(s_m),as.Date(colnames(s_m)))
+}
+
+yearly_zoo <- function(yearly) {
+    zoo(t(yearly),as.Date(colnames(yearly)))
+}
+
+zoo_yearly <- function(z) {
+    as.matrix(t(z))
+}
+
+zoo_series_frame <- function(z,series_names=c("word","year","weight")) {
+    yearly_series_frame(zoo_yearly(z),series_names=series_names)
+}
+
+series_rolling <- function(series,totals,k) {
+    rollapply(series,k,sum) / rollapply(totals,k,sum)
+}
+
 # tm_yearly_totals_meta
 #
 # tally up document topic proportions, keeping some metadata categories
@@ -753,6 +825,7 @@ term_year_series_frame <- function(words,term_year,year_seq,vocab,
         w <- w[!is.na(w)]
      }
 
+    # TODO use yearly_series_frame to factor this out
     wts <- term_year[w,,drop=F]
     if(!raw_counts) {
         if(is.null(denominator)) {
@@ -772,6 +845,7 @@ term_year_series_frame <- function(words,term_year,year_seq,vocab,
         }
     }
 
+    # TODO use yearly_series_frame to factor this out too
     rownames(wts) <- words
     colnames(wts) <- year_seq
     series <- melt(as.matrix(wts))
@@ -779,7 +853,7 @@ term_year_series_frame <- function(words,term_year,year_seq,vocab,
     series$year <- as.Date(series$year)
 
     series
-}    
+}
 
 
 
