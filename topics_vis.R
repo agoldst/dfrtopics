@@ -286,10 +286,12 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
 }
 
 tm_time_averages_plot <- function(topics,yearly_matrix,
+                                  denominator=NULL,
                                   years=5,
                                   facet=F) {
     series <- topic_proportions_series_frame(yearly=yearly_matrix,
                                              topics=topics,
+                                             denominator=denominator,
                                              rolling_window=years)
 
     series$topic <- sprintf("%03d",series$topic)
