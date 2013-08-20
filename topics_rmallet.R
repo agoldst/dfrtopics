@@ -611,6 +611,44 @@ weighted_keys_frame <- function(trainer,num.top.words=20,
     result
 }
 
+# topic_words_wkf
+#
+# given a topic_words matrix, produce the weighted keys frame (like
+# weighted_keys_frame, for when you have discarded the model object but
+# kept the topic_words)
+#
+# tw: a *matrix* (not dataframe) with topics in rows and words counts in
+# columns
+#
+# vocab: a vector, with words in the same order as the columns of tw
+#
+# alpha: a vector of alpha values for the topics
+#
+# n_top: number of top key words to store per topic
+
+topic_words_wkf <- function(tw,vocab,alpha,n_top=20) {
+
+    # TODO deduplicate code with weighted_keys_frame
+
+    n <- nrow(tw)
+    reps <- rep(n_top,n)
+
+    result <- data.frame(
+        topic=rep(seq(n),times=reps),
+        alpha=rep(alpha,times=reps),
+        word=character(n * n_top),
+        weight=numeric(n * n_top),
+        stringsAsFactors=F)
+
+    for(i in seq(n)) {
+        rows <- 1 + (((i - 1) * n_top) :  ((i * n_top) - 1))
+        js <- order(tw[i,],decreasing=T)[1:n_top]
+        result$weight[rows] <- tw[i,js]
+        result$word[rows] <- vocab[js]
+    }
+    result
+}
+
 # wkf_kf
 #
 # turn a weighted keys frame into something like what keys_frame returns
