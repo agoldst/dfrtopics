@@ -1530,4 +1530,23 @@ TermDocument_sparse <- function(tdm) {
     sparseMatrix(i=tdm$i,j=tdm$j,x=tdm$v,dims=c(tdm$nrow,tdm$ncol))
 }
 
+# tf_idf
+#
+# direct calculation of tf_idf scores from my plain tdm sparseMatrix
+#
+# term and doc (both numeric indices) can be vectors.
+#
+# May not be optimal for speed for calculating scores for the whole tdm.
 
+tf_idf <- function(term,doc,tdm) {
+    idf <- log(ncol(tdm) / rowSums(tdm[term,,drop=F] != 0))
+    Diagonal(n=length(term),x=idf) %*% tdm[term,doc]
+}
+
+# TODO topic key words / all topic words weighted according to
+# Blei and Lafferty, "Topic Models":
+#
+# score(k,v) = beta(k,v) log( beta(k,v) / ( Prod_j beta(j,v) )^(1/K) )
+#
+# where beta(k,v) is the estimated probability of term v in topic k, and K is 
+# the number of topics
