@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Topic Model Browser</title>
+  <script type="text/javascript" src="lib/d3.v3.min.js"></script>
+  <script type="text/javascript" src="lib/queue.v1.min.js"></script>
+  <link rel="stylesheet" href="index.css" type="text/css" /> 
+</head>
+
+<body>
+  <header>
+    <h1>Loading...</h1>
+    <div id="meta_info">
+    </div>
+  </header>
+
+  <nav>
+    <p>
+      <a id="overview_link" href="#">Overview</a>
+      <a id="bib_link" href="#">Bibliography</a>
+    </p>
+  </nav>
+
+  <section>
+    <div id="overview" class="hidden"></div>
+    <div id="topic_view" class="hidden">
+      <h2></h2>
+      <p id="topic_remark"></p>
+      <div id="topic_words">
+        <h3>Most probable words</h3>
+      </div>
+      <div id="topic_docs">
+        <h3>Documents with largest proportion</h3>
+      </div>
+    </div>
+    <div id="doc_view" class="hidden">
+      <h2></h2>
+      <p id="doc_remark"></p>
+      <div id="doc_topics"></div>
+    </div>
+    <div id="word_view" class="hidden">
+      <h2></h2>
+    </div>
+    <div id="bib_view">
+      <nav></nav>
+      <div id="bib_main"></div>
+    </div>
+  
+  </section>
+
+  <script type="text/javascript" src="index.js">
+  </script>
+
+</body>
+
+</html>
+
