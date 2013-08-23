@@ -497,11 +497,27 @@ words_topic_yearly_plot_overall <- function(topic,wkf,n,...) {
 # About documents
 # ---------------
 
-top_documents <- function(topic,id_map,dtm,n=5) {
-    indices <- order(dtm[,topic],decreasing=T)[1:n]
+# Return a frame with ids and weights with the "top" documents for a topic
+#
+# method: the notion of a "top" document is not well-specified.
+#       "raw":  maximum scores in the topic-column of the dtm.
+#       "max_frac": maximum after normalizing the topic-column of the dtm. A 
+#       topic may reach its maximum proportion in a document and yet that 
+#       document may yet have a larger proportion of another topic.
+
+top_documents <- function(topic,id_map,dtm,n=5,method="raw") {
+    if(method=="raw") {
+        doc_scores <- dtm[,topic]
+    } else if(method=="max_frac") {
+        doc_scores <- dtm[,topic] / rowSums(dtm)
+    } else {
+        stop("Unknown method.")
+    }
+
+    indices <- order(doc_scores,decreasing=T)[1:n]
     
     ids <- id_map[indices]
-    wts <- dtm[indices,topic]
+    wts <- doc_scores[indices]
 
     data.frame(id=ids,weight=wts)
 }
