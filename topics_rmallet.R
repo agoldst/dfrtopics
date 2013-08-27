@@ -649,6 +649,35 @@ topic_words_wkf <- function(tw,vocab,alpha,n_top=20) {
     result
 }
 
+topic_word_scores <- function(tw,b,method="blei_lafferty") {
+    if(method != "blei_lafferty") {
+        stop("I know only the blei_lafferty scoring method.")
+    }
+
+
+    # score(t,v) = p(t,v) log (p(t,v) / Prod_k p(k,v) ^ 1 / K)
+    #            = p(t,v) ( log p(t,v) - (1 / K) log( Prod_k p(k,v) ) )
+    #            = p(t,v) ( log p(t,v) - (1 / K) Sum_k (log p(k,v) ) )
+
+    n <- nrow(tw)
+    V <- ncol(tw)
+
+    # smooth + normalize weights
+    topic_totals <- rowSums(tw) + V * b
+    tw <- tw + b
+
+    tw <- Diagonal(x=1 / topic_totals) %*% tw
+
+    # ...
+    log_tw <- log(tw)
+
+    # calculate down-weighting factor for each word
+    word_factor <- tw %*% Diagonal(x=colSums(log_tw) / n)
+
+    tw * (log_tw) - word_factor
+}
+
+
 # wkf_kf
 #
 # turn a weighted keys frame into something like what keys_frame returns
@@ -928,10 +957,28 @@ write_topic_words <- function(trainer,
     message("Saved vocabulary to ",vocab_file)
 }
 
-# read_topic_words
+# read_topic_words_matrix
+#
+# Get the matrix with topics in rows and word counts in columns (columns
+# are in order of the vocabulary as known to the mallet instances).
+# Returns a sparseMatrix.
+#
+# tw_file: filename ("topic_words.csv")
+#
+# what: datatype to read in. integer() if raw counts, double() if
+# proportions
+
+read_topic_words_matrix <- function(tw_file,what=integer()) {
+    library(Matrix)
+    tw <- scan(tw_file,what=what,sep=",")
+    n <- length(scan(tw_file,what=what,sep=",",nlines=1,quiet=T))
+    as(matrix(tw,byrow=T,ncol=n),"sparseMatrix")
+}
+
+# read_topic_words (deprecated)
 #
 # get a "long" format dataframe of words in topics by reading in the
-# two files output by the above
+# two files output by write_topic_words()
 #
 # result: data frame with three columns, topic, word, and weight.
 # 
@@ -955,9 +1002,9 @@ read_topic_words <- function(topic_words_file,vocab_file) {
     
 # topic_words
 #
-# in-memory version of the above: much, much faster
+# get a dataframe with topic,word,weight rows from the mallet trainer object
 #
-# TODO refactor
+#
 
 topic_words <- function(trainer,smoothed=T,normalized=T) {
     tw <- mallet.topic.words(trainer,smoothed=smoothed,normalized=normalized)
@@ -974,7 +1021,7 @@ topic_words <- function(trainer,smoothed=T,normalized=T) {
                stringsAsFactors=F)      # if you want to factorize it...
 }
 
-# topic_words_wide
+# topic_words_wide (deprecated)
 #
 # Convert a long-format topic_words frame to wide (rows are topics,
 # variables are words). Or at least try. No promises on speed. The
@@ -987,13 +1034,13 @@ topic_words_wide <- function(tw,assume_ordered=T) {
     dcast(tw,topic ~ word)
 }
 
-# smooth_words
+# smooth_words (deprecated)
 
 smooth_words <- function(tw,beta) {
     transform(tw,weight=weight + beta)
 }
 
-# normalize_words
+# normalize_words (deprecated)
 
 normalize_words <- function(tw,smoothed,beta=NULL) {
     ddply(tw,"topic",transform,weight=weight/sum(weight))
