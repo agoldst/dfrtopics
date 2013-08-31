@@ -539,20 +539,23 @@ top_topics <- function(id,id_map,dtm,n=5) {
 # About topics
 # ------------
 
-topic_name <- function(topic,wkf,n=0,threshold=0.5) {
+topic_name <- function(topic,wkf,n=0,threshold=0.5,
+                       name_format="%03d %s") {
     words <- topic_top_words(topic,wkf,n,threshold)
 
     words_str <- paste(words, collapse=" ")
 
-    sprintf("%03d %s",topic,words_str)
+    sprintf(name_format,topic,words_str)
 }
 
 # or the above applied to many topics at once
-topic_names <- function(wkf,n=2,topics=NULL) {
+topic_names <- function(wkf,n=2,topics=NULL,
+                        name_format="%03d %s") {
     if(length(topics) == 0) {
         topics <- 1:length(unique(wkf$topic))
     }
-    ws <- lapply(topics,topic_name,wkf=wkf,n=n)
+    ws <- lapply(topics,topic_name,wkf=wkf,n=n,
+                 name_format=name_format)
     sapply(ws,paste,collapse=" ")
 }
 
