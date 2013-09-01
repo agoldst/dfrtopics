@@ -41,6 +41,14 @@ This script provides some `ggplot2` visualizations that make use of various aspe
 
 There are also some basic visualizations of the words in the corpus, which need various slices of the term-document matrix and the term-document-topic array (computed by functions in `topics_rmallet.R`).
 
+## A browser
+
+A very rudimentary topic-browser that runs in the web browser. Read the browser README [on the github page for `dfr-analysis/browser`](https://github.com/agoldst/dfr-analysis/tree/master/browser) for more about this *emphatically in-development sub-probject.*
+
+## A note on licensing
+
+I have decided to apply the [MIT License](https://github.com/agoldst/dfr-analysis/tree/master/LICENSE) to this repository. That means you can pretty much do anything you want with it, provided you attribute stuff by me to me. And you can't hold me liable. I prefer the spirit of the GNU Public License, but I would like academics who use this code to be able to do so without being obliged to release their source, since that it is not always possible. I don't attempt to forbid commercial uses, but I don't welcome them.
+
 ## Legacy scripts
 
 ### topics.R
@@ -87,6 +95,4 @@ Perl script to convert the result of
     mallet train-topics --output-doc-topics filename.tsv
 
 into a table with columns ordered by topic number. This can then be fed into the ``read.sorted.doc.topics`` method in ``topics.R``.
-
-## More to come!
 
