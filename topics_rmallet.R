@@ -1074,13 +1074,12 @@ write_diagnostics <- function(trainer,output_file="diagnostics.xml",
 read_diagnostics <- function(xml_file) {
     library(XML)
     d <- xmlParse(file=xml_file)
-    topic_attrs <- xmlSApply(getNodeSet(d,"/model/topic"),xmlAttrs)
-    # topic_attrs is a string matrix with topics in *columns*
-
-    topics <- as.data.frame(t(topic_attrs),stringsAsFactors=F)
-    # standardize to 1-indexed
-    topics <- cbind(topic=as.numeric(topics$id) + 1,topics)
-    topics$id <- NULL
+    # xmlSApply returns a string matrix with topics in *columns*
+    topic_attrs <- t(xmlSApply(getNodeSet(d,"/model/topic"),xmlAttrs))
+    # de-stringify: 
+    topics <- apply(topic_attrs,2,as.numeric)
+    # add in a 1-indexed "topic" number
+    topics <- data.frame(topic=topics[,"id"] + 1,topics)
 
     word_info <- function(node) {
         w <- xmlValue(node)
@@ -1090,9 +1089,18 @@ read_diagnostics <- function(xml_file) {
     }
 
     # result of this is a string matrix
-    wm <- xmlSApply(getNodeSet(d,"/model/topic/word"),word_info)
-    
-    words <- as.data.frame(t(wm))
+    wm <- t(xmlSApply(getNodeSet(d,"/model/topic/word"),word_info))
+    w_topics <- as.numeric(wm[,1]) # column "topic," re-de-stringified
+    w_words <- wm[,2] # column "word"
+
+    # de-stringify
+    w_rest <- apply(wm[,3:ncol(wm)],2,as.numeric)
+
+    words <- data.frame(topic=w_topics,
+                        word=w_words,
+                        w_rest,
+                        stringsAsFactors=F)
+
 
     list(topics=topics,words=words)
 }
