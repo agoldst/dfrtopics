@@ -1066,10 +1066,19 @@ write_diagnostics <- function(trainer,output_file="diagnostics.xml",
 #
 # returns a list of two dataframes:
 #
-# topics: topic-level diagnostics
+# topics: topic-level diagnostics.
 #
-# words: word-level diagnostics of the most probable words in each
-# topics
+#   the "topic" column is a 1-indexed topic number.
+#   the "corpus_dist" column gives the Jensen-Shannon divergence from the
+#       corpus 
+#   the "coherence" column gives the topic coherence measure defined
+#       by Mimno et al., "Optimizing Semantic Coherence in Topic Models",
+#       eq. (1) (sum of log-co-document-document frequency ratios for the
+#       num_top_words top words in the topic; num_top_words as set in
+#       get_diagnostics).
+#
+# words: word-level diagnostics about the num_top_words most probable words in 
+# each topic.
 
 read_diagnostics <- function(xml_file) {
     library(XML)
