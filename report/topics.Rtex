@@ -1,0 +1,229 @@
+\documentclass[10pt]{article}
+
+\usepackage[english]{babel}
+
+\usepackage{fontspec}
+    \setmainfont[%
+        Ligatures=TeX,
+        Numbers={OldStyle},
+        BoldFont={* Semibold}
+        ]{Garamond Premier Pro}
+
+\usepackage{fancyhdr}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage[bf,tiny,raggedright]{titlesec}
+\usepackage{titling}
+
+\usepackage{amsmath}
+
+% My own macros
+\usepackage{agoldstmacros}
+
+% And a hacked-up version of the lips package that processes without error
+\usepackage{lipskludge}
+
+\setcounter{secnumdepth}{-2}	% Suppress section numbers even with unstarred
+				% (sub)section commands.
+
+% The default geometry is normally preferable
+% But this will make a big text area
+\geometry{width=6.5 in, height=9.0 in,xetex}
+
+% Same goes for single spacing rather than double
+\singlespacing
+% \doublespacing
+
+\pagestyle{fancy}
+% I don't like fancyhdr's rules.
+\renewcommand{\footrulewidth}{0 pt}
+\renewcommand{\headrulewidth}{0 pt}
+
+\newcommand{\hdrsize}{\small}
+\fancyhead{}
+\fancyfoot{}
+
+% Title reconfiguration via titling package
+
+\setlength{\droptitle}{0 pt} % can move title up or down on page
+
+\pretitle{\begin{center}\bfseries}
+\posttitle{\end{center}}
+\preauthor{\begin{center}}
+\postauthor{\end{center}}
+\predate{\begin{center}}
+\postdate{\end{center}}
+
+% Footnotes in Chicago format
+\makeatletter 
+\renewcommand\@makefntext[1]{% 
+    \parindent 1em% 
+    \@thefnmark.~#1} 
+\makeatother 
+
+% Optional: no extra spacing after sentence period
+%\frenchspacing
+
+\usepackage[%
+  pdftitle={Topic-Modeling the History of Literary Scholarship},
+%  pdfauthor={Andrew Goldstone},
+  pdfauthor={Anonymous},
+  bookmarks, bookmarksopen,
+  colorlinks=true,
+  xetex]{hyperref}
+\urlstyle{same}
+
+\usepackage{longtable}
+% setup for knitr
+
+%% begin.rcode setup,include=F
+opts_chunk$set(echo=F,warning=F,prompt=F,comment="",dev="pdf",
+    cache=T)
+options(width=70)
+options(tikzDefaultEngine="xetex")
+library(ggplot2)
+library(grid)
+library(plyr)
+library(xtable)
+library(zoo)
+library(reshape2)
+library(scales)
+%% end.rcode
+
+
+
+\begin{document}
+
+%% begin.rcode file-paths,include=F,dependson=-1
+source("file_paths.R") # Create this file to supply the following variables:
+stopifnot(exists("dfr_analysis"))
+stopifnot(exists("citations_files"))
+stopifnot(exists("keys_file"))
+stopifnot(exists("doc_topics_file"))
+stopifnot(exists("vocab_file"))
+stopifnot(exists("id_map_file"))
+%% end.rcode
+
+%% begin.rcode dfr-analysis,include=F,dependson=-1
+source(file.path(dfr_analysis,"metadata.R"))
+source(file.path(dfr_analysis,"topics_rmallet.R"))
+source(file.path(dfr_analysis,"topics_vis.R"))
+%% end.rcode
+
+%% begin.rcode read-model,include=F,dependson=-1
+# initialize result object
+m <- list()
+
+m$metadata <- read_metadata(citations_files)
+
+m$wkf <- read.csv(keys_file,as.is=T)
+m$doctops <- read.csv(doc_topics_file,as.is=T)
+m$vocab <- readLines(vocab_file)
+m$id_map <- readLines(id_map_file)
+
+m$dtw <- merge(m$doctops,m$metadata[,c("id","pubdate")],by="id")
+m$topic_year <- tm_yearly_totals(tm_wide=m$dtw)
+m$dtm <- doc_topics_matrix(m$doctops)
+m$n <- length(unique(m$wkf$topic))
+
+%% end.rcode
+
+\section{The most prominent words in the topics}
+
+%% begin.rcode topic-table,results="asis",dependson=-1
+labeler <- function(d,n) {
+    data.frame(label=paste(d$word[order(d$weight,decreasing=T)][1:n],
+          collapse=" "),stringsAsFactors=F)
+}
+
+tlabels <- ddply(m$wkf,.(topic),labeler,n=10)
+
+print(xtable(tlabels),include.rownames=F,
+      tabular.environment='longtable',
+      floating=F)
+%% end.rcode
+
+\newpage
+
+{\centering
+%% begin.rcode main-loop,fig.keep="all",fig.show="asis",out.width='.45\\linewidth',fig.height=10,fig.width=6,results="asis",dependson=-1
+for(topic in 83) {
+#for(topic in 1:m$n) { 
+    cat(paste("\\section{Topic ",topic,": ",
+              tlabels$label[tlabels$topic==topic],"}",sep=""))
+
+    # prepare keyword plot
+
+    kp <- topic_keyword_plot(m$wkf,topic,
+                             scale_color_gradient(limits=range(m$wkf$alpha)))
+    kp <- kp + ggtitle("") +
+        theme_bw() +
+        theme(axis.title.y=element_blank(),
+              axis.ticks.y=element_blank(),
+              axis.text.y=element_text(color="black",size=16), #rescaled
+              legend.position="none")
+
+    # prepare topic time series plot
+
+    to_plot <- topic_proportions_series_frame(yearly=m$topic_year,
+                                              topics=topic,
+                                              denominator=NULL,
+                                              rolling_window=1)
+    p <- ggplot(to_plot,aes(year,weight))
+    p <- p +
+        geom_bar(stat="identity",fill="grey80",width=90) +
+        geom_smooth(method="loess",span=0.5,
+                               fill="grey60",
+                               color="black",se=T) +
+#        scale_y_continuous(labels=percent_format()) +
+        theme_bw() +
+        xlab("article publication year") +
+        ylab("proportion of words in corpus")
+
+    # actual output of both plots
+    print(kp)
+    cat("\\relax") # necessary to prevent paragraph break, for side-by-side
+    print(p)
+
+    docs <- top_documents(topic,m$id_map,m$dtm,n=10,method="max_frac")
+    meta <- m$metadata[m$metadata$id %in% docs$id,] 
+    meta <- meta[match(docs$id,meta$id),]
+
+    authors <- strsplit(meta$author,"\t")
+    authors <- sapply(authors,paste,collapse=" and ")
+    authors[authors==""] <- "{}[Anonymous]"
+
+    dates <- pubdate_Date(meta$pubdate)
+    dates <- strftime(dates,"%B %Y")
+    pp <- gsub("^p?p\\. ","",meta$pagerange)
+    meta$title <- gsub('"(.*?)"',"``\\1''",meta$title)
+#   meta$title <- gsub("'(.*?)'","`\\1'",meta$title)
+    meta$title <- gsub("<.*?>","",meta$title) #strip html tags
+    # there is at least one jstor entry with the following invalid tex!
+    # no. 432688
+    meta$title <- gsub('\\\\overset (.*?)\\\\to\\{(.*?)\\}',
+                       '\\\\overset{\\1}{\\2}',
+                       meta$title)
+
+    docs$article <- with(meta,
+                   paste(authors,', ``',title,",'' \\emph{",
+                         journaltitle,'} ',volume,", no. ",
+                         issue," (",dates,"): ",pp,".",
+                         sep=""))
+
+    docs$article <- gsub("_",",",gsub(
+                        "\t","",gsub(
+                        "(\\d)-","\\1--",docs$article)))
+    docs$id <- NULL
+
+    cat("\\par")
+
+    print(xtable(docs[,2:1],align="lp{5 in}r"),
+        include.rownames=F,floating=F,
+        sanitize.text.function=function (x) { gsub("&","\\&",x,fixed=T) })
+    
+    cat("\\newpage")
+}
+%% end.rcode
+}
+\end{document}
