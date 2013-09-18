@@ -147,8 +147,7 @@ print(xtable(tlabels),include.rownames=F,
 
 {\centering
 %% begin.rcode main-loop,fig.keep="all",fig.show="asis",out.width='.45\\linewidth',fig.height=10,fig.width=6,results="asis",dependson=-1
-for(topic in 83) {
-#for(topic in 1:m$n) { 
+for(topic in 1:m$n) { 
     cat(paste("\\section{Topic ",topic,": ",
               tlabels$label[tlabels$topic==topic],"}",sep=""))
 
@@ -177,6 +176,8 @@ for(topic in 83) {
                                color="black",se=T) +
 #        scale_y_continuous(labels=percent_format()) +
         theme_bw() +
+        theme(panel.grid.major.x=element_blank(), # no vertical gridlines
+              panel.grid.minor.x=element_blank()) +
         xlab("article publication year") +
         ylab("proportion of words in corpus")
 
@@ -196,7 +197,7 @@ for(topic in 83) {
     dates <- pubdate_Date(meta$pubdate)
     dates <- strftime(dates,"%B %Y")
     pp <- gsub("^p?p\\. ","",meta$pagerange)
-    meta$title <- gsub('"(.*?)"',"``\\1''",meta$title)
+    meta$title <- gsub('"(.*?)"',"`\\1'",meta$title)
 #   meta$title <- gsub("'(.*?)'","`\\1'",meta$title)
     meta$title <- gsub("<.*?>","",meta$title) #strip html tags
     # there is at least one jstor entry with the following invalid tex!
