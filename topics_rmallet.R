@@ -25,7 +25,8 @@
 # Needed because we need to set the heap allocation option before rJava
 # gets loaded by Rmallet.
 
-topics_rmallet_setup <- function(java_heap="2g") {
+topics_rmallet_setup <- function(java_heap="2g",
+                                 source_dir=".") {
     # Let's assume we're typically going to need more Java heap space;
     # this sets the maximum allocation
     heap_param <- paste("-Xmx",java_heap,sep="") 
@@ -33,17 +34,10 @@ topics_rmallet_setup <- function(java_heap="2g") {
     library(mallet)
     library(plyr)
     library(Matrix)
-    library(zoo)
+    library(zoo,warn.conflicts=F) # as.Date "masked," shaddup
 
-    # This file's only real dependency is on metadata.R, which is
-    # sourced by topics.R. However, I do use one topics.R function in
-    # model_documents(), which shows how to make the output from R
-    # mallet into a dataframe like that expected by my old visualization
-    # etc. functions in topics.R: use topic.model.df() in cojunction
-    # with keys_frame().
-    #
-
-    source("metadata.R")
+    # This file uses functions from metadata.R...
+    source(file.path(source_dir,"metadata.R"))
 }
 
 # model_documents()
