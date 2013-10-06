@@ -493,6 +493,36 @@ words_topic_yearly_plot_overall <- function(topic,wkf,n,...) {
     mallet_word_plot(words,...)
 }
 
+# topic_dist_plot
+#
+# Gives a sense of the "closeness" of topics to one another
+#
+# More precisely, the strategy is to take the Jensen-Shannon divergence among 
+# the topics considered as distributions over words, and then use 
+# multidimensional scaling (i.e. PCA) to reduce these distances in word-
+# distribution space to distances in R^2.
+#
+# twm: matrix with topics in rows and word counts in columns
+# b: beta (used to smooth the counts)
+# wkf: weighted keys frame (for labeling)
+#
+# actually, nothing stops you setting twm = topic-document matrix and b = 
+# vector of alphas. That gives the distances among topics as distributions over 
+# documents.
+
+topic_dist_plot <- function(twm,b,wkf) {
+    divs <- topic_divergences(twm,b)
+    dists <- cmdscale(divs,k=2)
+    to_plot <- data.frame(label=topic_names(wkf),x=dists[,1],y=dists[,2])
+    ggplot(to_plot) + geom_text(aes(x=x,y=y,label=label,hjust=1)) +
+        scale_x_continuous(expand=c(.1,.1)) + # a little extra horizontal air 
+        theme(axis.title=element_blank(),
+              axis.line=element_blank(),
+              axis.text=element_blank(),
+              axis.ticks=element_blank())
+}
+
+    
 # ---------------
 # About documents
 # ---------------

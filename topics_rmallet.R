@@ -52,13 +52,11 @@ topics_rmallet_setup <- function(java_heap="2g",
 #
 # wkf: data frame with the weightiest words in each topic, plus topic alphas
 #
-# topic_words: data frame with list of weights of all words in all topics (big)
-#
 # trainer: the RTopicModel object, after running LDA, holding the sampling 
 # state and references to the instance-list.
 #
-# To tweak modeling parameters, keep the instances, or work on the documents,
-# run these steps individually.
+# To tweak modeling parameters, keep or fine-tune the instances, or work on the 
+# documents, run these steps individually.
 
 model_documents <- function(citations.file,dirs,stoplist.file,num.topics,
                             seed=NULL) { 
@@ -73,7 +71,6 @@ model_documents <- function(citations.file,dirs,stoplist.file,num.topics,
     list(metadata=mf,
          doc_topics=doc_topics,
          wkf=keys,
-         topic_words=topics,
          trainer=model)
 }
 
@@ -1003,7 +1000,8 @@ read_topic_words <- function(topic_words_file,vocab_file) {
 #
 # get a dataframe with topic,word,weight rows from the mallet trainer object
 #
-#
+# not really as useful as just the topic word matrix you can get using the
+# mallet package function mallet.topic.words
 
 topic_words <- function(trainer,smoothed=T,normalized=T) {
     tw <- mallet.topic.words(trainer,smoothed=smoothed,normalized=normalized)
@@ -1232,30 +1230,19 @@ doc_topic_cor <- function(doctops) {
 # this will give you the J-S divergences between topics considered as
 # distributions of words.
 #
-# tw_wide: the wide format data frame from topic_words_wide.
-# TODO why so slow???
+# twm: the topic-word matrix (can get it from a trainer object with topic.words)
 #
-# OR trainer: the live trainer object. Better.
+# b: the estimated beta value
 #
-# If you have the topic-word matrix, just call row_dists(M).
-
-topic_divergences <- function(tw_wide=NULL,trainer=NULL) {
-    if(!is.null(tw_wide)) {
-        # drop the first column (with the topic id); copy on modify
-        tw_wide$topic <- NULL
-        return(row_dists(tw_wide,method="JS"))
-    }
-    else if(!is.null(trainer)) {
-        mtw <- mallet.topic.words(trainer,smoothed=F,normalized=F)
-        # smoothing
-        mtw <- mtw + trainer$model$beta
-        # normalization
-        mtw <- diag(1 / rowSums(mtw)) %*% mtw
-        return(row_dists(mtw,method="JS"))
-    }
-    else {
-        stop("Specify either tw (topic_words dataframe) or trainer object.")
-    }
+# actually, nothing stops you setting twm = topic-document matrix and b = 
+# vector of alphas. That gives the distances among topics as distributions over 
+# documents.
+topic_divergences <- function(twm,b) {
+    # smoothing
+    twm <- twm + b
+    # normalization
+    twm <- diag(1 / rowSums(twm)) %*% twm
+    row_dists(twm,method="JS")
 }
 
 # -----------------------------------------
