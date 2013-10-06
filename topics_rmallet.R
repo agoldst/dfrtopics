@@ -60,11 +60,12 @@ topics_rmallet_setup <- function(java_heap="2g",
 # To tweak modeling parameters, keep the instances, or work on the documents,
 # run these steps individually.
 
-model_documents <- function(citations.file,dirs,stoplist.file,num.topics) { 
+model_documents <- function(citations.file,dirs,stoplist.file,num.topics,
+                            seed=NULL) { 
     mf <- read_metadata(citations.file)
     texts <- read_dfr_wordcounts(dirs=dirs)
     instances <- make_instances(texts,stoplist.file)
-    model <- train_model(instances,num.topics=num.topics)
+    model <- train_model(instances,num.topics=num.topics,seed=seed)
     doc_topics <- doc_topics_frame(model,smoothed=F,normalized=F)
     keys <- weighted_keys_frame(model,smoothed=F,normalized=F)
     topics <- topic_words(model,smoothed=F,normalized=F)
@@ -278,9 +279,13 @@ train_model <- function(instances,num.topics,
                         n.hyper.iters=20,   # how often to do hyperparam. opt.
                         n.burn.in=50,       # num. iters before starting hyp. o.
                         symmetric_alpha=F,  # all alpha_k equal?
-                        threads=4L) {
+                        threads=4L,
+                        seed=NULL) {
     trainer <- MalletLDA(num.topics,alpha.sum,beta)
     trainer$model$setNumThreads(threads)
+    if(!is.null(seed)) {
+        trainer$model$setRandomSeed(as.integer(seed))
+    }
 
     trainer$loadDocuments(instances)
 
