@@ -59,19 +59,91 @@ topics_rmallet_setup <- function(java_heap="2g",
 # documents, run these steps individually.
 
 model_documents <- function(citations.file,dirs,stoplist.file,num.topics,
-                            seed=NULL) { 
+                            seed=NULL,num.top.words=50L) { 
     mf <- read_metadata(citations.file)
     texts <- read_dfr_wordcounts(dirs=dirs)
     instances <- make_instances(texts,stoplist.file)
     model <- train_model(instances,num.topics=num.topics,seed=seed)
     doc_topics <- doc_topics_frame(model,smoothed=F,normalized=F)
-    keys <- weighted_keys_frame(model,smoothed=F,normalized=F)
-    topics <- topic_words(model,smoothed=F,normalized=F)
+    keys <- weighted_keys_frame(model,num.top.words=num.top.words,
+                                smoothed=F,normalized=F)
 
     list(metadata=mf,
          doc_topics=doc_topics,
          wkf=keys,
-         trainer=model)
+         trainer=model,
+         seed=seed)
+}
+
+# output_model
+#
+# Convenience function for saving all the model outputs at once.
+#
+# model_result: the result from model_documents, or, equivalently, a list with 
+# elements called trainer, doc_topics, wkf, seed.
+#
+# output_dir: where to save files with default names.
+#
+# save_instances: extract the instance list from the trainer object?
+#
+# save_scaled: write a file of 2D coordinate for the topics?
+
+output_model <- function(model_result,output_dir=".",
+                         save_instances=F,save_scaled=T) {
+    tw_f <- file.path(output_dir,"topic_words.csv")
+    vocab_f <- file.path(output_dir,"vocab.txt")
+    write_topic_words(model_result$trainer,
+                      topic_words_file=tw_f,
+                      vocab_file=vocab_f,
+                      smoothed=F, normalized=F)
+    message("Wrote ",tw_f)
+    message("Wrote ",vocab_f)
+
+    params <- model_params(model_result$trainer)
+    params$seed <- model_result$seed
+    params_f <- file.path(output_dir,"params.csv")
+    write.csv(params,params_f)
+    message("Wrote ",params_f)
+
+    keys_f <- file.path(output_dir,"keys.csv")
+    write.table(model_result$wkf,keys_f,
+                quote=F,sep=",",row.names=F,col.names=T)
+    message("Wrote ",keys_f)
+
+    dt_f <- file.path(output_dir,"doc_topics.csv")
+    write.table(model_result$doc_topics,
+                dt_f,
+                quote=F,sep=",",row.names=F,col.names=T)
+    message("Wrote ",dt_f)
+
+    state_f <- file.path(output_dir,"mallet_state.gz")
+    write_mallet_state(model_result$trainer,state_f)
+    message("Wrote ",state_f)
+
+    diag_f <- file.path(output_dir,"diagnostics.xml") 
+    write_diagnostics(model_result$trainer,
+                      diag_f, 
+                      get_diagnostics(model_result$trainer,
+                        as.integer(sum(model_result$keys$topic==1))))
+    message("Wrote ",diag_f)
+
+    if (save_instances) {
+        inst_f <- file.path(output_dir,"instances.mallet")
+        write_instances(model_result$trainer$instances,inst_f)
+        message("Wrote ",inst_f)
+    }
+
+    if (save_scaled) {
+        scaled_f <- file.path(output_dir,"topic_scaled.csv")
+        scaled <- cmdscale(topic_divergences(
+            mallet.topic.words(model_result$trainer,
+                               smoothed=F,normalized=F),
+            params$beta),
+                           k=2)
+        write.table(scaled,scaled_f,
+                    quote=F,sep=",",row.names=F,col.names=F)
+        message("Wrote ",scaled_f)
+    }
 }
 
 # read_dfr_wordcounts
