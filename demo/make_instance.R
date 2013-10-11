@@ -149,7 +149,8 @@ make_instance <- function(
         aquo=as.Date("1880-01-01"),
         adquem=as.Date("2013-12-31"),
         itemtypes="fla\t",
-        length_min=1000,                                # words
+        length_min=2000,                                # words
+        stoplist_file="stoplist.txt",
         lengths_outfile=file.path(outdir,"document_lengths.csv"),
         britticisms_file=file.path(project_root,"uk_us.csv"),
         freq_threshold=NULL,
@@ -177,11 +178,6 @@ make_instance <- function(
     setwd(project_root)
     message("wd now: ",project_root)
 
-    message("regenerating stoplist_final.txt") 
-    system("python stoplist_final.py",ignore.stdout=T,ignore.stderr=T)
-
-    stoplist_file <- file.path(project_root,"stoplist_final.txt")
-
     if(!file.exists(outdir)) {
       dir.create(outdir)
     }
@@ -197,11 +193,11 @@ make_instance <- function(
         lengths$id <- as.id(lengths$filename)
 
         excluder <- function(metadata) {
-            c(exclude(metadata),exclude_shorts(metadata,lengths,length_min))
+            exclude_shorts(metadata,lengths,length_min)
         }
     }
     else {
-        excluder <- exclude
+        excluder <- function(m) { NULL }
     }
 
     setwd(pwd)

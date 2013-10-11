@@ -1,4 +1,6 @@
 pmla_all
+instances
+model
 !*.txt
 !*.csv
 
