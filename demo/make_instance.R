@@ -141,10 +141,9 @@ stopword_report <- function(overall,stoplist_file) {
 # make_instance: main function
 
 make_instance <- function(
-        outdir,
+        outdir="instances",
         dfr_analysis_root="~/Developer/dfr-analysis",
-        dfr_analysis_source=file.path(dfr_analysis_root,"source_all.R"),
-        project_root="~/Documents/research/20c/hls/tmhls",
+        project_root=".",
         dfr_data_root=project_root,
         journal_dirs="pmla_all",
         aquo=as.Date("1880-01-01"),
@@ -152,11 +151,11 @@ make_instance <- function(
         itemtypes="fla\t",
         length_min=1000,                                # words
         lengths_outfile=file.path(outdir,"document_lengths.csv"),
-        britticisms_file=file.path(project_root,"UK2UStransrules.csv"),
+        britticisms_file=file.path(project_root,"uk_us.csv"),
         freq_threshold=NULL,
         rank_threshold=10000, 
         plotfile=file.path(outdir,"freqplots.png"),
-        outfile=file.path(outdir,"journals.mallet"),
+        outfile=file.path(outdir,"docs.mallet"),
         java_heap="2g") {
 
     # "includes"
@@ -165,7 +164,7 @@ make_instance <- function(
     library(grid)
 
     setwd(dfr_analysis_root)
-    source(dfr_analysis_source)
+    source("topics_rmallet.R")
     topics_rmallet_setup(java_heap)
     setwd(pwd)
 
