@@ -2,20 +2,7 @@
 
 Bits and pieces to help analyze the data available from JSTOR's Data for Research (DfR) service. Skews to my needs as a literary scholar and digital-humanist-in-progress. Skews to my amateurishness as a programmer. Very much in-progress, hacked together, catch-as-catch-can, I am not an expert, I am not a lawyer, etc., etc., etc. Use and share freely, at your own risk. 
 
-## metadata.R
-
-Functions for manipulating metadata from DfR with R. The core function is `read_metadata()` for reading and combining `citations.CSV` files. I make particularly frequent use of `pubdate_Date()`, which converts the "pubdate" field to `Date` objects. For browsing, `cite_articles()` turns rows of metadata into a human-readable citation.
-
-
-## topics_rmallet.R
-
-Thanks to the advent of [the mallet interface for R](http://www.cs.princeton.edu/~mimno/R/), it's possible to avoid having to do the kinds of reprocessing of the output from the mallet command-line tool that I used to need to do (using the perl scripts listed below). In fact it's possible to run mallet itself from within R. This script provides basic functions for using mallet to topic-model wordcount data from DfR, and then to read and write the results of that output, as well as to tally it up by year. The functions in this file are explained in comments.
-
-I also provide some functions for reading mallet's "instances" from within R, so that you can recover the documents you fed to the topic modeler (in post-processed form, i.e. with stopwords removed, etc.).
-
-I have not been parsimonious about using other R packages, so there are a lot of dependencies here.
-
-### Basic example usage within R
+## Basic example usage within R
 
 ```R
 # let's imagine you have this repository in ~/projects/dfr-analysis
@@ -35,7 +22,24 @@ tm_wide <- doc_topics_wide(m$doc_topics,m$metadata)
 tm_yearly_line_plot(tm_wide=tm_wide,facet=T)
 ```
 
-## topics_vis.R
+A slightly fuller demonstration can be found in the `demo/` subdirectory here.
+
+## A guide to the files
+
+### metadata.R
+
+Functions for manipulating metadata from DfR with R. The core function is `read_metadata()` for reading and combining `citations.CSV` files. I make particularly frequent use of `pubdate_Date()`, which converts the "pubdate" field to `Date` objects. For browsing, `cite_articles()` turns rows of metadata into a human-readable citation.
+
+
+### topics_rmallet.R
+
+Thanks to the advent of [the mallet interface for R](http://www.cs.princeton.edu/~mimno/R/), it's possible to avoid having to do the kinds of reprocessing of the output from the mallet command-line tool that I used to need to do (using the perl scripts listed below). In fact it's possible to run mallet itself from within R. This script provides basic functions for using mallet to topic-model wordcount data from DfR, and then to read and write the results of that output, as well as to tally it up by year. The functions in this file are explained in comments.
+
+I also provide some functions for reading mallet's "instances" from within R, so that you can recover the documents you fed to the topic modeler (in post-processed form, i.e. with stopwords removed, etc.).
+
+I have not been parsimonious about using other R packages, so there are a lot of dependencies here.
+
+### topics_vis.R
 
 This script provides some `ggplot2` visualizations that make use of various aspects of the mallet output, with an emphasis on following topics over time. The `topic_keyword_plot()` gives a way of looking at "top key words" for a topic that preserves information about their weights. `topic_report()` generates a folder of images (multiple plots each) giving an overview of each topic in the model.
 
