@@ -1,5 +1,5 @@
-NUM_TOPICS := 100
-NUM_ITERS := 500
+NUM_TOPICS := 64
+NUM_ITERS := 600
 
 instances/docs.mallet: make_instance.R stoplist.txt uk_us.csv
 	R -e 'source("make_instance.R"); make_instance()'
