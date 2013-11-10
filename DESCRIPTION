@@ -1,0 +1,10 @@
+Package: dfrtopics
+Title: Tools for exploring topic models of JSTOR Data for Research outputs
+Description: 
+Version: 0.1
+Author: Andrew Goldstone <andrew.goldstone@gmail.com>
+Depends: mallet, plyr, ggplot2, zoo
+Suggests: knitr
+SystemRequirements: python
+License: MIT
+LazyData: true
