@@ -1,20 +1,27 @@
-# examples of elementary manipulation using the metadata
+# Functions to read and wrangle JSTOR metadata
 
-# read_metadata: make a dataframe from citations.CSV files
-#
-# filenames: vector of citations.CSV filenames
-#
-# assumes that each file has a trailing comma at the end of every line,
-# which makes read.csv find an extra field. DfR has changed their output
-# data format before, so check results carefully.
-#
-# Any extra parameters are passed on to read.csv; the most useful may
-# be strip.white, which determines whether read.csv will strip leading
-# and trailing whitespace from each field. NB jstor puts a trailing
-# tab at the end of each entry in fields that can contain multiple
-# tab-separated entries (e.g. author)--even if there is only a single
-# entry
-
+#' Make a dataframe from \code{citations.CSV} files
+#'
+#' Reads in metadata from JSTOR's metadata files and returns a combined dataframe.
+#'
+#' This function assumes that each file has a trailing comma at the end of every line,
+#' so we expect \code{\link{read.csv}} to find an extra dummy field. DfR has
+#' changed their output data format before, so check results carefully.
+#'
+#' NB. JSTOR puts a trailing tab at the end of each
+#' entry in fields that can contain multiple tab-separated entries (e.g.
+#' author)---even if there is only a single entry.
+#'
+#' @param filenames vector of \code{citations.CSV} filenames
+#' @param ... passed on to \code{\link{read.csv}}; the
+#' most useful may be \code{strip.white}, which determines whether
+#' \code{\link{read.csv}} will strip leading and trailing whitespace
+#' from each field. 
+#' @return A dataframe with deduplicated metadata. The function issues a warning if there 
+#' are lines that have the same id field but are not identical.
+#' @seealso \code{\link{pubdate_Date}}
+#' @export
+#'
 read_metadata <- function(filenames,...) {
     all_rows <- do.call(rbind,lapply(filenames,read_citations,...))
     # deduplicate
@@ -27,12 +34,17 @@ read_metadata <- function(filenames,...) {
     result
 }
 
-# read_citations: this does the work for the above.
-#
-# Reads a single citations.CSV file. Opens file dialog if filename is NA.
-#
-# See above re: trailing commas in dfr citations.CSV files.
-
+#' Read a single \code{citations.CSV} file.
+#'
+#' This function is mostly a helper for \code{\link{read_metadata}}. It reads a single
+#' \code{citations.CSV file}.
+#'
+#' @param filename the CSV file to read. If \code{NA}, opens the file dialog.
+#' @param ... Passed on to \code{\link{read.csv}}.
+#' @return A dataframe of metadata.
+#' @seealso \code{\link{read_metadata}}
+#' @export
+#'
 read_citations <- function(filename=NA,...) { 
     f <- filename
     if(is.na(filename)) { 
@@ -42,7 +54,7 @@ read_citations <- function(filename=NA,...) {
         print(f)
     }
 
-    # the nefarious trailing comma:
+    # the nefarious trailing comma (see read_metadata docs)
     cols <- scan(f,nlines=1,what=character(),sep=",",quiet=T)
     cols <- c(cols,"unused")
 
@@ -51,126 +63,88 @@ read_citations <- function(filename=NA,...) {
 }
 
     
-# legacy function: now just a wrapper around read_metadata
-
-read.citations <- function(filename=NA,strip=FALSE) { read_metadata(filename,strip.white=strip) }
-
-# given a dataframe as returned by read.citations,
-# return a dataframe with only full length articles 
-fla.subset <- function (df) {
-    subset(df,type=="fla\t")
-}
-
-# convert a jstor doc id to a wordcount filename
-#
-# implicitly vectorized for a list of id's
-
-as.filename <- function(id) {
+#' Convert JSTOR document id's to \code{wordcounts*.CSV} filenames
+#'
+#' Convenience function for turning an ID like \code{10.2307/3175328} into a DfR wordcount 
+#' filename like \code{wordcounts_10.2307_3175328.CSV}.
+#'
+#' @param id a character vector of document id's
+#' @return a character vector of filenames
+#' @examples
+#' id_filename("10.2307/3175328")
+#' @seealso \code{\link{filename_id}}
+#' @export
+#'
+id_filename <- function(id) {
     result <- paste("wordcounts_",id,".CSV",sep="")
     gsub("/","_",result,fixed=TRUE)
 }
 
-# as.id can be more generic
-# it expects the file (possibly including a path) to end with
-# wordcounts_xxxxxxxxx.XYZ
-# where xxxxxx are a jstor id, but with / replaced with _
-# and the file extension XYZ is alphabetic
-as.id <- function(filename) {
+#' Convert wordcount filenames to JSTOR document id's
+#'
+#' Convenience function for turning a file path like 
+#' \code{path/to/wordcounts_10.2307_3175328.CSV} into an id like
+#' \code{10.2307/3175328}.
+#'
+#' The file extension can be anything alphabetic.
+#'
+#' @return id a character vector of document id's
+#' @param filename a character vector of filenames
+#' @examples
+#' filename_id("path/to/wordcounts_10.2307_3175328.CSV")
+#' @seealso \code{\link{id_filename}}
+#' @export
+#'
+filename_id <- function(filename) {
   result <- sub("^.*wordcounts_","",filename)
   result <- sub("\\.[[:alpha:]]*$","",result)
   gsub("_","/",result)
 }
 
-
-# make a file listing the names of the wordcount files corresponding
-# to the entries in a dataframe, so that you can do something with the
-# wordcount files in another program
-#
-# used for, e.g., making a list of the files corresponding to the fla
-# entries returned by fla.subset
-
-write.filenames <- function(df,out.file="filenames.txt") { 
-    writeLines(as.filename(df$id),con=out.file)
-}
-
-# convert the pubdate field (a string in a date-time format) into numeric
-# years
-# 
-# throws out the month and day and time information 
-
-pubdate.to.years <- function(datestrs) {
-    as.numeric(substr(datestrs,1,4))
-}
-
-# subset out a range of years from a citations dataframe 
-# range is treated as inclusive on the left, exclusive on the right
-# example usage:
-# fla.df1960s <- datarange.subset(fla.df, 1960, 1970)
-daterange.subset <- function(df,min.incl,max.excl) {
-    subset(df,pubdate.to.years(pubdate) >= min.incl
-        & pubdate.to.years(pubdate) < max.excl)
-}
-
-# to keep month and day information, use this instead, which returns
-# Date object(s)
+#' Convert JSTOR pubdate fields to Date objects 
+#'
+#' @param pubdate a character vector of JSTOR pubdates
+#' @return a vector of Dates
+#' @export
+#'
 pubdate_Date <- function(pubdate) {
     as.Date(substr(pubdate,1,10))
 }
 
-# convert a DFR id into a jstor url
-#
-# FIXME this works often, but not always
-
+#' Convert a DfR ID into a JSTOR URL
+#'
+#' For viewing a document on JSTOR. This works often, but not always.
+#'
+#' @param id a document id
+#' @param jstor_direct if TRUE, try to guess a direct \code{jstor.org/stable/} URL; if FALSE, supply a \code{dx.doi.org} URL (doesn't always resolve).
+#' @param proxy added to the URL domain for proxying (e.g. \code{".libraries.example.edu"})
+#' @export
+#'
 dfr_id_url <- function(id,jstor_direct=F,
-                       proxy=".proxy.libraries.rutgers.edu") {
+                       proxy="") {
     if(jstor_direct) {
         sub("^.*\\/","http://www.jstor.org/stable/",id)
     } else {
         paste("http://dx.doi.org",proxy,"/",id,sep="")
     }
 }
-                    
 
-# dump all the metadata in a dataframe into a sqlite database in case
-# you need efficient access to that outside of R 
-#
-# table.name is the name of the database table to write the data frame to
-# filename is the name of the sqlite database
-
-write.sqlite <- function (df,filename=file.choose(),table.name="document") {
-    library(RSQLite)
-    db.driver <- dbDriver("SQLite") 
-    db.con <- dbConnect(db.driver,dbname=filename)
-    dbWriteTable(db.con,table.name,df)
-    dbDisconnect(db.con)
-    dbUnloadDriver(db.driver)
-}
-
-read.sqlite <- function(database.filename=file.choose(),
-                        table.name="document") { 
-    library(RSQLite)
-    db.driver <- dbDriver("SQLite") 
-    db.con <- dbConnect(db.driver,dbname=database.filename)
-    result <- dbReadTable(db.con,table.name)
-
-    # Database cleanup
-
-    dbDisconnect(db.con)
-    dbUnloadDriver(db.driver)
-
-    result
-}
-
-# --------
-# plots, descriptive output, etc.
-# --------
-
-# cite_articles
-# formerly known as cite.articles
-#
-# return a list of strings citing the articles identified by ids
-# or citing all articles in metadata if no ids supplied
-
+#' Generate simple citation strings from metadata
+#'
+#' Given a dataframe with metadata and (optionally) document id's,
+#' return a character vector of citations.
+#'
+#' The generated citations are meant for quick reference, not formal
+#' use. They do not handle quotations with quotations correctly and make
+#' no effort to scrub the cruft found in some journals' metadata on
+#' JSTOR. Authors are simply concatenated into a long "A and B and C"
+#' list.
+#'
+#' @param metadata data frame (from e.g. \code{\link{read_metadata}}) 
+#' @param ids character vector of document id's to generate citations for. If NULL, 
+#' generate citations for all rows of \code{metadata}
+#' @return a character vector of citations
+#'
 cite_articles <- function(metadata,ids=NULL)  {
     if(!is.null(ids)) {
         metadata <- metadata[metadata$id %in% ids,] 
@@ -195,42 +169,12 @@ cite_articles <- function(metadata,ids=NULL)  {
 }
 
 
-
-# How many of each item type appear in each temporal interval?
-#
-# not a very fancy plot
-
-plot_items_by_year <- function(metadata,time_interval="year") {
-    to.plot <- transform(metadata,
-                         Date=cut(pubdate_Date(pubdate),
-                                  breaks=time_interval))
-
-    # TODO proper date-interval breaks with cut.Date()
-    qplot(as.Date(Date),
-          data=to.plot,geom="histogram",
-          facets = ~ type) +
-        xlab("publication date") +
-        ggtitle("Number of each item type, by year")
-}
-
-# view_on_jstor
-#
-# Take an item id, open it in the web browser (using MacOS X "open").
-# Relies on dfr_id_url() above
-#
-# FIXME N.B. this doesn't always work
-
-view_on_jstor <- function(id,...) {
-    cmd <- paste("open",dfr_id_url(id,...))
-    system(cmd)
-}
-
-copublication_matrix <- function(metadata) {
-    stop("Unimplemented.")
+#copublication_matrix <- function(metadata) {
+#    stop("Unimplemented.")
 
     # TODO implemement
     # split author fields on tabs to get multiple authors
     # determine issues by journaltitle + volume + issue
     # M_ij = 1 iff author_i and author_j copublish in an issue
     # return M and author index
-}
+#}

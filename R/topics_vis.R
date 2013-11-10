@@ -1,10 +1,3 @@
-# libraries
-library(grid)
-library(ggplot2)
-library(scales)
-library(plyr)
-library(reshape2)
-
 # topic_report
 #
 # Visualize some information about a number of topics. Generates one PNG
@@ -601,3 +594,21 @@ topic_top_words <- function(topic,wkf,n=0,threshold=0.5) {
 
     words
 }
+
+# How many of each item type appear in each temporal interval?
+#
+# not a very fancy plot
+
+plot_items_by_year <- function(metadata,time_interval="year") {
+    to.plot <- transform(metadata,
+                         Date=cut(pubdate_Date(pubdate),
+                                  breaks=time_interval))
+
+    # TODO proper date-interval breaks with cut.Date()
+    qplot(as.Date(Date),
+          data=to.plot,geom="histogram",
+          facets = ~ type) +
+        xlab("publication date") +
+        ggtitle("Number of each item type, by year")
+}
+
