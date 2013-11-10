@@ -18,26 +18,18 @@
 # typing, which makes for some funtimes. To index into array-like
 # objects, apply as.integer() to parameters.
 
-# topics_rmallet_setup
-#
-# Call this before running any other functions here.
-#
-# Needed because we need to set the heap allocation option before rJava
-# gets loaded by Rmallet.
+# internal use only
+# reload mallet and rJava with a new heap parameter for java
+# no-op if java_heap is NULL
 
-topics_rmallet_setup <- function(java_heap="2g",
-                                 source_dir=".") {
-    # Let's assume we're typically going to need more Java heap space;
-    # this sets the maximum allocation
-    heap_param <- paste("-Xmx",java_heap,sep="") 
-    options(java.parameters=heap_param)
-    library(mallet)
-    library(plyr)
-    library(Matrix)
-    library(zoo,warn.conflicts=F) # as.Date "masked," shaddup
-
-    # This file uses functions from metadata.R...
-    source(file.path(source_dir,"metadata.R"))
+.reload_mallet <- function(java_heap=NULL) {
+    if(!is.null(java_heap)) {
+        message("Reloading mallet with rJava heap setting -Xmx ",java_heap)
+        options(java.parameters=paste("-Xmx",java_heap,sep=""))
+        detach("package:mallet",unload=T,character.only=T)
+        detach("package:rJava",unload=T,character.only=T)
+        library("mallet")
+    }
 }
 
 # model_documents()
@@ -59,7 +51,8 @@ topics_rmallet_setup <- function(java_heap="2g",
 # documents, run these steps individually.
 
 model_documents <- function(citations.file,dirs,stoplist.file,num.topics,
-                            seed=NULL,num.top.words=50L) { 
+                            seed=NULL,num.top.words=50L,java_heap=NULL) { 
+    .reload_mallet(java_heap=java_heap)
     mf <- read_metadata(citations.file)
     texts <- read_dfr_wordcounts(dirs=dirs)
     instances <- make_instances(texts,stoplist.file)
@@ -301,7 +294,9 @@ docs_frame <- function(counts) {
 #
 # stoplist.file is passed on to mallet
  
-make_instances <- function(docs,stoplist.file,...) {
+make_instances <- function(docs,stoplist.file,java_heap=NULL,...) {
+    .reload_mallet(java_heap)
+
     # token regex: letters only, by default
     # another possibility would be to include punctuation \p{P}
     mallet.import(docs$id,docs$text,
@@ -349,7 +344,11 @@ train_model <- function(instances,num.topics,
                         n.burn.in=50,       # num. iters before starting hyp. o.
                         symmetric_alpha=F,  # all alpha_k equal?
                         threads=4L,
-                        seed=NULL) {
+                        seed=NULL,
+                        java_heap=NULL) {
+
+    .reload_mallet(java_heap)
+
     trainer <- MalletLDA(num.topics,alpha.sum,beta)
     trainer$model$setNumThreads(threads)
     if(!is.null(seed)) {
