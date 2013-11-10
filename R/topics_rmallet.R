@@ -211,7 +211,7 @@ read_dfr <- function(dirs=NULL,files=NULL,report_interval=100) {
 
     # add id column
 
-    data.frame(id=rep(as.id(fv),times=n_types),
+    data.frame(id=rep(filename_id(fv),times=n_types),
                WORDCOUNTS=wordtype,
                WEIGHT=wordweight,
                stringsAsFactors=F)
