@@ -742,18 +742,54 @@ series_frame_zoo <- function(s,date_col=2,value_col=3) {
     zoo(t(s_m),as.Date(colnames(s_m)))
 }
 
+#' Convert a matrix of yearly values into a zoo object
+#'
+#' @param yearly a matrix with variables in rows and dates in string form in its 
+#' \code{colnames}
+#' @return a \code{\link{zoo:zoo}} object
+#'
+#' @seealso \code{\link{zoo_yearly}}
 yearly_zoo <- function(yearly) {
     zoo(t(yearly),as.Date(colnames(yearly)))
 }
 
+#' Convert a zoo object into a matrix with variables in rows
+#'
+#' @param z a \code{\link{zoo:zoo}} object
+#' @return a matrix with variables in rows and dates in string form in its 
+#' \code{colnames}
+#'
+#' @seealso \code{\link{yearly_zoo}}
+#'
+#' @export
 zoo_yearly <- function(z) {
     as.matrix(t(z))
 }
 
+#' Convert a zoo object into a "long" data frame
+#'
+#' @param z a \code{\link{zoo:zoo}} object
+#' @param series_names the names for the three columns of the result
+#' @return the data frame from \code{\link{yearly_series_frame}}
+#' @seealso \code{\link{yearly_series_frame}},
+#' \code{\link{zoo_yearly}}
+#'
+#' @export
 zoo_series_frame <- function(z,series_names=c("word","year","weight")) {
     yearly_series_frame(zoo_yearly(z),series_names=series_names)
 }
 
+#' Take rolling weighted averages
+#'
+#' This takes rolling averages where adjacent time-slices are not given equal weights.
+#'
+#' @param the series (a \code{\link{zoo:zoo}} object, which can contain one or many 
+#' variables)
+#' @param totals the denominators used in weighting (must be parallel to \code{series})
+#' @param k the window to take the rolling average in
+#' @return a \code{\link{zoo:zoo}} object with the averaged values
+#'
+#' @seealso \code{\link{rollapply}}
 series_rolling <- function(series,totals,k) {
     rollapply(series,k,sum) / rollapply(totals,k,sum)
 }
