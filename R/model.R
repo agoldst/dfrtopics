@@ -1922,13 +1922,27 @@ term_year_matrix <- function(metadata,
     list(tym=result,yseq=levels(years))
 }
 
-# term_year_matrix_journal
-#
-# like term_year_matrix, but sum words only in one journal
-#
-# journal: a string, to match against metadata$journaltitle (so be careful 
-# about those trailing "\t"s)
-
+#' Derive a term-year counts conditioned on a journal
+#'
+#' Convenience wrapper for \code{\link{term_year_matrix}, summing counts 
+#' only for documents in a given journal
+#'
+#' @param journal the journal, matched against \code{metadata$journaltitle} (so be careful 
+#' about trailing tabs in JSTOR metadata fields)
+#' @param metadata the metadata frame
+#' @param the term-document matrix from \code{\link{instances_term_document_matrix}}
+#' @param id_map character vector mapping \code{tdm} columns to documents
+#' @param vocabulary character vector mapping \code{tdm} rows to terms
+#' @return a two-element \code{list(tym=...,yseq...)} as in \code{\link{term_year_matrix}}
+#'
+#' @seealso
+#' \code{\link{instances_term_document_matrix}}
+#' \code{\link{instances_ids}}
+#' \code{\link{instances_vocabulary}}
+#' \code{\link{term_year_matrix}}
+#'
+#' @export
+#'
 term_year_matrix_journal <- function(journal,
                                      metadata,
                                      tdm,
@@ -1950,10 +1964,30 @@ term_year_matrix_journal <- function(journal,
                      big=T)
 }
 
-# journal_year_matrix
-#
-# total wordcounts per journal per year 
-
+#' Sum a term-document matrix over journals and years
+#'
+#' Calculates the total wordcounts per journal per year from a term-document matrix. Can 
+#' be usefully applied not just to the result of 
+#' \code{\link{instances_term_document_matrix}} but also to a 
+#' \code{\link{term_document_topic_matrix}}.
+#'
+#' @param tdm matrix or \code{\link{Matrix:sparseMatrix}} with terms in rows and documents 
+#' in columns
+#' @param metadata metadata frame
+#' @param id_map character vector mapping \code{tdm} columns to \code{metadata$id} values
+#' @return an ordinary matrix with journals in rows and years in columns; the 
+#' \code{\link{base:rownames}} of the result give the \code{journaltitle} values and the 
+#' \code{\link{base:colnames}} give the dates as strings
+#'
+#' @seealso
+#'
+#' \code{\link{instances_term_document_matrix}},
+#' \code{\link{term_document_topic_matrix}},
+#' \code{\link{term_year_matrix}},
+#' \code{\link{term_year_topic_matrix}}
+#'
+#' @export
+#'
 journal_year_matrix <- function(tdm,metadata,id_map) {
     metadata <- metadata[metadata$id %in% id_map,]
 
@@ -1969,7 +2003,6 @@ journal_year_matrix <- function(tdm,metadata,id_map) {
     journals <- journals[id_map]
     journals <- factor(journals,ordered=T)
 
-    library(Matrix)
     Y <- Matrix(0,nrow=length(years),ncol=nlevels(years)) 
     Y[cbind(seq_along(years),years)] <- 1
 
