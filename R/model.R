@@ -848,91 +848,67 @@ topic_year_meta <- function(doctops,metadata,
 }
 
 
-# keys_frame
-#
-# For compatibility with my old read.keys function, this throws out the
-# weighting information returned by mallet.topic.words. The provided
-# mallet.top.words function only works on one topic at a time and rather
-# expensively copies out the whole vocabulary each time you call it so
-# let's at least frontload that step.
-#
-# Efficiency: where it counts least!
-#
-# Renumbers topics from 1
-
-keys_frame <- function(trainer,num.top.words=20) {
-    # matrix of weight assigned to vocabulary item j (cols) in topic i (rows)
-    # word j is trainer$getVocabulary()[j]
-    word_weights <- mallet.topic.words(trainer,smoothed=T,normalized=T)
-    vocab <- trainer$getVocabulary()
-    data.frame(topic=seq(trainer$model$numTopics),
-               alpha=trainer$getAlpha(),
-               keywords=
-                    apply(word_weights,1,function(wts) {
-                          paste(vocab[order(wts,decreasing=T)[1:num.top.words]],
-                                collapse=" ")
-                                        }
-                    ),
-               stringsAsFactors=F
-    )
-} 
-
-# weighted_keys_frame
-#
-# A more informative topic key-words data frame, in "long" format.
-# each row is (alpha,topic,word,weight),
-# with num.top.words rows for each of the topics.
-# The words are in order by weight for each topic.
-#
-# smoothed, normalized: parameters passed on to RTopicModel, which transforms 
-# the weights accordingly. For raw counts, set both to F (the default)
-#
-# Renumbers topics from 1
-
-weighted_keys_frame <- function(trainer,num.top.words=20,
+#' Topic key words with weights
+#'
+#' A more informative topic key-words data frame, in "long" format.
+#'
+#' "Key words" are identified simply by rank order of weight within the topic.
+#' The result also gives the estimated alpha hyperparameter value for each topic.
+#'
+#' @param trainer reference to the \code{RTopicModel} object
+#' @param n_top number of "top words" for each topic
+#' @param smoothed if TRUE, smooth document-topic distribution using hyperparameters 
+#" \eqn{\alpha_k}
+#' @param normalized if TRUE, weights sum to 1
+#' @return a data frame with \code{n} rows for each topic and four columns, \code{alpha,
+#' topic,word,weight}. \code{alpha} is repeated \code{n} times in each topic: it gives the 
+#' topic hyperparameter \eqn{\alpha_k}. \code{topic} is numbered from 1. The returned 
+#' words are in rank order within each topic.
+#'
+#' @seealso \code{\link{mallet:mallet.topic.words}}
+#' \code{\link{tw_wkf}}
+#'
+#' @export
+#'
+weighted_keys_frame <- function(trainer,n_top=50,
                                 smoothed=F,normalized=F) {
-    word_weights <- mallet.topic.words(trainer,
-                                       smoothed=smoothed,
-                                       normalized=normalized)
-    vocab <- trainer$getVocabulary()
-    n <- trainer$model$numTopics
-    reps <- rep(num.top.words,n)
-
-    result <- data.frame(
-        topic=rep(seq(n),times=reps),
-        alpha=rep(trainer$getAlpha(),times=reps),
-        word=character(n * num.top.words),
-        weight=numeric(n * num.top.words),
-        stringsAsFactors=F)
-
-    for(i in seq(n)) {
-        rows <- 1 + (((i - 1) * num.top.words) :  ((i * num.top.words) - 1))
-        js <- order(word_weights[i,],decreasing=T)[1:num.top.words]
-        result$weight[rows] <- word_weights[i,js]
-        result$word[rows] <- vocab[js]
-    }
-    result
+    tw <- mallet.topic.words(trainer,
+                             smoothed=smoothed,
+                             normalized=normalized)
+    tw_wkf(tw,
+           vocab=trainer$getVocabulary(),
+           alpha=trainer$getAlpha(),
+           n_top=n_top)
 }
 
-# topic_words_wkf
-#
-# given a topic_words matrix, produce the weighted keys frame (like
-# weighted_keys_frame, for when you have discarded the model object but
-# kept the topic_words)
-#
-# tw: a *matrix* (not dataframe) with topics in rows and words counts in
-# columns
-#
-# vocab: a vector, with words in the same order as the columns of tw
-#
-# alpha: a vector of alpha values for the topics
-#
-# n_top: number of top key words to store per topic
-
-topic_words_wkf <- function(tw,vocab,alpha,n_top=20) {
-
-    # TODO deduplicate code with weighted_keys_frame
-
+#' Topic key words from the topic-word matrix
+#'
+#' Given a topic-word matrix, produce the weighted key-word dataframe.
+#'
+#' This gives the same result as \code{\link{weighted_keys_frame}} but can be used when
+#' you no longer have the reference to the \code{RTopicModel} but have saved the topic-word
+#' matrix.
+#'
+#' @param tw a matrix (not dataframe) with topics in rows and word weights in
+#' columns
+#'
+#' @param vocab a character vector with words in the same order as the columns of \code{tw}
+#'
+#' @param alpha a vector of \eqn{\alpha_k} values for the topics
+#'
+#' @param n_top number of top key words to store per topic
+#'
+#' @return a data frame with \code{n} rows for each topic and four columns, \code{alpha,
+#' topic,word,weight}. \code{alpha} is repeated \code{n} times in each topic: it gives the 
+#' topic hyperparameter \eqn{\alpha_k}. \code{topic} is numbered from 1. The returned words are 
+#' in rank order within each topic.
+#'
+#' @seealso \code{\link{mallet:mallet.topic.words}},
+#' \code{\link{weighted_keys_frame}}
+#'
+#' @export
+#'
+tw_wkf <- function(tw,vocab,alpha,n_top=50) {
     n <- nrow(tw)
     reps <- rep(n_top,n)
 
