@@ -1,48 +1,55 @@
-# topic_report
-#
-# Visualize some information about a number of topics. Generates one PNG
-# for each topic, with three plots: a plot showing the weights of the
-# most probable words in each topic, and a plot showing distributions of
-# doc-topic counts/proportions over time (with a smoothing line), and a
-# plot showing the yearly proportion of words/docs in the topic---which
-# alternative in these latter two depends on whether the doc-topic
-# scores are normalized or not.
-#
-# dt_long: long-form doc-topics data frame. Assumed to have been made by
-# doc_topics_long(doc_topics,metadata,meta_keep="pubdate"), i.e.,
-# four columns, id, variable (in the form "topicN"), pubdate, value
-# (topic weight).
-#
-# dt_wide: wide-form doc-topics frame, assumed to have been made by
-# reading in doc_topics, merging by id with metadata, and dropping
-# all but id and pubdate.
-#
-# topic: a vector of topics (if NULL, visualizes every topic)
-#
-# wkf: weighted keys data frame
-#
-# time_breaks: time intervals by which to show doc-topic distributions
-#
-# log-scale: whether to show topic proportions on a log scale (for
-# unsmoothed models, set to F so as not to take log 0 )
-#
-# raw_counts: are scores normalized? TODO currently unused
-#
-# filename_base: the name of a directory to save PNG files in.
-#
-# w,h: PNG dimensions in pixels.
-
-topic_report <- function(dt_long,dt_wide,wkf,
-                         topics=NULL,
+#' Overview visualization of multiple topics
+#'
+#' This function is intended for surveying a topic model. It generates three plots for 
+#' each topic and saves the three plots in a single PNG file.
+#'
+#' For each topic, the PNG topic has three plots:
+#' \enumerate{
+#' \item{The weights of the
+#' most probable words in each topic.}
+#' \item{Boxplots of the distributions of
+#' document-topic counts/proportions within short time-slices.}
+#' \item{The yearly proportion of words/documents in the topic.}
+#' }
+#' The meaning of the latter two plots depends on whether the doc-topic
+#' scores are normalized or not. 
+#'
+#' The plots are saved to \code{output_dir/<NNN>.png}. If you have more than 1000 topics, 
+#' other parts of this package will probably break too.
+#'
+#' @param doctopics document-topic frame from \code{\link{doc_topics_frame}}
+#' @param wkf topic key words frame from \code{\link{weighted_keys_frame}}
+#' @param metadata metadata frame from \code{\link{read_metadata}}
+#'
+#' @param topic: a vector of topics to generate plots for (by default, all)
+#'
+#' @param time_breaks time intervals by which to slice document-topic distributions for 
+#' the box plots: passed on to \code{\link{topic_time_boxplots}}.
+#'
+#' @param log-scale if TRUE, show topic proportions on a log scale. For
+#' unsmoothed models, set to FALSE so as not to take \code{log(0)}.
+#'
+#' @param output_dir directory to save plots to
+#'
+#' @param w PNG width (pixels)
+#' @param h PNG height (pixels)
+#'
+#' @seealso
+#' \code{\link{topic_keyword_plot}},
+#' \code{\link{topic_time_boxplots}},
+#' \code{\link{topic_yearly_lineplot}}
+#' 
+#' @export
+#'
+topic_report <- function(doctopics,wkf,metadata,
+                         topics=1:(ncol(doctopics - 1)),
                          time_breaks="5 years",
                          log_scale=F,
-                         raw_counts=F,
-                         filename_base="topic_report",
+                         output_dir="topic_report",
                          w=1200,h=800) {
 
-    if(is.null(topics)) {
-        topics <- 1:length(unique(wkf$topic))
-    }
+    dt_wide <- doc_topics_wide(doctops,metadata,meta_keep="pubdate")
+    dt_long <- doc_topics_long(doctops,metadata,meta_keep="pubdate")
 
     # scale so that keyword weight bars are appropriately colored
     color_scale <- scale_color_gradient(limits=range(wkf$alpha))
@@ -52,7 +59,7 @@ topic_report <- function(dt_long,dt_wide,wkf,
     yearly <- tm_yearly_totals(tm_wide=dt_wide)
 
     for(topic in topics) {
-        filename <- file.path(filename_base,
+        filename <- file.path(output_dir,
                               sprintf("%03d.png",topic))
         png(file=filename,width=w,height=h)
         message("Saving ",filename)
@@ -77,14 +84,14 @@ topic_report <- function(dt_long,dt_wide,wkf,
     }
 }
 
-# topic_keyword_plot
-#
-# Plot a single topic's most probable words.
-#
-# wkf: weighted keys frame; topic: a topic number from 1.
-#
-# color_scale: specify if you are making many plots and want coloration
-# by alpha.
+#' topic_keyword_plot
+#'
+#' Plot a single topic's most probable words.
+#'
+#' wkf: weighted keys frame; topic: a topic number from 1.
+#'
+#' color_scale: specify if you are making many plots and want coloration
+#' by alpha.
 
 topic_keyword_plot <- function(wkf,topic,
                                color_scale=scale_color_gradient()) {
@@ -124,20 +131,20 @@ topic_keyword_plot <- function(wkf,topic,
     p
 }
 
-# corpus_dist_plot
-#
-# a quick way to visualize a useful diagnostic calculated by mallet:
-# the KL divergence between a topic and the corpus itself. These is
-# calculated by mallet's diagnostics output. Use read_diagnostics() to
-# get dataframes from the XML. Or you *could* calculate it yourself if
-# you insist.
-#
-# topic_diagnostics: a dataframe
-#
-# wkf: the weighted keys frame (for naming topics)
-#
-# Pass in subsets of these by topics if you wish to plot only some
-# topics. > 100 topics makes the labels hard to fit in a vertical stack.
+#' corpus_dist_plot
+#'
+#' a quick way to visualize a useful diagnostic calculated by mallet:
+#' the KL divergence between a topic and the corpus itself. These is
+#' calculated by mallet's diagnostics output. Use read_diagnostics() to
+#' get dataframes from the XML. Or you *could* calculate it yourself if
+#' you insist.
+#'
+#' topic_diagnostics: a dataframe
+#'
+#' wkf: the weighted keys frame (for naming topics)
+#'
+#' Pass in subsets of these by topics if you wish to plot only some
+#' topics. > 100 topics makes the labels hard to fit in a vertical stack.
 
 corpus_dist_plot <- function(topic_diagnostics,wkf) {
     topic_order <- order(topic_diagnostics$corpus_dist,decreasing=T)
@@ -164,27 +171,27 @@ corpus_dist_plot <- function(topic_diagnostics,wkf) {
 
 
 
-# tm_yearly_line_plot
-#
-# plot yearly averages. Supply a long or wide form data frame with
-# document- topic scores. Alternatively, you can precalculate the yearly
-# totals (using tm_yearly_totals() and supply them as .yearly_totals).
-#
-# topics: which topics to consider, as a vector of numbers from 1
-#
-# raw_counts: are topic scores word counts or estimated proportions?
-# Does not affect the actual plot, but if the topic scores have been
-# normalized then we are looking at frequency of the topic in documents
-# rather than freq. of the topic in words, so the title of the plot is
-# changed accordingly
-#
-# facet: faceted plot or multiple lines on one plot? If yes, you can use
-# the .faceting parameter to tweak the facet by passing a facet_wrap()
-# call
-#
-# .yearly_overall: if the denominator for a yearly average is not simply
-# the sum of all the entries (because you are supplying a subset of
-# the full topic matrix) you can supply this parameter
+#' tm_yearly_line_plot
+#'
+#' plot yearly averages. Supply a long or wide form data frame with
+#' document- topic scores. Alternatively, you can precalculate the yearly
+#' totals (using tm_yearly_totals() and supply them as .yearly_totals).
+#'
+#' topics: which topics to consider, as a vector of numbers from 1
+#'
+#' raw_counts: are topic scores word counts or estimated proportions?
+#' Does not affect the actual plot, but if the topic scores have been
+#' normalized then we are looking at frequency of the topic in documents
+#' rather than freq. of the topic in words, so the title of the plot is
+#' changed accordingly
+#'
+#' facet: faceted plot or multiple lines on one plot? If yes, you can use
+#' the .faceting parameter to tweak the facet by passing a facet_wrap()
+#' call
+#'
+#' .yearly_overall: if the denominator for a yearly average is not simply
+#' the sum of all the entries (because you are supplying a subset of
+#' the full topic matrix) you can supply this parameter
 
 
 tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
@@ -310,13 +317,13 @@ tm_time_averages_plot <- function(topics,yearly_matrix,
                       years,"years)"))
 }
 
-# tm_time_boxplots
-#
-# tm_long: a doc-topics frame with merged-in pubdate metadata
-#
-# time_breaks: intervals in which to plot doc-topic distributions
-#
-# log_scale: set to F if there are zeroes in the doc-topic proportions.
+#' tm_time_boxplots
+#'
+#' tm_long: a doc-topics frame with merged-in pubdate metadata
+#'
+#' time_breaks: intervals in which to plot doc-topic distributions
+#'
+#' log_scale: set to F if there are zeroes in the doc-topic proportions.
 
 tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
     tm_long$date_cut <- cut(pubdate_Date(tm_long$pubdate),time_breaks)
@@ -345,13 +352,13 @@ tm_time_boxplots <- function(tm_long,time_breaks="5 years",log_scale=T) {
         ggtitle(plot_title)
 }
 
-# tm_yearly_journals_plot
-#
-# Plot a topic's yearly average in individual journals in an area plot
-#
-# doctops,metadata,yearly_overall: as in tm_yearly_totals_meta
-#
-# or pass .yrly_j, a dataframe of yearly totals by journal and topic
+#' tm_yearly_journals_plot
+#'
+#' Plot a topic's yearly average in individual journals in an area plot
+#'
+#' doctops,metadata,yearly_overall: as in tm_yearly_totals_meta
+#'
+#' or pass .yrly_j, a dataframe of yearly totals by journal and topic
 
 tm_yearly_journals_plot <- function(topic,
                                     doctops=NULL,
@@ -376,33 +383,33 @@ tm_yearly_journals_plot <- function(topic,
 
 
 
-# ----------------
-# Individual words
-# ----------------
+#' ----------------
+#' Individual words
+#' ----------------
 
-# mallet_word_plot
-#
-# The MALLET 1-gram viewer! Also useful in conjunction with topic
-# frequencies over time. Compare tm_yearly_line_plot(topic,...) with
-# the results of mallet_word_plot(topic_top_words(topic,n=50,...)) to
-# discover whether corpus frequencies and topic frequencies diverge
-# (which may or may not be significant!)
-#
-# words: a vector of words
-#
-# term_year: the term_year_matrix
-#
-# year_seq: the year sequence corresponding to columns in the
-# term_year_matrix. Expected to be a factor or vector of ISO dates.
-#
-# the vocabulary corresponding to rows of the term_year_matrix
-#
-# plot_freq: plot raw counts or yearly ratios?
-#
-# smoothing: add a smoothing line to the plot?
-#
-# gg_only: if T, don't add geoms to plot object (so the caller can do it
-# instead)
+#' mallet_word_plot
+#'
+#' The MALLET 1-gram viewer! Also useful in conjunction with topic
+#' frequencies over time. Compare tm_yearly_line_plot(topic,...) with
+#' the results of mallet_word_plot(topic_top_words(topic,n=50,...)) to
+#' discover whether corpus frequencies and topic frequencies diverge
+#' (which may or may not be significant!)
+#'
+#' words: a vector of words
+#'
+#' term_year: the term_year_matrix
+#'
+#' year_seq: the year sequence corresponding to columns in the
+#' term_year_matrix. Expected to be a factor or vector of ISO dates.
+#'
+#' the vocabulary corresponding to rows of the term_year_matrix
+#'
+#' plot_freq: plot raw counts or yearly ratios?
+#'
+#' smoothing: add a smoothing line to the plot?
+#'
+#' gg_only: if T, don't add geoms to plot object (so the caller can do it
+#' instead)
 
 mallet_word_plot <- function(words,term_year,year_seq,vocab,
                              plot_freq=T,
@@ -439,25 +446,25 @@ mallet_word_plot <- function(words,term_year,year_seq,vocab,
         ggtitle(plot_title)
 }
 
-# words_topic_yearly_plot
-#
-# Given the results of term_year_topic_matrix, make a line plot showing
-# the occurrence of individual words IN A TOPIC over time. Whether you
-# plot counts or ratios, this is not the same as the corpus frequency of
-# the individual words; this is the time track of words assigned to the
-# given topic.
-#
-# words: a vector of words
-#
-# topic_desc: a short label for the topic, to go in the plot title
-#
-# tytm: the sparse matrix returned in the results of
-# term_year_topic_matrix
-#
-# yseq: the years corresponding to the columns of the tytm (also in
-# results of term_year_topic_matrix)
-#
-# vocab: the mallet vocabulary, corresponding to the rows of the tytm
+#' words_topic_yearly_plot
+#'
+#' Given the results of term_year_topic_matrix, make a line plot showing
+#' the occurrence of individual words IN A TOPIC over time. Whether you
+#' plot counts or ratios, this is not the same as the corpus frequency of
+#' the individual words; this is the time track of words assigned to the
+#' given topic.
+#'
+#' words: a vector of words
+#'
+#' topic_desc: a short label for the topic, to go in the plot title
+#'
+#' tytm: the sparse matrix returned in the results of
+#' term_year_topic_matrix
+#'
+#' yseq: the years corresponding to the columns of the tytm (also in
+#' results of term_year_topic_matrix)
+#'
+#' vocab: the mallet vocabulary, corresponding to the rows of the tytm
 
 words_topic_yearly_plot <- function(words,topic_desc,
                                     tytm,yseq,vocab,...) {
@@ -471,37 +478,37 @@ words_topic_yearly_plot <- function(words,topic_desc,
     result + ggtitle(plot_title)
 }
 
-# words_topic_yearly_plot_overall
-#
-# if you want the occurrence of the top words for a topic IN THE CORPUS,
-# you can use this convenience function to pass topic_top_words to
-# mallet_word_plot
-#
-# n: number of top words
-#
-# n = 0 to instead accept the default threshold for topic top words
+#' words_topic_yearly_plot_overall
+#'
+#' if you want the occurrence of the top words for a topic IN THE CORPUS,
+#' you can use this convenience function to pass topic_top_words to
+#' mallet_word_plot
+#'
+#' n: number of top words
+#'
+#' n = 0 to instead accept the default threshold for topic top words
 
 words_topic_yearly_plot_overall <- function(topic,wkf,n,...) {
     words <- topic_top_words(topic,wkf,n)
     mallet_word_plot(words,...)
 }
 
-# topic_dist_plot
-#
-# Gives a sense of the "closeness" of topics to one another
-#
-# More precisely, the strategy is to take the Jensen-Shannon divergence among 
-# the topics considered as distributions over words, and then use 
-# multidimensional scaling (i.e. PCA) to reduce these distances in word-
-# distribution space to distances in R^2.
-#
-# twm: matrix with topics in rows and word counts in columns
-# b: beta (used to smooth the counts)
-# wkf: weighted keys frame (for labeling)
-#
-# actually, nothing stops you setting twm = topic-document matrix and b = 
-# vector of alphas. That gives the distances among topics as distributions over 
-# documents.
+#' topic_dist_plot
+#'
+#' Gives a sense of the "closeness" of topics to one another
+#'
+#' More precisely, the strategy is to take the Jensen-Shannon divergence among 
+#' the topics considered as distributions over words, and then use 
+#' multidimensional scaling (i.e. PCA) to reduce these distances in word-
+#' distribution space to distances in R^2.
+#'
+#' twm: matrix with topics in rows and word counts in columns
+#' b: beta (used to smooth the counts)
+#' wkf: weighted keys frame (for labeling)
+#'
+#' actually, nothing stops you setting twm = topic-document matrix and b = 
+#' vector of alphas. That gives the distances among topics as distributions over 
+#' documents.
 
 topic_dist_plot <- function(twm,b,wkf) {
     divs <- topic_divergences(twm,b)
@@ -516,17 +523,17 @@ topic_dist_plot <- function(twm,b,wkf) {
 }
 
     
-# ---------------
-# About documents
-# ---------------
+#' ---------------
+#' About documents
+#' ---------------
 
-# Return a frame with ids and weights with the "top" documents for a topic
-#
-# method: the notion of a "top" document is not well-specified.
-#       "raw":  maximum scores in the topic-column of the dtm.
-#       "max_frac": maximum after normalizing the topic-column of the dtm. A 
-#       topic may reach its maximum proportion in a document and yet that 
-#       document may yet have a larger proportion of another topic.
+#' Return a frame with ids and weights with the "top" documents for a topic
+#'
+#' method: the notion of a "top" document is not well-specified.
+#'       "raw":  maximum scores in the topic-column of the dtm.
+#'       "max_frac": maximum after normalizing the topic-column of the dtm. A 
+#'       topic may reach its maximum proportion in a document and yet that 
+#'       document may yet have a larger proportion of another topic.
 
 top_documents <- function(topic,id_map,dtm,n=5,method="raw") {
     if(method=="raw") {
@@ -545,11 +552,11 @@ top_documents <- function(topic,id_map,dtm,n=5,method="raw") {
     data.frame(id=ids,weight=wts)
 }
 
-# This one means different things, depending on whether dtm is
-# normalized per topic. If dtm is raw counts, one gets the topics that
-# have been assigned the largest number of words in a document. But
-# if dtm is column-normalized, then one gets the topics for which the
-# document is comparatively most prominent within that topic.
+#' This one means different things, depending on whether dtm is
+#' normalized per topic. If dtm is raw counts, one gets the topics that
+#' have been assigned the largest number of words in a document. But
+#' if dtm is column-normalized, then one gets the topics for which the
+#' document is comparatively most prominent within that topic.
 
 top_topics <- function(id,id_map,dtm,n=5) {
     i <- match(id,id_map)
@@ -558,9 +565,9 @@ top_topics <- function(id,id_map,dtm,n=5) {
     data.frame(topic=indices,weight=dtm[i,indices])
 }
 
-# ------------
-# About topics
-# ------------
+#' ------------
+#' About topics
+#' ------------
 
 topic_name <- function(topic,wkf,n=0,threshold=0.5,
                        name_format="%03d %s") {
@@ -571,7 +578,7 @@ topic_name <- function(topic,wkf,n=0,threshold=0.5,
     sprintf(name_format,topic,words_str)
 }
 
-# or the above applied to many topics at once
+#' or the above applied to many topics at once
 topic_names <- function(wkf,n=2,topics=NULL,
                         name_format="%03d %s") {
     if(length(topics) == 0) {
@@ -595,9 +602,9 @@ topic_top_words <- function(topic,wkf,n=0,threshold=0.5) {
     words
 }
 
-# How many of each item type appear in each temporal interval?
-#
-# not a very fancy plot
+#' How many of each item type appear in each temporal interval?
+#'
+#' not a very fancy plot
 
 plot_items_by_year <- function(metadata,time_interval="year") {
     to.plot <- transform(metadata,
