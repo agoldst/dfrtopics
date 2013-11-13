@@ -56,7 +56,7 @@ topic_report <- function(doctopics,wkf,metadata,
 
     # only calculate yearly totals once for all topics
 
-    yearly <- tm_yearly_totals(tm_wide=dt_wide)
+    yearly <- topic_year_matrix(tm_wide=dt_wide)
 
     for(topic in topics) {
         filename <- file.path(output_dir,
