@@ -1,27 +1,7 @@
-# topics_rmallet.R
-#
-# Functions for creating topic models and manipulating their output.
-# Uses the R API for mallet. The underlying modeling is done by the
-# cc.mallet.topics.ParallelTopicModel java class.
-#
-# Source this, then call topics_rmallet_setup(). model_documents() is
-# a wrapper for the most basic usage, but it is more useful as an
-# explanation of the order in which the other functions here are to be
-# used.
-#
-# A note on using the R mallet API
-# --------------------------------
-#
-# When you make a trainer object with MalletLDA(), the result actually
-# holds the full topic model in the form of the ParallelTopicTrainer
-# java object accessible at trainer$model. N.B. java is strict about
-# typing, which makes for some funtimes. To index into array-like
-# objects, apply as.integer() to parameters.
-
 # internal use only
 # reload mallet and rJava with a new heap parameter for java
 # no-op if java_heap is NULL
-
+#
 .reload_mallet <- function(java_heap=NULL) {
     if(!is.null(java_heap)) {
         message("Reloading mallet with rJava heap setting -Xmx ",java_heap)
