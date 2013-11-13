@@ -481,14 +481,23 @@ train_model <- function(instances,num_topics,
     trainer
 }
 
-# doc_topics_frame
-#
-# Create a data frame with topic proportions for each document in the
-# first n columns and document ids in the last column. The rows are in
-# the order of documents passed into mallet. This function renumbers
-# topics from 1. The result is suitable for joining with metadata. 
-
-doc_topics_frame <- function(trainer,smoothed=T,normalized=T) { 
+#' Get the document-topic data frame
+#'
+#' Create a data frame with topic proportions for each document in the
+#' first n columns and document ids in the last column.
+#'
+#' This is the document-topic matrix with an extra column to make merging against metadata 
+#' easier. 
+#'
+#' @param trainer The \code{RTopicModel} object, after a training run
+#' @param smoothed if TRUE, smooth document-topic distribution using hyperparameters 
+#" \eqn{\alpha_k}
+#' @param normalized if TRUE, weights sum to 1
+#' @return A dataframe with columns \code{topic1,topic2,...,topicN,id}.
+#'
+#' @export
+#'
+doc_topics_frame <- function(trainer,smoothed=F,normalized=F) { 
     # matrix of topic proportions (cols) in docs (rows)
     # smoothing means nothing has 0 prob.
     # normalized instead of raw counts 
