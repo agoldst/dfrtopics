@@ -2029,47 +2029,22 @@ journal_year_matrix <- function(tdm,metadata,id_map) {
     result
 }
 
-# tdm_tm
-#
-# Convert a term-document sparseMatrix to the tm package's format.
-#
-# If tf_idf is TRUE, also replaces entries with tf-idf scores.
-
-tdm_tm <- function(tdm,tf_idf=T) {
-    library(tm)
-    if(tf_idf) {
-        result <- as.TermDocumentMatrix(tdm,weighting=weightTfIdf)
-    } else  {
-        # weightTf is just the identity function
-        result <- as.TermDocumentMatrix(tdm,weighting=weightTf)
-    }
-    result
-}
-
-# Converting the tm package object back down to a regular sparseMatrix
-# Because they don't provide an "as" method themselves
-
-TermDocument_sparse <- function(tdm) {
-    sparseMatrix(i=tdm$i,j=tdm$j,x=tdm$v,dims=c(tdm$nrow,tdm$ncol))
-}
-
-# tf_idf
-#
-# direct calculation of tf_idf scores from my plain tdm sparseMatrix
-#
-# term and doc (both numeric indices) can be vectors.
-#
-# May not be optimal for speed for calculating scores for the whole tdm.
-
+#' Calculate tf*idf scores
+#'
+#' Calculates tf*idf scores from a term-document \code{\link{Matrix:sparseMatrix}}.
+#'
+#' May not be optimal for speed for calculating scores for the whole tdm.
+#'
+#' @param term numeric index into rows of \code{tdm} (can be a vector)
+#' @param doc numeric index into columns of \code{tdm} (can be a vector)
+#' @param tdm term-document \code{\link{Matrix:sparseMatrix}}
+#'
+#' @seealso
+#' \code{\link{instances_term_document_matrix}}
+#'
+#' @export
+#'
 tf_idf <- function(term,doc,tdm) {
     idf <- log(ncol(tdm) / rowSums(tdm[term,,drop=F] != 0))
     Diagonal(n=length(term),x=idf) %*% tdm[term,doc]
 }
-
-# TODO topic key words / all topic words weighted according to
-# Blei and Lafferty, "Topic Models":
-#
-# score(k,v) = beta(k,v) log( beta(k,v) / ( Prod_j beta(j,v) )^(1/K) )
-#
-# where beta(k,v) is the estimated probability of term v in topic k, and K is 
-# the number of topics
