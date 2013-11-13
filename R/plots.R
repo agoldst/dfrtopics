@@ -1,3 +1,6 @@
+# Selected visualizations of the topic model and the corpus, with an emphasis on seeing 
+# how the counts are distributed over document dates.
+
 #' Overview visualization of multiple topics
 #'
 #' This function is intended for surveying a topic model. It generates three plots for 
