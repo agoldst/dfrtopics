@@ -4,9 +4,9 @@
 #'
 #' Extracts the most salient words from the weighted key-words frame.
 #'
-#' The "top" words are tose the maximum weightings for the topic in \code{wkf}. IN 
-#' addition to raw ranking, consider the "salience" score calculated by 
-#' \code{\link{topic_word_scores}}.
+#' The "top" words are those with the maximum weightings for the topic in \code{wkf}. In 
+#' addition to raw ranking (the default for \code{\link{weighted_keys_frame}}, consider 
+#' the "salience" score calculated by \code{\link{topic_word_scores}}.
 #'
 #' @param topic the topic number (one-based)
 #' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
