@@ -557,11 +557,20 @@ topic_dist_plot <- function(tw,b,
 
     
 
-#' How many of each item type appear in each temporal interval?
+#' Histogram of items by year
 #'
-#' not a very fancy plot
-
-plot_items_by_year <- function(metadata,time_interval="year") {
+#' Use the metadata to see the time distribution of the corpus. Not a very fancy plot.
+#'
+#' Facets on item types (often useful, but note that JSTOR's metadata is imperfect).
+#'
+#' @param metadata the metadata frame
+#' @param time_interval passed on to \code{\link[base]{cut.Date}} to bin dates
+#' 
+#' @return A \link[ggplot2]{ggplot} object.
+#'
+#' @export
+#'
+items_time_histogram <- function(metadata,time_interval="year") {
     to.plot <- transform(metadata,
                          Date=cut(pubdate_Date(pubdate),
                                   breaks=time_interval))
