@@ -108,7 +108,7 @@ topic_names <- function(wkf,topics=unique(wkf$topic),name_format="%03d %s",...) 
 #' 
 #' @export
 #'
-topic_labeller <- function(wkf,...)
+topic_labeller <- function(wkf,...) {
     function (topic) { topic_name(topic,wkf=wkf,...) }
 }
 

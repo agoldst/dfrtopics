@@ -376,7 +376,7 @@ topic_time_boxplots <- function(doctops_long,time_breaks="5 years",log_scale=T) 
 #' @return A \link[ggplot2]{ggplot} object.
 #'
 #' @seealso
-# '\code{\link{topic_year_meta}}
+#' \code{\link{topic_year_meta}}
 #'
 #' @export
 #' 
@@ -480,7 +480,7 @@ term_yearly_lineplot <- function(words,term_year,year_seq,vocab,
 #' \code{\link{term_year_topic_matrix}}
 #'
 #' @param yseq map from columns of the tytm to dates (also in
-#' results of \code{\link{term_year_topic_matrix})
+#' results of \code{\link{term_year_topic_matrix}})
 #'
 #' @param vocab map from rows of \code{tytm} to words (the MALLET vocabulary)
 #'
