@@ -48,19 +48,42 @@ model_documents <- function(citations.file,dirs,stoplist.file,num.topics,
          seed=seed)
 }
 
-# output_model
-#
-# Convenience function for saving all the model outputs at once.
-#
-# model_result: the result from model_documents, or, equivalently, a list with 
-# elements called trainer, doc_topics, wkf, seed.
-#
-# output_dir: where to save files with default names.
-#
-# save_instances: extract the instance list from the trainer object?
-#
-# save_scaled: write a file of 2D coordinate for the topics?
-
+#' A convenience function for saving all the model outputs at once.
+#'
+#' Save a series of files with the results of an LDA run.
+#'
+#' The following files are written to \code{output_dir}:
+#' \describe{
+#' \item{\code{topic_words.csv}}{unnormalized topic-word matrix, CSV format}
+#' \item{\code{vocab.txt}}{list of words (same order as columns of topic-word matrix), one 
+#' per line}
+#' \item{\code{params.csv}}{CSV with one row of data holding miscellaneous model 
+#' parameters}
+#' \item{\code{keys.csv}}{topic key words CSV; see \code{\link{weighted_keys_frame}} for 
+#' the format}
+#' \item{\code{doc_topics.csv}}{document-topic matrix CSV; see
+#' \code{\link{doc_topics_frame}} for the format}
+#' \item{\code{mallet_state.gz}}{MALLET sampling state (a big file)}
+#' \item{\code{diagnostics.xml}}{MALLET model diagnostics}
+#' \item{\code{instances.mallet}}{save the source text "instances" file (not done by
+#' default)}
+#' \item{\code{topic_scaled.csv}}{CSV with scaled 2D coordinates for the topics. Obtained 
+#' by applying \code{\link{cmdscale}} to a matrix of topic divergences calculated by 
+#' \code{\link{topic_divergences}}}
+#' }
+#'
+#' @param model_result the result from \code{\link{model_documents}}, or, equivalently, a 
+#' list with 
+#' elements called \code{trainer}, \code{doc_topics}, \code{wkf}, and \code{seed}.
+#'
+#' @param output_dir where to save all the output files.
+#'
+#' @param save_instances if TRUE, extract the instance list from the trainer object and save it to \code{instances.mallet}; if FALSE (the default), don't
+#'
+#' @param save_scaled if TRUE (the default), write a file of 2D coordinate for the topics
+#'
+#' @export
+#'
 output_model <- function(model_result,output_dir=".",
                          save_instances=F,save_scaled=T) {
     tw_f <- file.path(output_dir,"topic_words.csv")
@@ -119,42 +142,50 @@ output_model <- function(model_result,output_dir=".",
     }
 }
 
-# read_dfr_wordcounts
-#
-# reads in wordcounts*.CSV files and produces a dataframe with one line
-# for each document containing the id and the "text" of the document as
-# an inflated bag of words
-#
-# dirs, files: vectors
-#
-# uses all wordcounts*.CSV files in each of the dirs and all the files
-# in files
-
+#' Convert DfR wordcount files to a single dataframe
+#'
+#' This function reads in \code{wordcounts*.CSV} files and produces a
+#' dataframe with one line for each document. A big waste of memory, but a simple 
+#' way to get these files into MALLET.
+#'
+#' @param dirs character vector of directories containing \code{wordcounts*.CSV} files
+#' @param files individual filenames to read.
+#' @return a dataframe with one line for each document with two fields, the document id 
+#' (from the filename) and the "text" of the document as an inflated bag of words.
+#'
+#' @export
+#' 
 read_dfr_wordcounts <- function(dirs=NULL,files=NULL) {
     counts <- read_dfr(dirs=dirs,files=files)
     docs_frame(counts)
 }
 
-# read_dfr
-#
-# dirs, files: as above
-#
-# reads in a bunch of wordcounts*.CSV files and stacks them up in a
-# single "long format" dataframe with rows:
-# id        WORDCOUNTS  WEIGHT
-# <docid>   <feature>   <count>
-#
-# Note that empty documents are skipped; DfR supplies wordcounts files
-# for documents that have no wordcount data. These will be in DfR's
-# metadata but not in the output dataframe here.
-#
-# TODO could this be faster? This is slow. A perl script would be
-# faster, but this keeps us in R and does everything in memory.
-#
-# memory usage: for N typical journal articles, the resulting dataframe
-# needs about 20N K of memory. So R will hit its limits somewhere around
-# 100K articles.
-
+#' Convert DfR wordcount files to a long-format data frame
+#'
+#' Reads in a bunch of \code{wordcounts*.CSV} files and stacks them up in a
+#' single "long format" dataframe. Invoked by
+#' \code{\link{read_dfr_wordcounts}}.
+#'
+#' Empty documents are skipped; DfR supplies wordcounts files
+#' for documents that have no wordcount data. These will be in DfR's
+#' metadata but not in the output dataframe here.
+#'
+#' This is slow. An outboard script in python or Perl is
+#' faster, but this keeps us in R and does everything in memory.
+#' Memory usage: for N typical journal articles, the resulting dataframe
+#' needs about 20N K of memory. So R will hit its limits somewhere around
+#' 100K articles of typical length.
+#'
+#' @param dirs character vector of directories containing \code{wordcounts*.CSV} files
+#' @param files individual filenames to read.
+#' @return A dataframe with three columns: \code{id}, the document ID; 
+#' \code{WORDCOUNTS}, a feature counted by JSTOR (i.e. a word type); \code{WEIGHT}, the 
+#' count.
+#' @seealso
+#' \code{\link{read_dfr_wordcounts}}
+#'
+#' @export
+#' 
 read_dfr <- function(dirs=NULL,files=NULL,report_interval=100) {
     # aggregate all filenames in files
     # and all wordcounts*.CSV files in each dir in dirs
@@ -198,14 +229,19 @@ read_dfr <- function(dirs=NULL,files=NULL,report_interval=100) {
 
 }
 
-# overall_counts
-#
-# given a counts frame like that returned by read_dfr, calculate total
-# corpus-wide counts for each word type
-#
-# returns a 1D table, i.e. a vector of counts with word types as the
-# element names
-
+#' Calculate total corpus-wide feature counts
+#'
+#' Given a wordcounts long-format dataframe returned by \code{\link{read_dfr}},
+#' calculate total
+#' corpus-wide counts for each word type
+#'
+#' @param counts The dataframe from \code{\link{read_dfr}}
+#' @return a 1D table, i.e. a vector of counts with word types as the
+#' element names
+#' @seealso \code{\link{read_dfr}}
+#'
+#' @export
+#' 
 overall_counts <- function(counts) {
     # the dumb way is surprisingly fast (lazy evaluation?)
     # whereas ddply(counts,.(WORDCOUNTS),summarize,count=sum(WEIGHT))
@@ -213,19 +249,23 @@ overall_counts <- function(counts) {
     with(counts,table(rep(WORDCOUNTS,times=WEIGHT)))
 }
 
-# remove_rare
-#
-# throw out words whose frequency in the *corpus* is below a threshold
-#
-# counts: long-form dataframe as returned by read_dfr
-#
-# freq_threshold: frequency threshold (between 0 and 1)
-#
-# OR rank_threshold: rank threshold (natural number)
-
+#' Throw out words whose frequency in the corpus is below a threshold
+#'
+#' For filtering wordcounts before building MALLET instances.
+#'
+#' @param counts long-form dataframe as returned by \code{\link{read_dfr}}
+#' @param freq_threshold frequency threshold (NULL, or a number between 0 and 1)
+#' @param rank_threshold rank threshold (natural number): used if \code{freq_threshold} 
+#' is NULL
+#' @param .overall precalculated overall counts (if NULL, \code{\link{overall_counts}} is 
+#' invoked)
+#'
+#' @return A filtered feature-counts dataframe
+#' 
+#' @export
+#' 
 remove_rare <- function(counts,freq_threshold=NULL,rank_threshold=NULL,
                         .overall=NULL) { 
-    # (buried parameter: .overall: precalculated overall counts) 
     if(is.null(.overall)) {
         overall <- overall_counts(counts)
     }
@@ -254,27 +294,40 @@ remove_rare <- function(counts,freq_threshold=NULL,rank_threshold=NULL,
     result
 } 
                         
-# docs_frame
-#
-# counts: long-format data frame like that returned by read_dfr
-#
-# inflates wordcounts into bags of words
-# 
-# the result is a dataframe
-
+#' Convert long-format feature-counts into documents
+#'
+#' Naively "inflates" feature counts into a bag of words, for sending to MALLET.
+#'
+#' @param counts long-format data frame like that returned by \code{\link{read_dfr}}
+#'
+#' @return a dataframe with two columns: \code{id}, the document id; \code{text}, the full 
+#' document text (but with the words in meaningless order)
+#'
+#' @seealso \code{\link{read_dfr_wordcounts}}
+#' 
+#' @export
+#' 
 docs_frame <- function(counts) {
     ddply(counts,.(id),summarize,
           text=paste(rep(WORDCOUNTS,times=WEIGHT),collapse=" "))
 }
 
-# make_instances
-# 
-# given a frame like that returned by docs_frame above,
-# create a mallet InstanceList object
-#
-# stoplist.file is passed on to mallet
- 
-make_instances <- function(docs,stoplist.file,java_heap=NULL,...) {
+#' Create MALLET instances from a document frame
+#' 
+#' Given a frame like that returned by \code{\link{docs_frame}},
+#' create a MALLET \code{InstanceList} object
+#'
+#' @param docs data frame with \code{id} and \code{text} columns
+#' @param stoplist_file passed on to MALLET
+#' @param java_heap if non-null, java is restarted with this heap parameter
+#' @param ... passed on to \code{\link[mallet]{mallet.import}}
+#' @return an rJava reference to a MALLET \code{InstanceList}
+#' @seealso \code{\link{train_model}}
+#' \code{\link{write_instances}}
+#'
+#' @export
+#' 
+make_instances <- function(docs,stoplist_file,java_heap=NULL,...) {
     .reload_mallet(java_heap)
 
     # token regex: letters only, by default
@@ -372,36 +425,59 @@ doc_topics_frame <- function(trainer,smoothed=T,normalized=T) {
     cbind(doc.frame,id=trainer$getDocumentNames(),stringsAsFactors=F)
 }
 
-# doc_topics_matrix
-#
-# Extract just the numerical part of a doc_topics frame. If you are using the 
-# output of the above, you can assume topics in numerical order and documents
-# in the order of the instances passed to mallet.
-
+#' Extract the numerical part of a doc_topics frame
+#'
+#' A convenience function for extracting the numerical part of a doc_topics frame, 
+#' discarding the document id's.
+#'
+#' If you have the trainer object, you can simply use 
+#' \code{\link{mallet:mallet.doc.topics}}.
+#'
+#' @param doctopics the data frame from \code{\link{doc_topics_frame}}
+#' @seealso \code{\link{mallet:mallet.doc.topics}},
+#' \code{\link{doc_topics_frame}}
+#'
+#' @export
+#'
 doc_topics_matrix <- function(doctopics) {
     as.matrix(doctopics[,-ncol(doctopics)])
 }
 
-# normalize_doc_topics
-#
-# by convention, I'll call the parameter dtm when I use just the doc-topic 
-# matrix, with no metadata in it.
-
+#' Normalize columns to sum to one
+#'
+#' Normalize columns to sum to one
+#'
+#' A convenience function for expressing the process of normalizing the doc-topic matrix. 
+#' Actually valid for any matrix in which no column is entirely zero.
+#'
+#' @param dtm the doc_topics matrix (or any other matrix with weights in columns)
+#'
+#' @return a matrix
+#'
+#' @export
+#'
 normalize_doc_topics <- function(dtm) {
     dtm <- dtm %*% diag(1 / colSums(dtm))
 }
 
-# doc_topics_long
-#
-# synthesize the above doc_topics frame with metadata into a "long" format
-#
-# meta_keep: vector of names of columns of metadata to keep
-#
-# the result will have rows called:
-#
-# "id"      meta_keep[1]  meta_keep[2] ...  "variable"  "value"
-# <docid>   <metadata vals ...>             topicN      <topic proportion>
-
+#' Get a melted document-topic-metadata frame
+#'
+#' Synthesizes a \code{\link{doc_topics_frame}} with metadata into a "long" format
+#'
+#' @param doctops frame with document-topic weights and an id column
+#' @param metadata frame
+#' @param meta_keep vector of names of columns of metadata to keep
+#'
+#' @return a data frame with an id column, one column for each element of 
+#' \code{meta_keep}, a \code{variable} column with \code{topic<n>} labeling the topic, and 
+#' a \code{value} column with the topic score
+#'
+#' @seealso \code{\link{plyr:melt}}, \code{\link{doc_topics_frame}}, 
+#' \code{\link{doc_topics_wide}},
+#' \code{\link{read_metadata}}
+#'
+#' @export
+#'
 doc_topics_long <- function(doctops,metadata,
                             meta_keep=c("pubdate","journaltitle")) {
     library(reshape2)
