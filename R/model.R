@@ -1100,34 +1100,41 @@ read_simplified_state <- function(infile,
     state
 }
 
-# term_year_topic_matrix
-#
-# Find the term counts per year for a given topic.
-#
-# The result is, like that of term_year_matrix() below, a list:
-#     tym, a sparseMatrix with terms in vocab order in rows and years in cols
-#     yseq, the ordering of years in the columns
-#     topic, the topic that this slice represents
-#
-# ss: the "simplified state" returned by read_simplified_state. Operated on 
-# using the mwhich function from the bigmemory package.
-#
-# id_map: the list of doc id's as mallet knows them.
-#
-# vocab: the list of word types as mallet knows them.
-#
-# metadata: returned from read_metadata
+#' Calculate yearly term-topic counts
+#'
+#' Total up the number of times some words are assigned to a given topic.
+#'
+#' This function makes use of the "simplified state" to look at yearly trends for words 
+#' \emph{within} topics. Normally a given word type is divided between multiple topics in 
+#' a single document. This allows you to investigate how the model distributes uses of 
+#' certain words over time to topics.
+#' 
+#' @return a list similar to that returned by \code{\link{term_year_matrix}}:
+#' \describe{
+#'     \item{\code{tym}}{a sparseMatrix with terms in vocab order in rows and years in columns}}
+#'     \item{\code{yseq}}{a character vector mapping columns to years}
+#'     \item{topic}{the value of the \code{topic} parameter}}
+#'
+#' @param topic one-based topic number
+#' @param ss a \code{big.matrix} holding the "simplified state" as returned by 
+#' \code{\link{read_simplified_state}. Operated on using \code{\link{bigmemory:mwhich}}.
+#'
+#' @param id_map a character vector mapping document numbers in \code{ss} to JSTOR id's 
+#' that can be matched against \code{metadata$id}
+#'
+#' @param vocab a character vector mapping word numbers in \code{ss} to words as strings
+#'
+#' @param metadata the dataframe of metadata as returned by \code{\link{read_metadata}}
+#'
+#' @seealso \code{\link{read_simplified_state}},
+#' \code{\link{term_year_matrix}},
+#' \code{\link{term_document_topic_matrix}}
+#' 
+#' @export
+#'
+term_year_topic_matrix <- function(topic,ss,id_map,vocab,metadata) {
 
-term_year_topic_matrix <- function(topic,ss,id_map,metadata,vocab) {
-    library(Matrix)
-
-    indices <- mwhich(ss,"topic",topic,"eq")
-
-    tdm_topic <- sparseMatrix(i=ss[indices,"type"],
-                              j=ss[indices,"doc"],
-                              x=ss[indices,"count"],
-                              dims=c(length(vocab),
-                                     length(id_map)))
+    tdm_topic <- term_document_topic_matrix(topic,ss,id_map,vocab) 
 
     result <- term_year_matrix(metadata=metadata,
                                tdm=tdm_topic,
@@ -1139,15 +1146,38 @@ term_year_topic_matrix <- function(topic,ss,id_map,metadata,vocab) {
     result
 }
 
-# topic_yearly_top_words
-#
-# Which are the top words in a given topic per year?
-#
-# returns a vector of pasted-together words, with the dates as names
-# 
-# tytm, yseq: returned from the term_year_topic_matrix
-#
-# n_words: how many words?
+#' The term-document matrix for a topic
+#'
+#' Extracts a matrix of counts of words assigned to a given topic in each document from 
+#' the "simplified" sampling state.
+#'
+#' @return a \code{\link{Matrix:sparseMatrix}} with terms in rows (\code{vocab} 
+#' order) and documents in columns (\code{id_map} order). No normalization or smoothing is 
+#' applied to word counts.
+#'
+#' @param ss a \code{big.matrix} holding the "simplified state" as returned by 
+#' \code{\link{read_simplified_state}. Operated on using \code{\link{bigmemory:mwhich}}.
+#'
+#' @param id_map a character vector mapping document numbers in \code{ss} to JSTOR id's 
+#'
+#' @param vocab a character vector mapping word numbers in \code{ss} to words as strings
+#'
+#' @seealso \code{\link{read_simplified_state}},
+#' \code{\link{term_year_matrix}},
+#' \code{\link{term_year_topic_matrix}}
+#' 
+#' @export
+#'
+term_document_topic_matrix <- function(topic,ss,id_map,vocab) {
+    library(bigmemory)
+    indices <- mwhich(ss,"topic",topic,"eq")
+
+    sparseMatrix(i=ss[indices,"type"],
+                 j=ss[indices,"doc"],
+                 x=ss[indices,"count"],
+                 dims=c(length(vocab),
+                        length(id_map)))
+}
 
 topic_yearly_top_words <- function(tytm,yseq,vocab,n_words=5) {
     result <- character(length(yseq))
