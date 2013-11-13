@@ -367,53 +367,98 @@ make_instances <- function(docs,stoplist_file,java_heap=NULL,...) {
                   ...)
 }
 
-# write_instances
-#
-# write a mallet InstanceList object to a file
- 
-write_instances <- function(instances,output.file) {
-  instances$save(new(J("java.io.File"),output.file))
+#' Save a mallet InstanceList object to a file
+#'
+#' Saves mallet instances to disk using MALLET's file writer. The result is then 
+#' equivalent to \code{mallet import-dirs} or similar at the command line.
+#' @param instances reference to the \code{InstanceList}
+#' @param output_file filename
+#'
+#' @seealso \code{\link{read_instances}},
+#' \code{\link{make_instances}}
+#'
+#' @export
+#' 
+write_instances <- function(instances,output_file="instances.mallet") {
+  instances$save(new(J("java.io.File"),output_file))
 }
 
-# read_instances
-#
-# read a mallet InstanceList object from a file
-
+#' Read a mallet \code{InstanceList} object from a file
+#'
+#' Reads a mallet \code{InstanceList} object from a file.
+#'
+#' @param filename the instance file
+#' @return a reference to the MALLET \code{InstanceList} object
+#' @seealso \code{\link{write_instances}},
+#' \code{\link{make_instances}}
+#' \code{\link{train_model}}
+#'
+#' @export
+#' 
 read_instances <- function(filename) {
     J("cc.mallet.types.InstanceList","load",new(J("java.io.File"),
                                                 path.expand(filename)))
 }
 
-# train_model
-#
-# train the topic model
-#
-# instances: can either be a mallet instances object or the name of a
-# mallet instances file
-#
-# returns the trainer object, which holds a reference to the RTopicModel
-# object (which in turns points to the actual modeling object of class
-# ParallelTopicModel
-#
-# optimize_hyperparameters=F overrides the other switches for hyperparameter 
-# optimization and turns estimation of alpha_k off.
-
-train_model <- function(instances,num.topics,
-                        alpha.sum=5,beta=0.01,      # starting values
-                        n.iters=200,
-                        n.max.iters=10,     # at end: iterated conditional modes
+#' Train a topic model
+#'
+#' Invokes MALLET's parallel topic modeling algorithm.
+#'
+#' @param instances either an rJava reference to an \code{InstanceList} object or the 
+#' name of a MALLET instances file
+#' @param num_topics how many topics to train?
+#' @param alpha_sum initial sum of hyperparameters \eqn{alpha_k}: priors of topics over 
+#' document
+#' @param beta initial value of hyperparameter \eqn{\beta}: prior of topics over words
+#' @param n_iters number of Gibbs sampling iterations to run
+#' @param n_max_iters number of "iterated conditional modes"
+#' @param optimize_hyperparameters if TRUE (the default), optimize \eqn{\alpha_k} and 
+#' \eqn{\beta}. If FALSE, the value of \code{symmetric_alpha} is ignored.
+#' @param n_hyper_iters how often to do hyperparameter optimization
+#' @param n_burn_in number of initial "burn-in" iterations before hyperparameter 
+#' optimization
+#' @param symmetric_alpha if FALSE (the default), allow the
+#' \eqn{\alpha_k} to be different from one another. If TRUE when
+#' \code{optimize_hyperparameters} is TRUE, then the sum of the alphas
+#' will still be varied by the algorithm, but all the \eqn{\alpha_k}
+#' will be the same.
+#' @param threads number of threads to run in parallel. 
+#' @param seed MALLET's random number seed: set this to ensure a reproducible model.
+#' instances: can either be a mallet instances object or the name of a
+#' mallet instances file
+#' @param java_heap if non-null, java is restarted with this heap parameter
+#'
+#' @return the trainer object, which holds a reference to the \code{RTopicModel}
+#' object constructed by \code{\link{mallet:MalletLDA}}. In order to access the full 
+#' MALLET Java API, use this object's reference to the \code{ParallelTopicModel}, which is 
+#' simply \code{trainer$model}. You can then call all the \code{ParallelTopicModel} 
+#' methods, though Java's strict typing means you'll have some funtimes with
+#' \code{\link{rJava:.jcall}}. To index into array-like objects from Java, apply 
+#' \code{\link{base:as.integer}} to parameters.
+#'
+#' @export
+#'
+#' @seealso \code{\link{make_instances}},
+#' \code{\link{make_instances}},
+#' \code{\link{model_documents}},
+#' \code{\link{output_model}}
+#' 
+train_model <- function(instances,num_topics,
+                        alpha_sum=5,beta=0.01,
+                        n_iters=200,
+                        n_max_iters=10,
                         optimize_hyperparameters=T,
-                        n.hyper.iters=20,   # how often to do hyperparam. opt.
-                        n.burn.in=50,       # num. iters before starting hyp. o.
-                        symmetric_alpha=F,  # all alpha_k equal?
+                        n_hyper_iters=20,
+                        n_burn_in=50,
+                        symmetric_alpha=F,
                         threads=4L,
                         seed=NULL,
                         java_heap=NULL) {
 
     .reload_mallet(java_heap)
 
-    trainer <- MalletLDA(num.topics,alpha.sum,beta)
-    trainer$model$setNumThreads(threads)
+    trainer <- MalletLDA(num_topics,alpha_sum,beta)
+    trainer$model$setNumThreads(as.integer(threads))
     if(!is.null(seed)) {
         trainer$model$setRandomSeed(as.integer(seed))
     }
@@ -422,17 +467,17 @@ train_model <- function(instances,num.topics,
 
     if(optimize_hyperparameters) {
         trainer$model$setSymmetricAlpha(symmetric_alpha)
-        trainer$setAlphaOptimization(n.hyper.iters,n.burn.in)
+        trainer$setAlphaOptimization(n_hyper_iters,n_burn_in)
     }
     else {
         trainer$setAlphaOptimization(0,0)
     }
 
-    trainer$train(n.iters)
+    trainer$train(n_iters)
     # following from dmimno's mallet-example.R:
     # iterate picking "best" (?) topic for each token instead of sampling
     # from posterior distribution (?)
-    trainer$maximize(n.max.iters)
+    trainer$maximize(n_max_iters)
     trainer
 }
 
