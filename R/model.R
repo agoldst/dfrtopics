@@ -342,63 +342,6 @@ docs_frame <- function(counts) {
           text=paste(rep(WORDCOUNTS,times=WEIGHT),collapse=" "))
 }
 
-#' Create MALLET instances from a document frame
-#' 
-#' Given a frame like that returned by \code{\link{docs_frame}},
-#' create a MALLET \code{InstanceList} object
-#'
-#' @param docs data frame with \code{id} and \code{text} columns
-#' @param stoplist_file passed on to MALLET
-#' @param java_heap if non-null, java is restarted with this heap parameter
-#' @param ... passed on to \code{\link[mallet]{mallet.import}}
-#' @return an rJava reference to a MALLET \code{InstanceList}
-#' @seealso \code{\link{train_model}}
-#' \code{\link{write_instances}}
-#'
-#' @export
-#' 
-make_instances <- function(docs,stoplist_file,java_heap=NULL,...) {
-    .reload_mallet(java_heap)
-
-    # token regex: letters only, by default
-    # another possibility would be to include punctuation \p{P}
-    mallet.import(docs$id,docs$text,
-                  stoplist.file=stoplist.file,
-                  ...)
-}
-
-#' Save a mallet InstanceList object to a file
-#'
-#' Saves mallet instances to disk using MALLET's file writer. The result is then 
-#' equivalent to \code{mallet import-dirs} or similar at the command line.
-#' @param instances reference to the \code{InstanceList}
-#' @param output_file filename
-#'
-#' @seealso \code{\link{read_instances}},
-#' \code{\link{make_instances}}
-#'
-#' @export
-#' 
-write_instances <- function(instances,output_file="instances.mallet") {
-  instances$save(new(J("java.io.File"),output_file))
-}
-
-#' Read a mallet \code{InstanceList} object from a file
-#'
-#' Reads a mallet \code{InstanceList} object from a file.
-#'
-#' @param filename the instance file
-#' @return a reference to the MALLET \code{InstanceList} object
-#' @seealso \code{\link{write_instances}},
-#' \code{\link{make_instances}}
-#' \code{\link{train_model}}
-#'
-#' @export
-#' 
-read_instances <- function(filename) {
-    J("cc.mallet.types.InstanceList","load",new(J("java.io.File"),
-                                                path.expand(filename)))
-}
 
 #' Train a topic model
 #'
