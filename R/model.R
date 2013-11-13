@@ -1179,6 +1179,25 @@ term_document_topic_matrix <- function(topic,ss,id_map,vocab) {
                         length(id_map)))
 }
 
+#' Get top words for a given topic, conditioned by year
+#'
+#' This is a convenience function for summarizing the results of 
+#' \code{\link{term_year_topic_matrix}}.
+#' @return a vector of pasted-together words, with the dates as element names
+#' 
+#' @param tytm matrix with words in rows and years in columns (assumed conditional on a 
+#' topic, though this doesn't figure into the calculation)
+#' 
+#' @param yseq character vector mapping columns of \code{tytm} to dates
+#' @param vocab character vector mapping rows of \code{tytm} to words
+#' @param n_words number of top words per date to report
+#'
+#' @seealso
+#' \code{\link{term_year_topic_matrix}},
+#' \code{\link{weighted_keys_frame}}
+#'
+#' @export
+#'
 topic_yearly_top_words <- function(tytm,yseq,vocab,n_words=5) {
     result <- character(length(yseq))
     for (y in seq_along(yseq)) {
