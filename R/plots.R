@@ -391,39 +391,42 @@ topic_yearly_journals_plot <- function(topic,topic_year_meta_frame) {
 
 
 
-#' ----------------
-#' Individual words
-#' ----------------
-
-#' mallet_word_plot
+#' Plot individual word frequencies over time
 #'
-#' The MALLET 1-gram viewer! Also useful in conjunction with topic
-#' frequencies over time. Compare tm_yearly_line_plot(topic,...) with
-#' the results of mallet_word_plot(topic_top_words(topic,n=50,...)) to
-#' discover whether corpus frequencies and topic frequencies diverge
-#' (which may or may not be significant!)
+#' The MALLET 1-gram viewer! Use date metadata to show 
+#' you the changing frequency of terms over time in the processed corpus.
 #'
-#' words: a vector of words
+#' This is useful when exploring topic
+#' frequencies over time. For example, compare \code{\link{topic_yearly_lineplot}(topic,...
+#' )} with \code{\link{mallet_word_plot}(\link{topic_top_words}(topic,n=50,...))} to
+#' discover whether the top words of a topic really move up and down in the same way that 
+#' a topic does (which may or may not be significant).
 #'
-#' term_year: the term_year_matrix
+#' @param words a vector of words
 #'
-#' year_seq: the year sequence corresponding to columns in the
-#' term_year_matrix. Expected to be a factor or vector of ISO dates.
+#' @param term_year term-year matrix, from \code{\link{term_year_matrix}}
 #'
-#' the vocabulary corresponding to rows of the term_year_matrix
+#' @param year_seq map from column indices of \code{term_year} to dates. Also returned in 
+#' the 
+#' list from \code{\link{term_year_matrix}}
 #'
-#' plot_freq: plot raw counts or yearly ratios?
+#' @param vocab map from matrix rows to terms, matched against \code{words}
 #'
-#' smoothing: add a smoothing line to the plot?
+#' @param plot_freq if TRUE, plot yearly fractions of the total; if FALSE, plot raw counts 
+#' @param plot_total if TRUE, plot sum of weights of all \code{words}
 #'
-#' gg_only: if T, don't add geoms to plot object (so the caller can do it
-#' instead)
-
+#' @param smoothing if TRUE, add a smoothing line to the plot
+#'
+#' @seealso
+#' \code{\link{term_year_series_frame}}
+#' \code{\link{term_year_matrix}}
+#'
+#' @export
+#'
 mallet_word_plot <- function(words,term_year,year_seq,vocab,
                              plot_freq=T,
                              plot_total=F,
-                             smoothing=F,
-                             gg_only=F) {
+                             smoothing=F) {
     words <- words[words %in% vocab]
 
     series <- term_year_series_frame(words,term_year,year_seq,vocab,
@@ -441,11 +444,9 @@ mallet_word_plot <- function(words,term_year,year_seq,vocab,
         plot_title <- paste(series$word,' over time (filtered corpus)',sep="")
     }
 
-    if(!gg_only) {
-        result <- result + geom_line()
-        if(smoothing) {
-            result <- result + geom_smooth()
-        }
+    result <- result + geom_line()
+    if(smoothing) {
+        result <- result + geom_smooth()
     }
 
     result +
