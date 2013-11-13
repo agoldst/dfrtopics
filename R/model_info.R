@@ -1,21 +1,37 @@
+# Functions for extracting basic information about the model
 
-#' ---------------
-#' About documents
-#' ---------------
-
-#' Return a frame with ids and weights with the "top" documents for a topic
+#' Get the "top" documents for a topic
 #'
-#' method: the notion of a "top" document is not well-specified.
-#'       "raw":  maximum scores in the topic-column of the dtm.
-#'       "max_frac": maximum after normalizing the topic-column of the dtm. A 
-#'       topic may reach its maximum proportion in a document and yet that 
-#'       document may yet have a larger proportion of another topic.
-
-top_documents <- function(topic,id_map,dtm,n=5,method="raw") {
+#' Constructs a dataframe with the id's and weights with the "top" documents for a topic.
+#'
+#' @param topic The topic in question
+#' @param doc_topics matrix with documents in rows and topic weights in columns
+#' @param id_map character vector mapping rows of \code{doc_topic} to JSTOR doc id's: with 
+#' the \code{doc_topics_frame}, simply use the \code{id} column
+#' @param n number of top documents to extract
+#' @param method the notion of a "top" document is not well-specified. Currently this 
+#' function knows only two simple methods: \describe{
+#'      \item{\code{"raw"}}{maximum scores in the topic-column of the 
+#' \code{doc_topic}}
+#'      \item{\code{"max_frac"}}{maximum when document-topic scores are normalized to sum 
+#' to 1. Note that a topic may reach its maximum proportion in a document and yet that 
+#' document may yet have a larger proportion of another topic.}}
+#' @return a data frame with \code{n} rows ordered from weightiest to least weighty, and 
+#' two columns: \code{id} and \code{weight}. The id's can be passed to, e.g. 
+#' \code{\link{cite_articles}}.
+#'
+#' @seealso
+#' \code{\link{doc_topics_matrix}},
+#' \code{\link{doc_topics_frame}},
+#' \code{\link{cite_articles}}
+#'
+#' @export
+#'
+top_documents <- function(topic,doc_topics,id_map,n=5,method="raw") {
     if(method=="raw") {
-        doc_scores <- dtm[,topic]
+        doc_scores <- doc_topics[,topic]
     } else if(method=="max_frac") {
-        doc_scores <- dtm[,topic] / rowSums(dtm)
+        doc_scores <- doc_topics[,topic] / rowSums(doc_topics)
     } else {
         stop("Unknown method.")
     }
