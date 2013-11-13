@@ -983,102 +983,114 @@ topic_word_scores <- function(tw,b,method="blei_lafferty") {
     tw * (log_tw) - word_factor
 }
 
-
-# wkf_kf
-#
-# turn a weighted keys frame into something like what keys_frame returns
-# (for use with plot.topics.yearly etc. from topics.R)
-
-wkf_kf <- function(wkf) {
-    ddply(wkf,"topic",summarize,
-          alpha=alpha[1],
-          keywords=paste(word[order(weight,decreasing=T)],collapse=" "))
-}
-
-# write_mallet_state
-# 
-# save the Gibbs sampling state of <trainer> to a (gzipped) file
-
+#' Save the Gibbs sampling state to a file
+#'
+#' Saves the MALLET sampling state using MALLET's own state-output routine, which produces 
+#' a ginormous gzipped textfile
+#'
+#' @param trainer the \code{RTopicModel} object
+#' @param outfile the output file name
+#'
+#' @seealso \code{\link{read_simplified_state}}
+#'
+#' @export
+#'
 write_mallet_state <- function(trainer,outfile="state.gz") {
     fileobj <- new(J("java.io.File"),outfile)
     trainer$model$printState(fileobj)
 }
 
-
-# read_mallet_state
-#
-# Read in a Gibbs sampling state from disk
-#
-# expects the name of a gzipped file in <infile>
-
-read_mallet_state <- function(infile) {
-    con <- gzfile(infile)
-    result <- read.table(con,header=F,comment.char="#",
-               col.names=c("doc","source","pos","typeindex","type","topic"),
-               sep=" ",as.is=T) 
-    result
-}
-
-# sampling_state
-#
-# Sad wrapper for the previous two: get a dataframe with the sampling
-# state. Uses a temporary file and wastes time gzipping and gunzipping.
-#
-# not particularly easy to do this without going to a file--cf.
-# ParallelTopicModel.printState()
-
-sampling_state <- function(trainer,tmpfile="state.gz",rm.tmpfile=F) {
-    write_mallet_state(trainer,tmpfile)
-    result <- read_mallet_state(tmpfile)
-    if(rm.tmpfile) {
-        unlink(tmpfile)
+#' Reduce a MALLET sampling state on disk to a simplified form
+#'
+#' This function reads in the sampling state output by MALLET and writes a CSV file in 
+#' giving the assignments of word types to topics in each document.
+#' 
+#' The resulting file has a header \code{document,word,topic,count} describing its 
+#' columns. Use \code{\link{read_simplified_state}} to access the result in R. The MALLET 
+#' state is typically too big to handle in memory using R, so the "simplification" is done 
+#' using a very simple python script.
+#'
+#' @param state_file the MALLET state (assumed to be gzipped)
+#' @param outfile the name of the output file (will be clobbered)
+#' @return the return value from the python script
+#'
+#' @seealso \code{\link{read_simplified_state}}
+#'
+#' @export
+#'
+simplify_state <- function(state_file,outfile) {
+    if(file.exists(outfile)) {
+        stop("Output file ",outfile," already exists.")
     }
-    result
+    cmd <- paste("python",
+                 file.path(path.package("dfrtopics"),"inst","python",
+                                   "simplify_state.py"),
+                 state_file,">",infile)
+    message("Executing ",cmd)
+    system(cmd)
 }
 
-# read_simplified_state
-#
-# Read in a Gibbs sampling state and return a dataframe of <document,
-# word, topic, count> rows. The former three are represented as
-# integers, corrected to be indexed from 1, against the list of
-# documents and word types in the mallet instances. Thus you can recover
-# the table of words and documents using the instance-reading functions
-# below.
-#
-# generate_file: The Gibbs sampling state is written in a highly redundant
-# form which R is not very happy to read in as is. simplify_state.py is
-# a python script to toss out the redundant columns (basically, it's
-# just gunzip -c | cut -f) which you can use to generate a simplified
-# statefile. This function will call that script for you if you pass
-# simplify=T and set statefile to the original gzipped mallet state.
-#
-# data_type: the C++ type to store the data in. If all values have magnitude 
-# less than 2^15, you can get away with "short", but guess what? Linguistic
-# data hates you, and a typical vocabulary includes more word types than that.
-
-read_simplified_state <- function(infile,generate_file=F,state_file=NULL,
-                                  simplifier="python/simplify_state.py",
-                                  big=T,
+#' Read in a Gibbs sampling state
+#'
+#' This function reads in a Gibbs sampling state represented by
+#' \code{document,word,topic,count} rows. The resulting dataframe or
+#' \code{big.matrix} gives access to the assignments of individual words
+#' to topics within documents. Because of the nature of the JSTOR data,
+#' the result aggregates all instances of a given word type in a given document;
+#' MALLET itself remembers token order, but this is meaningless when
+#' working with JSTOR \code{wordcounts.CSV} files.
+#'
+#' This uses the \pkg{bigmemory} package (q.v.) to read the 
+#' simplified state instead of attempting to hold the result in memory in a data frame.
+#'
+#' MALLET writes out its final sampling state in a highly redundant
+#' form which R is not very happy to read in as is. In order to work with the sampling 
+#' state in R, one first needs to toss out redundant columns. This package supplies a 
+#' python script (\code{inst/python/simplify_state.py}) for this; if you set
+#' \code{generate_file=T} and \code{state_file}, this function will call that script for 
+#' you.
+#'
+#' To recover the meaning of the integer codes for words and documents, use the functions 
+#' for reading MALLET \code{InstanceList}s: \code{\link{instances_vocabulary}} and 
+#' \code{\link{instances_ids}}. \emph{N.B.} the MALLET sampling state, and the "simplified 
+#' state" output by this function to disk, index documents, words, and topics from zero, 
+#' but the dataframe returned by this function indexes these from one for convenience 
+#' within R.
+#'
+#' @return a \code{big.matrix} with four columns, 
+#' \code{document,word,topic,count}. Documents, words, and topics are \emph{one-indexed} 
+#' in the result.
+#'
+#' @param infile the name of a CSV file holding the simplified state: a CSV with header 
+#' row and four columns, \code{document,word,topic,count}, where the documents, words, and 
+#' topics are \emph{zero-index}. Create the file from MALLET output using 
+#' \code{\link{simplify_state}}.
+#' @param data_type the C++ type to store the data in. If all values have magnitude 
+#' less than \eqn{2^15}, you can get away with \code{short}, but guess what? Linguistic
+#' data hates you, and a typical vocabulary can easily include more word types than that.
+#' @param big_wordkir the working directory where \code{\link{bigmemory:read.big.matrix}} 
+#' will store its temporary files. By default, uses \code{\link{base:tempdir}}, but if you 
+#' have more scratch space elsewhere, use that for handling large sampling states.
+#'
+#' @seealso
+#' \code{\link{simplify_state}},
+#' \code{\link{write_mallet_state}},
+#' \code{\link{term_year_topic_matrix}},
+#' \pkg{bigmemory}
+#'
+#' @export
+#'
+read_simplified_state <- function(infile,
                                   data_type="integer",
                                   big_workdir=tempdir()) {
-    if(generate_file) {
-        cmd <- paste("python",simplifier,state_file,">",infile)
-        message("Executing ",cmd)
-        system(cmd)
-    }
-    if(big) {
-        library(bigmemory)
-        message("Loading ",infile," to a big.matrix...")
-        state <- read.big.matrix(infile,type=data_type,header=T,sep=",",
-                                 backingpath=big_workdir,
-                                 backingfile="state.bin",
-                                 descriptorfile="state.desc")
-        message("Done.")
-    }
-    else {
-        state <- read.table(infile,header=T,sep=",",
-                             colClasses=rep(integer(),3))
-    }
+
+    library(bigmemory)
+    message("Loading ",infile," to a big.matrix...")
+    state <- read.big.matrix(infile,type=data_type,header=T,sep=",",
+                             backingpath=big_workdir,
+                             backingfile="state.bin",
+                             descriptorfile="state.desc")
+    message("Done.")
 
     # change mallet's 0-based indices to 1-based
     state[,1] <- state[,1] + 1L     # docs
