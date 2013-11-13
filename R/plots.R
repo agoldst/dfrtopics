@@ -398,7 +398,7 @@ topic_yearly_journals_plot <- function(topic,topic_year_meta_frame) {
 #'
 #' This is useful when exploring topic
 #' frequencies over time. For example, compare \code{\link{topic_yearly_lineplot}(topic,...
-#' )} with \code{\link{mallet_word_plot}(\link{topic_top_words}(topic,n=50,...))} to
+#' )} with \code{\link{term_yearly_lineplot}(\link{topic_top_words}(topic,n=50,...))} to
 #' discover whether the top words of a topic really move up and down in the same way that 
 #' a topic does (which may or may not be significant).
 #'
@@ -423,15 +423,17 @@ topic_yearly_journals_plot <- function(topic,topic_year_meta_frame) {
 #'
 #' @export
 #'
-mallet_word_plot <- function(words,term_year,year_seq,vocab,
-                             plot_freq=T,
-                             plot_total=F,
-                             smoothing=F) {
+term_yearly_lineplot <- function(words,term_year,year_seq,vocab,
+                                 plot_freq=T,
+                                 plot_total=F,
+                                 smoothing=F,
+                                 denominator=NULL) {
     words <- words[words %in% vocab]
 
     series <- term_year_series_frame(words,term_year,year_seq,vocab,
                                      raw_counts=!plot_freq,
-                                     total=plot_total)
+                                     total=plot_total,
+                                     denominator=denominator)
 
     if(length(words) > 1 & !plot_total) { 
         result <- ggplot(series,aes(year,weight,color=word,group=word))
