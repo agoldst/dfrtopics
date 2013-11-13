@@ -361,31 +361,30 @@ topic_time_boxplots <- function(doctops_long,time_breaks="5 years",log_scale=T) 
         ggtitle(plot_title)
 }
 
-#' tm_yearly_journals_plot
+#' Plot a topic's time series in individual journals
 #'
-#' Plot a topic's yearly average in individual journals in an area plot
+#' Convenience function for plotting results from \code{\link{topic_year_meta}}.
+#' Produces an area plot of the yearly proportions of topic, conditional on journal.
 #'
-#' doctops,metadata,yearly_overall: as in tm_yearly_totals_meta
+#' @param topic the one-indexed topic number.
+#' @param topic_year_meta_frame the result of
+#' \code{topic_year_meta(doctops,metadata,yearly_overall,vars="journaltitle")}
 #'
-#' or pass .yrly_j, a dataframe of yearly totals by journal and topic
-
-tm_yearly_journals_plot <- function(topic,
-                                    doctops=NULL,
-                                    metadata=NULL,
-                                    yearly_overall=NULL,
-                                    .yrly_j=NULL) { 
-    if(is.null(.yrly_j)) {
-        yrly_j <- tm_yearly_totals_meta(doctops,metadata,yearly_overall,
-                                        vars="journaltitle")
-    } else {
-        yrly_j <- .yrly_j
-    }
+#' @return A \link[ggplot2]{ggplot} object.
+#'
+#' @seealso
+# '\code{\link{topic_year_meta}}
+#'
+#' @export
+#' 
+topic_yearly_journals_plot <- function(topic,topic_year_meta_frame) {
+    topic_year_meta_frame$pubdate <- as.Date(pubdate)
 
     topic_name <- paste("topic",topic,sep="")
-    ggplot(yrly_j,aes_string(x="as.Date(pubdate)",
-                             y=topic_name,
-                             group="journaltitle",
-                             fill="journaltitle")) +
+    ggplot(topic_year_meta_frame,aes_string(x="pubdate",
+                                            y=topic_name,
+                                            group="journaltitle",
+                                            fill="journaltitle")) +
         geom_area() +
         ggtitle(paste("Proportion of words in topic",topic))
 }
