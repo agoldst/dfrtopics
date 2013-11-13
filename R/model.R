@@ -794,29 +794,30 @@ series_rolling <- function(series,totals,k) {
     rollapply(series,k,sum) / rollapply(totals,k,sum)
 }
 
-# tm_yearly_totals_meta
-#
-# tally up document topic proportions, keeping some metadata categories
-#
-# A convenience version of tm_yearly_totals that allows you 
-# to split out the yearly totals by, e.g., journaltitle
-#
-# doctops: the document-topic matrix, assumed to be in a form like that 
-# returned by doc_topics_wide
-#
-# metadata: the metadata frame, or a subset of its columns
-#
-# yearly_totals: the result of tm_yearly_totals, used for normalizing within 
-# each year. Pass NULL if you want raw counts instead.
-#
-# vars: metadata columns to split by; by default, use all metadata columns
-#
-# result: a data frame suitable for plotting, where each row gives yearly 
-# totals for each topic for a given metadata combination. The topic 
-# proportion columns are called "topic1", "topic2", etc.
-
-tm_yearly_totals_meta <- function(doctops,metadata,
-                                  yearly_totals=NULL,vars=NULL) { 
+#' Tally up document-topic proportions, conditional on metadata
+#'
+#' Like \code{\link{topic_year_matrix}}, this tallies up document-topic proportions over #' yearly time-slices but allows you 
+#' to split out the yearly totals by, e.g., \code{journaltitle}
+#'
+#' @param doctops the document-topic data frame with id column (from 
+#' \code{\link{doc_topics_frame}}
+#'
+#' @param metadata the metadata frame, or a subset of its columns
+#'
+#' @param topic_year the result of \code{\link{topic_year_matrix}}, used for normalizing 
+#' within each year. Pass \code{NULL} if you want raw counts instead.
+#'
+#' @param vars metadata columns to split by; by default, use all supplied metadata columns
+#'
+#' @return a data frame suitable for plotting, where each row gives yearly 
+#' totals for each topic for a given metadata combination. The topic 
+#' proportion columns are called \code{topic1}, \code{topic2}, etc.
+#'
+#' @export
+#' @seealso \code{\link{topic_year_matrix}}
+#'
+topic_year_meta <- function(doctops,metadata,
+                            topic_year=NULL,vars=NULL) { 
     if(is.null(vars)) {
         vars <- names(metadata)
     }
@@ -838,8 +839,8 @@ tm_yearly_totals_meta <- function(doctops,metadata,
     }
     else {
         ply_fun <- function(d) {
-            yr_col <- match(d$pubdate[1],colnames(yearly_totals))
-            tally(d) / sum(yearly_totals[,yr_col])
+            yr_col <- match(d$pubdate[1],colnames(topic_year))
+            tally(d) / sum(topic_year[,yr_col])
         }
     }
 
