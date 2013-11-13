@@ -1536,13 +1536,11 @@ JS_divergence <- function(P,Q) {
 
 }
 
-# JS_flexmix
-#
 # For testing JS_divergence against an "official" implementation of
 # KLdiv. Not faster on a single pair of rows, and can't use KLdiv's
 # vectorization to do lots of JS's at once, unfortunately.
 
-JS_flexmix <- function(P,Q) {
+.JS_flexmix <- function(P,Q) {
     library(flexmix)
     PQ_mean = (P + Q) / 2
     eps = min(P,Q) / 2    # otherwise KLdiv replaces values less than 10^-4
