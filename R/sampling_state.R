@@ -130,13 +130,14 @@ read_simplified_state <- function(infile,
 #' 
 #' @return a list similar to that returned by \code{\link{term_year_matrix}}:
 #' \describe{
-#'     \item{\code{tym}}{a sparseMatrix with terms in vocab order in rows and years in columns}}
+#'     \item{\code{tym}}{a \code{\link{Matrix:sparseMatrix}} with terms in vocab order in rows and years in columns}
 #'     \item{\code{yseq}}{a character vector mapping columns to years}
-#'     \item{topic}{the value of the \code{topic} parameter}}
+#'     \item{\code{topic}}{the value of the \code{topic} parameter}
+#' }
 #'
 #' @param topic one-based topic number
 #' @param ss a \code{big.matrix} holding the "simplified state" as returned by 
-#' \code{\link{read_simplified_state}. Operated on using \code{\link{bigmemory:mwhich}}.
+#' \code{\link{read_simplified_state}}. Operated on using \code{\link{bigmemory:mwhich}}.
 #'
 #' @param id_map a character vector mapping document numbers in \code{ss} to JSTOR id's 
 #' that can be matched against \code{metadata$id}
@@ -175,7 +176,7 @@ term_year_topic_matrix <- function(topic,ss,id_map,vocab,metadata) {
 #' applied to word counts.
 #'
 #' @param ss a \code{big.matrix} holding the "simplified state" as returned by 
-#' \code{\link{read_simplified_state}. Operated on using \code{\link{bigmemory:mwhich}}.
+#' \code{\link{read_simplified_state}}. Operated on using \code{\link{bigmemory:mwhich}}.
 #'
 #' @param id_map a character vector mapping document numbers in \code{ss} to JSTOR id's 
 #'

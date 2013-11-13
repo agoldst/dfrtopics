@@ -298,7 +298,7 @@ instances_vocabulary <- function(instances) {
 #' @param id_map character vector mapping \code{tdm} columns to documents
 #' @param vocabulary character vector mapping \code{tdm} rows to terms
 #'
-#' @return A two-element list: \define{
+#' @return A two-element list: \describe{
 #'      \item{\code{tym}}{the term-year-matrix (as \code{\link{Matrix:sparseMatrix}})} 
 #' \item{\code{yseq}}{a map from column indices to dates. Should be
 #' sequential but may not be evenly spaced if any year
@@ -417,7 +417,7 @@ term_year_series_frame <- function(words,term_year,year_seq,vocab,
 
 #' Derive a term-year counts conditioned on a journal
 #'
-#' Convenience wrapper for \code{\link{term_year_matrix}, summing counts 
+#' Convenience wrapper for \code{\link{term_year_matrix}}, summing counts 
 #' only for documents in a given journal
 #'
 #' @param journal the journal, matched against \code{metadata$journaltitle} (so be careful 
