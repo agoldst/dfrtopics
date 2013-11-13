@@ -457,51 +457,58 @@ term_yearly_lineplot <- function(words,term_year,year_seq,vocab,
         ggtitle(plot_title)
 }
 
-#' words_topic_yearly_plot
+#' Plot words in a topic over time
 #'
-#' Given the results of term_year_topic_matrix, make a line plot showing
-#' the occurrence of individual words IN A TOPIC over time. Whether you
+#' Making use of the final Gibbs sampling state, this function makes a line plot showing
+#' the occurrence of individual words \emph{in a topic} over time. Whether you
 #' plot counts or ratios, this is not the same as the corpus frequency of
 #' the individual words; this is the time track of words assigned to the
 #' given topic.
 #'
-#' words: a vector of words
+#' In fact this function is simply a convenience wrapper for 
+#' \code{\link{term_yearly_lineplot}}, just passing that function the topic-conditioned 
+#' term-document matrix instead of the overall term-document matrix.
 #'
-#' topic_desc: a short label for the topic, to go in the plot title
+#' @param words a vector of words
 #'
-#' tytm: the sparse matrix returned in the results of
-#' term_year_topic_matrix
+#' @param topic_label: a short label for the topic, to go in the plot title
 #'
-#' yseq: the years corresponding to the columns of the tytm (also in
-#' results of term_year_topic_matrix)
+#' @param tytm the sparse matrix returned in the results of
+#' \code{\link{term_year_topic_matrix}}
 #'
-#' vocab: the mallet vocabulary, corresponding to the rows of the tytm
-
-words_topic_yearly_plot <- function(words,topic_desc,
-                                    tytm,yseq,vocab,...) {
-    result <- mallet_word_plot(words=words,
-                               term_year=tytm,
-                               year_seq=yseq,
-                               vocab=vocab,
-                               ...)
+#' @param yseq map from columns of the tytm to dates (also in
+#' results of \code{\link{term_year_topic_matrix})
+#'
+#' @param vocab map from rows of \code{tytm} to words (the MALLET vocabulary)
+#'
+#' @param ... plotting parameters handed on to
+#' \code{\link{term_yearly_lineplot}}. Be careful with the
+#' \code{plot_freq} parameter: by default, this will give the
+#' results normalized by column sums of \code{tytm}, which will
+#' give the proportion of words \emph{words assigned to the topic}
+#' occupied by \code{words}. If you want the denominator to be
+#' the proportion of words \emph{in the processed corpus}, pass
+#' \code{denominator=colSums(term_yearly_matrix(...))}.
+#'
+#' @return A \link[ggplot2]{ggplot} object.
+#'
+#' @seealso
+#' \code{\link{term_year_topic_matrix}},
+#' \code{\link{term_yearly_lineplot}}
+#'
+#' @export
+#'
+term_yearly_topic_lineplot <- function(words,topic_label,
+                                       tytm,yseq,vocab,...) {
+    result <- term_yearly_lineplot(words=words,
+                                   term_year=tytm,
+                                   year_seq=yseq,
+                                   vocab=vocab,
+                                   ...)
     plot_title <- ifelse(length(words)==1,words,"Words")
-    plot_title <- paste(plot_title,"in\n",topic_desc)
-    result + ggtitle(plot_title)
-}
-
-#' words_topic_yearly_plot_overall
-#'
-#' if you want the occurrence of the top words for a topic IN THE CORPUS,
-#' you can use this convenience function to pass topic_top_words to
-#' mallet_word_plot
-#'
-#' n: number of top words
-#'
-#' n = 0 to instead accept the default threshold for topic top words
-
-words_topic_yearly_plot_overall <- function(topic,wkf,n,...) {
-    words <- topic_top_words(topic,wkf,n)
-    mallet_word_plot(words,...)
+    plot_title <- paste(plot_title,"in\n",topic_label)
+    result <- result + ggtitle(plot_title)
+    result
 }
 
 #' topic_dist_plot
