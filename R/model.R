@@ -593,31 +593,33 @@ doc_topics_wide <- function(doctops,metadata,
     merge(doctops,metadata[,meta_keep],by="id")
 }
 
-# tm_yearly_totals
-#
-# Tot up the total of each topic for each year. Either a long-form or a
-# wide-form data frame may be passed in; the wide form can be handled much
-# (orders of magnitude) faster. 
-#
-# result: a matrix with: rows containing topic totals, columns
-# containing years present in the data, colnames with strings
-# representing dates.
-
-tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
-
-    if(!is.null(tm_long)) {
-        # copy on modify
-        tm_long$pubdate <- cut(pubdate_Date(tm_long$pubdate),breaks="years")
-        tm_long$pubdate <- droplevels(tm_long$pubdate)
-        tm_long$id <- NULL
-        totals <- ddply(tm_long,c("variable","pubdate"),summarize,
-                        total=sum(value))
-        acast(totals,variable ~ pubdate,value.var="total")
-    }
-    else if(!is.null(tm_wide)) {
-        tm_wide$pubdate <- cut(pubdate_Date(tm_wide$pubdate),breaks="years")
-        tm_wide$pubdate <- droplevels(tm_wide$pubdate)
-        tm_wide$id <- NULL
+#' The yearly totals of topic weights
+#'
+#' Tots up the total of each topic for each year, given documents and date metadata
+#'
+#' Either a long-form or a
+#' wide-form data frame may be passed in; the wide form can be handled much
+#' (orders of magnitude) faster. Formerly called \code{tm_yearly_totals}, but that's silly.
+#'
+#' @param dt_wide doc_topics frame with attached metadata from 
+#' \code{\link{doc_topics_wide}}
+#' @param dt_long doc_topics frame with attached metadata from 
+#' \code{\link{doc_topics_long}}
+#' @return a matrix with: rows containing topic totals, columns
+#' containing years present in the data, colnames with strings
+#' representing dates.
+#'
+#' @export
+#'
+#' @seealso
+#' \code{\link{doc_topics_wide}},
+#' \code{\link{doc_topics_long}}
+#'
+topic_year_matrix <- function(dt_wide=NULL,dt_long=NULL) {
+    if(!is.null(dt_wide)) {
+        dt_wide$pubdate <- cut(pubdate_Date(dt_wide$pubdate),breaks="years")
+        dt_wide$pubdate <- droplevels(dt_wide$pubdate)
+        dt_wide$id <- NULL
 
         # Here, assume that the wide matrix has topic scores in all but
         # the last column, which holds the pubdate. daply will stick the
@@ -627,7 +629,16 @@ tm_yearly_totals <- function(tm_long=NULL,tm_wide=NULL) {
         topic_sum <- function (d) {
             colSums(subset(d,select=-pubdate))
         }
-        t(daply(tm_wide,"pubdate",topic_sum))
+        t(daply(dt_wide,"pubdate",topic_sum))
+    }
+    else if(!is.null(dt_long)) {
+        # copy on modify
+        dt_long$pubdate <- cut(pubdate_Date(dt_long$pubdate),breaks="years")
+        dt_long$pubdate <- droplevels(dt_long$pubdate)
+        dt_long$id <- NULL
+        totals <- ddply(dt_long,c("variable","pubdate"),summarize,
+                        total=sum(value))
+        acast(totals,variable ~ pubdate,value.var="total")
     }
     else {
         stop("Supply either long or wide-form document-topic matrix")
