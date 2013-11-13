@@ -1752,11 +1752,18 @@ instances_term_document_matrix <- function(instances,verbose=F) {
     result
 }
 
-# instances_ids
-#
-# return a vector of id's ("names") of instances,
-# in the order mallet keeps them in
-
+#' Extract document id's
+#'
+#' Returns a vector of id's ("names") from an \code{InstanceList},
+#' in the order MALLET keeps them in
+#'
+#' @param instances a reference to an \code{InstanceList} object (from 
+#' \code{\link{read_instances}} or \code{trainer$instances})
+#'
+#' @return a character vector of document ID's
+#'
+#' @export
+#'
 instances_ids <- function(instances) {
     iter <- instances$iterator()
 
@@ -1768,34 +1775,78 @@ instances_ids <- function(instances) {
     replicate(instances$size(),instance_name())
 }
 
-# get_instance
-#
-# retrieve an instance from the instance list by id
-
+#' retrieve an instance from the instance list by id
+#'
+#' Pulls out a single instance (document) from the instance list by id.
+#'
+#' @param instances a reference to an \code{InstanceList} object (from 
+#' \code{\link{read_instances}} or \code{trainer$instances})
+#'
+#' @param id a document id
+#'
+#' @param id_map map from instance index to id's, to match against \code{id}. Calculated 
+#' by default, but if you're going to do this a lot, precalculate the \code{id_map} just 
+#' once.
+#'
+#' @return reference to a MALLET \code{Instance}.
+#'
+#' @export
+#'
 get_instance <- function(instances,id,id_map=instances_ids(instances)) {
     j <- match(id,id_map) - 1
     .jcall(instances,"Ljava/lang/Object;","get",as.integer(j))
 }
 
-# instance_vector
-#
-# An instance holds a vector giving the _sequence_ of features,
-# zero-indexed. To get a vector we can read off against
-# trainer$getVocabulary() in R, we add 1.
-
+#' Convert an instance to a vector
+#'
+#' Extracts an R vector representation of the \code{FeatureSequence}.
+#'
+#' A \code{FeatureSequence} is a list of \emph{zero-based} indices
+#' into the vocabulary. For convenience, this function adds
+#' 1 so that the result can be used to index directly into a
+#' vocabulary vector (e.g. from \code{trainer$getVocabulary()} or
+#' \code{\link{instances_vocabulary}}). Note that although MALLET's
+#' topic-modeling works on feature \emph{sequences} because it is
+#' designed to preserve the order of words in the documents it models,
+#' the pre-aggregated data from JSTOR means that the "sequences" will be
+#' meaningless: \code{\link{docs_frame}} simply puts all the occurrences
+#' of a word in a document next to one another.
+#'
+#' @param instance a reference to an Instance
+#' @return an integer vector, with \emph{one-based} indices into the vocabulary
+#'
+#' @seealso
+#' \code{\link{instances_vocabulary}},
+#' \code{\link{docs_frame}},
+#' \code{\link{instance_text}}
+#' 
+#' @export
+#'
 instance_vector <- function(instance) {
     fs <- .jcall(instance,"Ljava/lang/Object;","getData")
     .jcall(fs,"[I","getFeatures") + 1
 }
 
-# instance_text
-#
-# The instance is a sequence, so this is how you read it
-#
-# Repeated calls: this will be much faster if you retrieve the
-# vocabulary separately and pass that in. An InstanceList guarantees
-# that all Instances have the same vocabulary.
-
+#' Transform an instance back into text
+#'
+#' "Reads" a MALLET instance as a text string for quick inspection.
+#'
+#' In the case of DfR data, the resulting string will have all
+#' occurrences of each word type next to one another: not very
+#' informative except for spot-checks for garbage data, correct
+#' stop-wording, etc.
+#'
+#' Repeated calls will be much faster if you retrieve the vocabulary
+#' separately and pass that in as \code{vocab}. An \code{InstanceList}
+#' guarantees that all \code{Instances} have the same vocabulary.
+#'
+#' @param instance reference to an instance
+#' @param vocab character vector giving the vocabulary
+#' @param collapse passed on to \code{\link{base:paste}}
+#' @return A string "spelling out" the instance text
+#'
+#' @export
+#'
 instance_text <- function(instance,
                           vocab=instances_vocabulary(instance),
                           collapse=" ") {
@@ -1803,10 +1854,20 @@ instance_text <- function(instance,
 }
 
 
-# The vocabulary, from the raw instance. If you have the topic model
-# trainer object, the vocabulary is retrievable more quickly with an
-# RTopicModel method: trainer$getVocabulary().
-
+#' Retrieve the vocabulary from the instances
+#'
+#' Retrieves the vocabulary from the instances.
+#' 
+#'  If you have the topic model
+#' trainer object, the vocabulary is retrievable more quickly with an
+#' \code{RTopicModel} method: \code{trainer$getVocabulary()}. But every 
+#' \code{InstanceList} knows its vocabulary.
+#'
+#' @param instances reference to the \code{InstanceList}
+#' @return character vector mapping one-based word indices to terms as strings
+#'
+#' @export
+#'
 instances_vocabulary <- function(instances) {
     sapply(.jevalArray(instances$getAlphabet()$toArray()),.jstrVal)
 }
