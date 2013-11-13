@@ -44,17 +44,33 @@ top_documents <- function(topic,doc_topics,id_map,n=5,method="raw") {
     data.frame(id=ids,weight=wts)
 }
 
-#' This one means different things, depending on whether dtm is
-#' normalized per topic. If dtm is raw counts, one gets the topics that
+#' Get top topics for a document
+#'
+#' This function extracts the most salient topics for a document from a document-topic 
+#' matrix.
+#'
+#' The result means different things, depending on whether the matrix is
+#' normalized per topic. If not, one gets the topics that
 #' have been assigned the largest number of words in a document. But
-#' if dtm is column-normalized, then one gets the topics for which the
+#' if of the matrix is column-normalized, then one gets the topics for which the
 #' document is comparatively most prominent within that topic.
-
-top_topics <- function(id,id_map,dtm,n=5) {
+#'
+#' @param id a JSTOR document ID, matched against \code{id_map}
+#' @param doc_topics a matrix with documents in rows and topic scores in columns
+#' @param id_map mapping from rows of \code{doc_topics} to id's
+#' @param n number of topics to extract
+#'
+#' @return a dataframe with \code{n} rows and two columns, \code{topic} and \code{weight}.
+#'
+#' @seealso
+#' \code{\link{doc_topics_matrix}},
+#' \code{\link{doc_topics_frame}}
+#' 
+top_topics <- function(id,doc_topics,id_map,n=5) {
     i <- match(id,id_map)
-    indices <- order(dtm[i,],decreasing=T)[1:n]
+    indices <- order(doc_topics[i,],decreasing=T)[1:n]
 
-    data.frame(topic=indices,weight=dtm[i,indices])
+    data.frame(topic=indices,weight=doc_topics[i,indices])
 }
 
 #' ------------
