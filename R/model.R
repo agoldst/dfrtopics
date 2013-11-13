@@ -1872,35 +1872,38 @@ instances_vocabulary <- function(instances) {
     sapply(.jevalArray(instances$getAlphabet()$toArray()),.jstrVal)
 }
 
-# term_year_matrix
-#
-# Aggregate word counts by years. Pass in a term-document matrix created
-# by instances_tdm, as well as the instances object or precalculated
-# versions of the remaining parameters
-#
-# returns a two-element list:
-#
-# tym: the term-year-matrix (possibly sparse)
-#
-# yseq: the year sequence represented by the columns. Should be
-# sequential (ordered factor) but may not be evenly spaced if any year
-# is missing from the data.
-#
-# Further parameters:
-#
-# big: if tdm is a sparseMatrix, set to T and the resulting
-# term-year-matrix will be sparse too.
-#
-# id_map: ids in InstanceList order
-#
-# vocabulary: the vocabulary, as known to the instances
-
+#' Aggregate word counts by years
+#'
+#' Aggregates word counts in a term-document matrix by document years.
+#'
+#' @param metadata the metadata frame
+#' @param tdm term-document sparseMatrix (from result of \code{\link{instances_term_document_matrix}})
+#' @param instances supply a reference to an \code{InstanceList} and the routine will 
+#' retrieve the id list and vocabulary automatically. Ignored if \code{id_map} and 
+#' \code{vocabulary} are specified.
+#' @param id_map character vector mapping \code{tdm} columns to documents
+#' @param vocabulary character vector mapping \code{tdm} rows to terms
+#'
+#' @return A two-element list: \define{
+#'      \item{\code{tym}}{the term-year-matrix (as \code{\link{Matrix:sparseMatrix}})} 
+#' \item{\code{yseq}}{a map from column indices to dates. Should be
+#' sequential but may not be evenly spaced if any year
+#' is missing from the data.}
+#' }
+#'
+#' @seealso
+#' \code{\link{instances_term_document_matrix}}
+#' \code{\link{instances_ids}}
+#' \code{\link{instances_vocabulary}}
+#' \code{\link{term_year_topic_matrix}}
+#'
+#' @export
+#'
 term_year_matrix <- function(metadata,
                              tdm,
                              instances=NULL,
                              id_map=instances_ids(instances),
-                             vocabulary=instances_vocabulary(instances),
-                             big=T) {
+                             vocabulary=instances_vocabulary(instances)) {
     metadata <- metadata[metadata$id %in% id_map,]
     dates <- pubdate_Date(metadata$pubdate)
     names(dates) <- metadata$id
@@ -1910,13 +1913,7 @@ term_year_matrix <- function(metadata,
     years <- droplevels(years)
 
     # indicator-matrix version of years
-    if(big) {
-        library(Matrix)
-        Y <- Matrix(0,nrow=length(years),ncol=nlevels(years))
-    }
-    else {
-        Y <- matrix(0,nrow=length(years),ncol=nlevels(years))
-    }
+    Y <- Matrix(0,nrow=length(years),ncol=nlevels(years))
 
     Y[cbind(seq_along(years),years)] <- 1
 
