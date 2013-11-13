@@ -1,3 +1,6 @@
+# Core dfrtopics functions: running MALLET and extracting document-topic and topic-word 
+# information.
+
 # internal use only
 # reload mallet and rJava with a new heap parameter for java
 # no-op if java_heap is NULL
