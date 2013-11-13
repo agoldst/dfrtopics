@@ -11,6 +11,10 @@
 #' @return a dataframe with one line for each document with two fields, the document id 
 #' (from the filename) and the "text" of the document as an inflated bag of words.
 #'
+#' @seealso
+#' \code{\link{read_dfr}} and \code{\link{docs_frame}}, which this function wraps; 
+#' \code{\link{overall_counts}} for token frequencies \emph{before} stopword removal.
+#'
 #' @export
 #' 
 read_dfr_wordcounts <- function(dirs=NULL,files=NULL) {
@@ -40,7 +44,9 @@ read_dfr_wordcounts <- function(dirs=NULL,files=NULL) {
 #' \code{WORDCOUNTS}, a feature counted by JSTOR (i.e. a word type); \code{WEIGHT}, the 
 #' count.
 #' @seealso
-#' \code{\link{read_dfr_wordcounts}}
+#' \code{\link{read_dfr_wordcounts}},
+#' \code{\link{instances_term_document_matrix}} for 
+#' feature counts \emph{after} stopword removal (etc.).
 #'
 #' @export
 #' 
@@ -96,7 +102,8 @@ read_dfr <- function(dirs=NULL,files=NULL,report_interval=100) {
 #' @param counts The dataframe from \code{\link{read_dfr}}
 #' @return a 1D table, i.e. a vector of counts with word types as the
 #' element names
-#' @seealso \code{\link{read_dfr}}
+#' @seealso \code{\link{read_dfr}}, \code{\link{instances_term_document_matrix}} for 
+#' feature counts \emph{after} stopword removal (etc.).
 #'
 #' @export
 #' 

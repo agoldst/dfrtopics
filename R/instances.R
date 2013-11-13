@@ -80,7 +80,9 @@ read_instances <- function(filename) {
 #' @seealso
 #' \code{\link{Matrix:sparseMatrix}},
 #' \code{\link{instances_vocabulary}},
-#' \code{\link{instances_ids}}
+#' \code{\link{instances_ids}},
+#' \code{\link{read_dfr}} for access to the unprocessed wordcounts data (i.e. before 
+#' stopword removal, etc.).
 #'
 #' @export
 #'
