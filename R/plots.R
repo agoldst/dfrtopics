@@ -84,15 +84,29 @@ topic_report <- function(doctopics,wkf,metadata,
     }
 }
 
-#' topic_keyword_plot
+#' Plot a single topic's most probable words
 #'
-#' Plot a single topic's most probable words.
+#' Creates a simple plot visualizing word weights in a topic as horizontal bars. The 
+#' weightiest words appear at the top of the plot.
 #'
-#' wkf: weighted keys frame; topic: a topic number from 1.
+#' The default \code{\link{weighted_keys_frame}} will simply rank words by frequency in 
+#' the topic. However, nothing prevents you from using this function with the results of 
+#' another scoring scheme, for example by taking 
+#' \code{\link{tw_wkf}(\link{topic_word_scores})}.
+#' 
+#' @param wkf weighted keys frame
+#' @param topic topic number (matched against \code{wkf$topic})
+#' @param color_scale scale to use for mapping alpha value to color. Not particularly 
+#' useful for a single plot; if you are making multiple plots, however, as 
+#' \code{\link{topic_report}} does, then specifying this is handier.
+#' @return a \link[ggplot2]{ggplot} object
 #'
-#' color_scale: specify if you are making many plots and want coloration
-#' by alpha.
-
+#' @seealso
+#' \code{\link{topic_report}},
+#' \code{\link{weighted_keys_frame}}
+#'
+#' @export
+#'
 topic_keyword_plot <- function(wkf,topic,
                                color_scale=scale_color_gradient()) {
     if(length(topic) > 1) {
