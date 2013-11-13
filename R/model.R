@@ -333,7 +333,7 @@ normalize_doc_topics <- function(dtm) {
 #' \code{meta_keep}, a \code{variable} column with \code{topic<n>} labeling the topic, and 
 #' a \code{value} column with the topic score
 #'
-#' @seealso \code{\link[plyr]{melt}}, \code{\link{doc_topics_frame}}, 
+#' @seealso \code{\link[reshape2]{melt}}, \code{\link{doc_topics_frame}}, 
 #' \code{\link{doc_topics_wide}},
 #' \code{\link{read_metadata}}
 #'
@@ -358,7 +358,7 @@ doc_topics_long <- function(doctops,metadata,
 #' @return a data frame with an id column, one column for each element of 
 #' \code{meta_keep}, and \code{topic<n>} columns with topic weights
 #'
-#' @seealso \code{\link[plyr]{melt}}, \code{\link{doc_topics_frame}}, 
+#' @seealso \code{\link[reshape2]{melt}}, \code{\link{doc_topics_frame}}, 
 #' \code{\link{doc_topics_long}},
 #' \code{\link{read_metadata}}
 #'
