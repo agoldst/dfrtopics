@@ -269,36 +269,47 @@ topic_yearly_lineplot <- function(series,
     result
 }
 
-tm_time_averages_plot <- function(topics,yearly_matrix,
-                                  denominator=NULL,
-                                  years=5,
-                                  facet=F) {
-    series <- topic_proportions_series_frame(yearly=yearly_matrix,
-                                             topics=topics,
-                                             denominator=denominator,
-                                             rolling_window=years)
+#' Plot time series of yearly topic proportions as bars
+#'
+#' Plot time series of topics as bars (faceted for multiple topics).
+#'
+#' This is a convenience function for quickly visualizing output from 
+#' \code{\link{topic_proportions_series_frame}}. It does not offer fine-grained control 
+#' over the plot: for that, I recommend making plots yourself from the data frame. 
+#'
+#' @param series three-column data frame of dates, topics, and weights, from 
+#' \code{\link{topic_proportions_series_frame}}
+#'
+#' @param topic_label function mapping topic numbers to labels. Recommended: pass the result of \code{\link{topic_labeller}(wkf,...)}. By default just the topic number is used.
+#'
+#' @return A \link[ggplot2]{ggplot} object.
+#'
+#' @seealso
+#' \code{\link{topic_proportions_series_frame}} to generate the data needed for the plot,
+#' \code{\link{topic_labeller}} for generating facet titles,
+#' \code{\link{topic_yearly_lineplot}} for bars instead of lines showing the same data.
+#'
+#' @export
+#'
+topic_yearly_barplot <- function(series,
+                                 topic_label=function (n) { sprintf("%03d",n) }) {
 
-    series$topic <- sprintf("%03d",series$topic)
+    series$topic <- topic_label(series$topic)
+
+    p <- ggplot(series,aes(year,weight)) +
+        geom_bar(stat="identity",fill="grey80",width=90) +
+        geom_smooth(method="loess",span=0.5,fill="grey60",color="black",se=F)
+
+    if(length(unique(series$topic)) > 1) {
+        p <- p + facet_wrap(~ topic)
+    }
+
+    p <- p + scale_y_continuous(labels=percent_format()) +
+        xlab("article publication year") +
+        ylab("proportion of words in corpus") +
+        ggtitle("Topics over time")
     
-    result <- ggplot(series,aes(year,weight))
-
-    if(length(topics) > 1) {
-        if(facet) {
-            result <- result + geom_line(aes(group=1)) + facet_wrap(~ topic)
-        }
-        else {
-            result <- result + geom_line(aes(group=topic,color=topic))
-        }
-    }
-    else {
-        result <- result + geom_line(aes(group=1)) +
-            theme(legend.position="none")
-    }
-
-    result +
-        ylab("overall topic proportion") +
-        ggtitle(paste("Topic proportion (moving intervals of",
-                      years,"years)"))
+    p
 }
 
 #' tm_time_boxplots
