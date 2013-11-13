@@ -676,7 +676,23 @@ topic_proportions_series_frame <- function(yearly,
 
 }
 
-# yearly: the matrix
+#' Convert a matrix of time series to a dataframe
+#'
+#' Utility wrapper for \code{\link{plyr:melt}} on matrices with parallel time series in 
+#' rows.
+#'
+#' @param yearly matrix with variables in rows and time measurements in columns
+#' @param total if TRUE, sum over rows to produce a single total series
+#' @param year_seq character vector giving the dates the columns of \code{yearly} 
+#' correspond to (by default, assume these are stored in \code{\link{colnames}(yearly)})
+#' @param var_seq character vector giving names of variables in rows of \code{yearly}
+#' @param series_names column names for final dataframe
+#' @return three-column data frame ("long" form)
+#' @seealso TODO vis,
+#' \code{\link{topic_proportions_series_frame}}
+#'
+#' @export
+#'
 yearly_series_frame <- function(yearly,
                                 total=F,
                                 year_seq=colnames(yearly),
@@ -700,6 +716,21 @@ yearly_series_frame <- function(yearly,
     series
 }
 
+#' Convert a yearly series data frame into a zoo object
+#'
+#' Utility function for swapping between the long form dataframe of 
+#' \code{\link{yearly_series_frame}} and a \pkg{zoo} object.
+#'
+#' @param s three-column data frame
+#' @param date_col index of date column (default 2)
+#' @param value_col index of value column (default 3)
+#' @return a \code{zoo} time series object
+#'
+#' @seealso
+#' \code{\link{yearly_series_frame}}, \pkg{zoo}
+#'
+#' @export
+#'
 series_frame_zoo <- function(s,date_col=2,value_col=3) {
     val_var <- names(s)[value_col]
     date_var <- names(s)[date_col]
