@@ -511,27 +511,42 @@ term_yearly_topic_lineplot <- function(words,topic_label,
     result
 }
 
-#' topic_dist_plot
+#' Plot topics on the plane
 #'
-#' Gives a sense of the "closeness" of topics to one another
+#' This plot gives a heuristic sense of how "close" topics are to one another.
 #'
-#' More precisely, the strategy is to take the Jensen-Shannon divergence among 
+#' The strategy is to take the Jensen-Shannon divergence among 
 #' the topics considered as distributions over words, and then use 
 #' multidimensional scaling (i.e. PCA) to reduce these distances in word-
-#' distribution space to distances in R^2.
+#' distribution space to distances in \eqn{R^2}.
 #'
-#' twm: matrix with topics in rows and word counts in columns
-#' b: beta (used to smooth the counts)
-#' wkf: weighted keys frame (for labeling)
-#'
-#' actually, nothing stops you setting twm = topic-document matrix and b = 
-#' vector of alphas. That gives the distances among topics as distributions over 
+#' Actually, nothing stops you setting \code{tw} to be the topic-document matrix and 
+#' \code{b} to be the vector of \eqn{\alpha_k}. That would plot the distances among topics 
+#' as distributions over 
 #' documents.
-
-topic_dist_plot <- function(twm,b,wkf) {
-    divs <- topic_divergences(twm,b)
+#'
+#' @param tw matrix with topics in rows and raw word counts in columns (use \code{\link{read_topic_words}}
+#' @param b estimated \eqn{beta} value (used to smooth the counts)
+#' @param topic_label function mapping topic numbers to labels. Recommended: pass the 
+#' result of \code{\link{topic_labeller}(wkf,...)}. By default just the topic number is 
+#' used.
+#'
+#' @return A \link[ggplot2]{ggplot} object.
+#'
+#' @seealso
+#' \code{\link{topic_divergences}},
+#' \code{\link{read_topic_words}},
+#' \code{\link[base]{cmdscale}},
+#' \code{\link{topic_labeller}}
+#'
+#' @export
+#'
+topic_dist_plot <- function(tw,b,
+                            topic_label=function (n) { sprintf("%03d",n) }) {
+    divs <- topic_divergences(tw,b)
     dists <- cmdscale(divs,k=2)
-    to_plot <- data.frame(label=topic_names(wkf),x=dists[,1],y=dists[,2])
+    to_plot <- data.frame(label=topic_label(seq(nrow(tw))),
+                          x=dists[,1],y=dists[,2])
     ggplot(to_plot) + geom_text(aes(x=x,y=y,label=label,hjust=1)) +
         scale_x_continuous(expand=c(.1,.1)) + # a little extra horizontal air 
         theme(axis.title=element_blank(),
