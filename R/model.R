@@ -1642,30 +1642,37 @@ topic_divergences <- function(twm,b) {
     row_dists(twm,method="JS")
 }
 
-# -----------------------------------------
-# Probing a corpus via the mallet instances
-# -----------------------------------------
+#' -----------------------------------------
+#' Probing a corpus via the mallet instances
+#' -----------------------------------------
 
-# instances_tdm
-#
-# Given an instance list, return a term-document matrix.
-#
-# Documents are in columns, terms are in rows. The ordering of the terms
-# is as in the vocabulary, and the ordering of documents is as in the
-# instance list; retrieve the ids in this order with instances_ids().
-#
-# big: if true, try to build up a sparseMatrix instead of a regular matrix.
-# On your head be it. For the idea of going sparse, h/t Ben Marwick.
-#
-# parallel: if true (when big is true), try to run in parallel using    
-# doMC. Not actually workable at scale the way I've written it, so    
-# this option is deprecated, and the function will error out instead. 
-#
-# N.B. Instances typically hold processed text (no stopwords,
-# lowercased, etc.)
-#
-
-instances_tdm <- function(instances,big=T,parallel=F,verbose=F) {
+#' Extract term-document matrix from instances
+#'
+#' Given an instance list, returns a term-document matrix.
+#'
+#' \emph{N.B.} Instances hold processed text (stopwords already removed, text typically
+#' lowercased, etc.)
+#' For the idea of going sparse, h/t Ben Marwick. I also experimented with parallelization 
+#' using \code{doMC}, but not successfully.
+#'
+#' @return a \code{\link{Matrix:sparseMatrix}} with documents in columns and terms 
+#' in rows. The ordering of the terms
+#' is as in the vocabulary (\code{\link{instances_vocabulary}}), and the ordering of 
+#' documents is as in the
+#' instance list (\code{\link{instances_ids}}).
+#'
+#' @param instances file holding MALLET instances or rJava reference to a MALLET 
+#' \code{InstanceList} object from e.g. \code{\link{read_instances}}
+#' @param verbose if TRUE, give some progress messaging
+#'
+#' @seealso
+#' \code{\link{Matrix:sparseMatrix}},
+#' \code{\link{instances_vocabulary}},
+#' \code{\link{instances_ids}}
+#'
+#' @export
+#'
+instances_term_document_matrix <- function(instances,verbose=F) {
     if(verbose) {
         log <- message
     }
@@ -1684,86 +1691,64 @@ instances_tdm <- function(instances,big=T,parallel=F,verbose=F) {
     log("Retrieved instances from mallet.")
     log("Compiling tdm...")
 
+    # ugh. Solution from:
+    # http://stackoverflow.com/questions/8843700/creating-sparse-matrix-from-a-list-of-sparse-vectors
+    log("Tabulating instances into sparseVector list")
 
-    if(big) {
-
-        library(Matrix)
-
-        if(parallel) {
-            stop("Serial execution will be better.")
-
-            library(foreach)
-            library(doMC)
-            registerDoMC()
-            log("Executing in parallel with ",getDoParWorkers(),
-                " workers")
-
-            result <- foreach(i=instances,
-                              .combine=cBind) %dopar% {
-                Matrix(tabulate(instance_vector(i),nbins=nwords),
-                       ncol=1,sparse=T)
-            }
-        }
-        else {
-            # ugh. Solution from:
-            # http://stackoverflow.com/questions/8843700/creating-sparse-matrix-from-a-list-of-sparse-vectors
-            log("Tabulating instances into sparseVector list")
-
-            instance_tf <- function(inst) {
-                counts <- tabulate(instance_vector(inst))
-                sparseVector(counts,seq_along(counts),length=nwords)
-            }
-
-            vs <- lapply(instances,instance_tf) 
-            n_x <- sapply(vs,function(v) length(v@i))
-
-            # If we wanted to be totally vectorial, we could compute a
-            # running total of n_x, which tells us how to index into our
-            # row and column vectors for each document:
-            # 
-            #    acc <- matrix(0L,nrow=length(n_x),ncol=length(n_x))
-            #    acc[upper.tri[rsum,diag=T]] <- 1L 
-            #    indices <- n_x %*% acc
-            #
-            # and then calculate the a:a+l-1 sequences in advance,
-            # but whatevs!
-
-            N <- sum(n_x)
-            rs <- integer(N)
-            cs <- integer(N)
-            xs <- integer(N)
-
-            a <- 1
-            for(k in seq_along(vs)) {
-                stopifnot(is(vs[[k]],"sparseVector"))
-            }
-
-            log("Building sparseMatrix parameters")
-            for (k in seq_along(vs)) {
-                l <- n_x[k]
-                if(l == 0) {
-                    next
-                }
-
-                elems_k <- a:(a + l - 1)
-
-                cs[elems_k] <- k
-                rs[elems_k] <- vs[[k]]@i
-                xs[elems_k] <- vs[[k]]@x
-                a <- a + l
-            }
-
-            log("Constructing sparseMatrix")
-
-            result <- sparseMatrix(i=rs,j=cs,x=xs)
-        }
+    instance_tf <- function(inst) {
+        counts <- tabulate(instance_vector(inst))
+        sparseVector(counts,seq_along(counts),length=nwords)
     }
-    else { 
-        instance_tf <- function(inst) {
-            tabulate(instance_vector(inst),nbins=nwords)
-        }
-        result <- vapply(instances,instance_tf,integer(nwords))
+
+    vs <- lapply(instances,instance_tf) 
+    n_x <- sapply(vs,function(v) length(v@i))
+
+    # If we wanted to be totally vectorial, we could compute a
+    # running total of n_x, which tells us how to index into our
+    # row and column vectors for each document:
+    # 
+    #    acc <- matrix(0L,nrow=length(n_x),ncol=length(n_x))
+    #    acc[upper.tri[rsum,diag=T]] <- 1L 
+    #    indices <- n_x %*% acc
+    #
+    # and then calculate the a:a+l-1 sequences in advance,
+    # but whatevs!
+
+    N <- sum(n_x)
+    rs <- integer(N)
+    cs <- integer(N)
+    xs <- integer(N)
+
+    a <- 1
+    for(k in seq_along(vs)) {
+        stopifnot(is(vs[[k]],"sparseVector"))
     }
+
+    log("Building sparseMatrix parameters")
+    for (k in seq_along(vs)) {
+        l <- n_x[k]
+        if(l == 0) {
+            next
+        }
+
+        elems_k <- a:(a + l - 1)
+
+        cs[elems_k] <- k
+        rs[elems_k] <- vs[[k]]@i
+        xs[elems_k] <- vs[[k]]@x
+        a <- a + l
+    }
+
+    log("Constructing sparseMatrix")
+
+    result <- sparseMatrix(i=rs,j=cs,x=xs)
+
+    # non-sparse version:
+    #       instance_tf <- function(inst) {
+    #       tabulate(instance_vector(inst),nbins=nwords)
+    #    }
+    #    result <- vapply(instances,instance_tf,integer(nwords))
+    #}
     result
 }
 
