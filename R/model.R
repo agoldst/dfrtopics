@@ -645,15 +645,26 @@ topic_year_matrix <- function(dt_wide=NULL,dt_long=NULL) {
     }
 } 
 
+#' Get a dataframe suitable for plotting time series of topics
+#'
+#' Produces a dataframe suitable for plotting time series of topics on the basis of the 
+#' yearly totals of topics.
+#'
+#' @param yearly the topic-year matrix, with dates as colnames
+#' @param topics which topics to keep in the dataframe: by default, all are retained
+#' @param denominator the totals to divide the yearly series by. By default, the sums of 
+#' the columns of \code{yearly} are used, so that the resulting dataframe gives the 
+#' proportion of \emph{words} in the corpus for that year assigned to the topic in 
+#' question. 
+#' @param rolling_window the number of years to take rolling averages over (default 1)
+#' @return a dataframe with columns \code{topic,year,weight}
+#' @export
+#'
 topic_proportions_series_frame <- function(yearly,
                                            topics=1:nrow(yearly),
-                                           denominator=NULL,
+                                           denominator=colSums(yearly),
                                            rolling_window=1) {
     yseq <- colnames(yearly)
-
-    if(is.null(denominator)) {
-        denominator <- colSums(yearly)
-    }
 
     z <- series_rolling(series=yearly_zoo(yearly[topics,,drop=F]),
                        totals=zoo(denominator,as.Date(yseq)),
