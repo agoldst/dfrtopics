@@ -69,7 +69,7 @@ topic_report <- function(doctopics,wkf,metadata,
         print(topic_keyword_plot(wkf,topic,color_scale),
               vp=viewport(layout.pos.row=c(1,2),layout.pos.col=1))
 
-        print(tm_yearly_line_plot(.yearly_totals=yearly,
+        print(topic_yearly_lineplot(.yearly_totals=yearly,
                                   topics=topic,raw_counts=raw_counts),
               vp=viewport(layout.pos.row=1,layout.pos.col=2))
 
@@ -188,74 +188,49 @@ corpus_dist_plot <- function(corpus_dist,wkf) {
 
 
 
-#' tm_yearly_line_plot
+#' Plot time series of yearly topic proportions
 #'
-#' plot yearly averages. Supply a long or wide form data frame with
-#' document- topic scores. Alternatively, you can precalculate the yearly
-#' totals (using tm_yearly_totals() and supply them as .yearly_totals).
+#' Plot a time series of topics as lines on a single plot or on faceted plots.
 #'
-#' topics: which topics to consider, as a vector of numbers from 1
+#' This is a convenience function for quickly visualizing output from 
+#' \code{\link{topic_proportions_series_frame}}. It does not offer fine-grained control 
+#' over the plot: for that, I recommend making plots yourself from the data frame. 
 #'
-#' raw_counts: are topic scores word counts or estimated proportions?
-#' Does not affect the actual plot, but if the topic scores have been
-#' normalized then we are looking at frequency of the topic in documents
-#' rather than freq. of the topic in words, so the title of the plot is
-#' changed accordingly
+#' @param series three-column data frame of dates, topics, and weights, from 
+#' \code{\link{topic_proportions_series_frame}}
 #'
-#' facet: faceted plot or multiple lines on one plot? If yes, you can use
-#' the .faceting parameter to tweak the facet by passing a facet_wrap()
-#' call
+#' @param topic_label function mapping topic numbers to labels. Recommended: pass the result of \code{\link{topic_labeller}(wkf,...)}. By default just the topic number is used.
 #'
-#' .yearly_overall: if the denominator for a yearly average is not simply
-#' the sum of all the entries (because you are supplying a subset of
-#' the full topic matrix) you can supply this parameter
-
-
-tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
-                                topics=NULL,raw_counts=T,facet=F,
-                                smoothing_line=F,
-                                .yearly_totals=NULL,
-                                .yearly_overall=NULL,
-                                .faceting=facet_wrap(~ topic),
-                                tnames=NULL) {
-    if(!is.null(.yearly_totals)) {
-        series <- .yearly_totals
-    } else if(!is.null(tm_long)) {
-        series <- tm_yearly_totals(tm_long=tm_long)
-    } else if(!is.null(tm_wide)) {
-        series <- tm_yearly_totals(tm_wide=tm_wide)
-    } else {
-        stop("Supply long, wide, or pre-aggregated document-topic matrix")
-    }
+#' @param raw_counts Are topic scores word counts or estimated proportions? This
+#' does not affect the plotted data, but if the topic scores have been
+#' normalized then we are looking at the frequency of the topic in documents
+#' rather than the frequency of the topic in words, so the title of the plot is
+#' changed accordingly.
+#'
+#' @param facet If TRUE, make a faceted plot with one small plot for each topic in \code{series}. If FALSE, put multiple lines on a single plot.
+#' @param smoothing_line If TRUE, add a loess smoother.
+#'
+#' @return A \link[ggplot2]{ggplot} object.
+#'
+#' @seealso
+#' \code{\link{topic_proportions_series_frame}} to generate the data needed for the plot,
+#' \code{\link{topic_labeller}} for generating facet titles,
+#' \code{\link{topic_yearly_barplot}} for bars instead of lines showing the same data.
+#'
+#' @export
+#'
+topic_yearly_lineplot <- function(series,
+                                  topic_label=function (n) { sprintf("%03d",n) },
+                                  raw_counts=T,facet=F,
+                                  smoothing_line=F) {
 
     plot_title <- ifelse(raw_counts,
                          "Proportion of words in topic",
                          "Proportion of documents in topic")
 
-    dates <- colnames(series)
-
-    if(is.null(.yearly_overall)) { 
-        yearly_overall <- colSums(series)
-    }
-    else {
-        yearly_overall <- .yearly_overall
-    }
-    series <- series %*% diag(1 / yearly_overall) 
-    colnames(series) <- dates
-
-    # keep just the specified topics; if none specified, do all
-    if(is.null(topics)) {
-        topics <- 1:nrow(series)
-    }
-
-    tlabels <- paste("topic",topics,sep="")
-    to.plot <- melt(series[tlabels,])
-
-    if(length(topics) == 1) {
-        to.plot$pubdate <- as.Date(rownames(to.plot))
-        result <- ggplot(to.plot,aes(pubdate,value,group=1))
+    if(length(unique(series$topic)) == 1) {
+        result <- ggplot(series,aes(year,weight,group=1))
         result <- result + geom_line()
-
         plot_title <- paste(plot_title,topics)
 
         if(facet) {
@@ -265,23 +240,15 @@ tm_yearly_line_plot <- function(tm_long=NULL,tm_wide=NULL,
         if(smoothing_line) {
             result <- result + geom_smooth(method="loess")
         }
+        result <- result + theme(legend.position="none")
     }
     else { 
-        to.plot <- rename(to.plot,c("Var1"="topic"))
-        tnums <- as.character(to.plot$topic)
-        tnums <- as.integer(substr(tnums,6,nchar(tnums)))
-
-        if(!is.null(tnames)) {
-            to.plot$topic <- tnames[tnums]
-        } else { 
-            to.plot$topic <- sprintf("%03d",tnums)
-        }
-        result <- ggplot(to.plot,aes(as.Date(Var2),value,group=topic))
-
+        series$topic <- topic_label(series$topic)
+        result <- ggplot(series,aes(year,weight,group=topic))
         plot_title <- paste(plot_title,"s",sep="")
 
         if(facet) { 
-            result <- result + geom_line() + .faceting
+            result <- result + geom_line() + facet_wrap(~ topic)
             if(smoothing_line) {
                 result <- result + geom_smooth(method="loess")
             }
