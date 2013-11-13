@@ -1208,45 +1208,65 @@ topic_yearly_top_words <- function(tytm,yseq,vocab,n_words=5) {
     result
 }
 
-# topic_term_time_series
-#
-# yearly totals of a given word (or words) within a topic: just a
-# convenience function to pull out the right row(s) of the tytm.
-#
-# tytm: the matrix in the results from term_year_topic_matrix
-
+#' Get the time series of words within a topic
+#'
+#' A convenience function to access the yearly totals of a given word (or words) within a 
+#' topic from the \code{\link{term_year_topic_matrix}} results
+#'
+#' @param word character vector of terms
+#'
+#' @param tytm matrix with terms in rows and years in columns
+#'
+#' @param character vector mapping rows of \code{tytm} to words (matched against 
+#' \code{word})
+#' 
+#' @seealso
+#' \code{\link{term_year_topic_matrix}}
+#'
+#' @export
+#'
 topic_term_time_series <- function(word,tytm,vocab) {
     w <- match(word,vocab)
     tytm[w,,drop=F]
 }
 
-# term_year_series_frame
-#
-# make a dataframe, suitable for plotting, of entries from a term-year
-# matrix
-#
-# words: which words to pick out
-#
-# term_year: the term-year spareMatrix (included in list returned by
-# term_year_matrix)
-#
-# year_seq: the years corresponding to columns of term_year, as strings
-# in ISO format (in list from term_year_matrix)
-#
-# vocab: the vocabulary corresponding to rows of term_year
-#
-# raw_counts: return counts, or yearly proportions?
-#
-# total: if true, tally up the total incidences of all words in words
-#
-# denominator: if raw_counts=F, you can divide through by this
-# instead of by the column totals of term_year (useful if you
-# are passing in a term_year_topic_matrix but you still want the
-# yearly proportion out of all words in the corpus, in which case
-# denominator=term_year_matrix()$tym. WARNING: assumes the columns of
-# denominator correspond to the same years as those of term_year
-
-
+#' Convert a term-year matrix to a dataframe for plotting
+#'
+#' This function makes a dataframe, suitable for plotting, of entries
+#' from a term-year matrix (conditional on topic or not).
+#'
+#' @param words which terms to pick out
+#'
+#' @param term_year matrix with terms in rows and time-slices in columns
+#'
+#' @param year_seq character vector mapping columns of \code{term_year}
+#' to dates, as strings in ISO format (the \code{yseq}
+#' component of results from \code{\link{term_year_matrix}} or
+#' \code{\link{term_year_topic_matrix}}
+#' @param vocab character vector mapping rows of \code{term_year} to terms
+#'
+#' @param raw_counts if FALSE (the default), divide counts through by column totals or 
+#' \code{denominator}
+#' 
+#' @param total if TRUE, tally up the total incidences of all words in \code{words}
+#'
+#' @param denominator \code{raw_counts} is FALSE, counts are normalized by this. If this 
+#' is NULL, column totals are used. Use this parameter if you
+#' are passing in a \code{\link{term_year_topic_matrix}} but you still want the
+#' yearly proportion out of all words in the corpus, in which case
+#' set \code{denominator=term_year_matrix()$tym}. The columns of
+#' \code{denominator} are assumed to correspond to the same years as those of 
+#' \code{term_year}, so be careful of dropped years.
+#'
+#' @return a dataframe with three columns, \code{word,year,weight}. If \code{total} is 
+#' TRUE, this will have only one row.
+#'
+#' @seealso
+#' \code{\link{term_year_topic_matrix}},
+#' \code{\link{term_year_matrix}}
+#'
+#' @export
+#'
 term_year_series_frame <- function(words,term_year,year_seq,vocab,
                                    raw_counts=F,
                                    total=F,
