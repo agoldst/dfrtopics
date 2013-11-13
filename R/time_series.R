@@ -242,7 +242,7 @@ topic_year_meta <- function(doctops,metadata,
         colSums(d[,-drop_cols])
     }
 
-    if(is.null(yearly_totals)) {
+    if(is.null(topic_year)) {
         ply_fun <- tally
     }
     else {
