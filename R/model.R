@@ -1310,27 +1310,39 @@ term_year_series_frame <- function(words,term_year,year_seq,vocab,
 }
 
 
-
-# Save the "topic word weights," i.e. the estimated weights of each word
-# for each topic
-#
-# topic_wordfile: name of a file to write the topic x word matrix as a
-# csv file (topics are rows). No row or column headers.
-#
-# vocab_file: name of a file to write the vocabulary corresponding to
-# columns of topic_wordfile. one word per line.
-#
-# smoothed, normalized: parameters passed on to RTopicModel. Set both to
-#F to get raw counts.
-#
-# This is the same information, differently organized, output in a
-# single file by mallet's --topic-word-weights-file <outfile.tsv>
-# option. To access that, use:
-#
-# trainer$model$printTopicWordWeights(new(J("java.io.File"),
-#                                     "outfile.tsv"))
-#
-
+#' Write the topic-word matrix to disk
+#'
+#' Saves the estimated weights of words in topics to a headerless CSV file and the list of 
+#' words in the "vocabulary" of the model to a text file.
+#'
+#' This is the same information, differently organized, output in a
+#' single file by mallet's \code{--topic-word-weights-file <outfile.tsv>}
+#' command-line option. To create that from R, use:
+#' \code{
+#' trainer$model$printTopicWordWeights(new(J("java.io.File"),
+#'                                     "outfile.tsv"))
+#' }
+#'
+#' @param trainer the reference to the \code{RTopicModel} object.
+#'
+#' @param topic_words_file name of a file to write the topic-word matrix to as a
+#' CSV file (topics are rows). No row or column headers.
+#'
+#' @param vocab_file name of a file to write the vocabulary corresponding to
+#' columns of topic_wordfile. One word per line.
+#'
+#' @param smoothed passed on to \code{\link{mallet:mallet.topic.words}}.
+#' @param normalized passed on to \code{\link{mallet:mallet.topic.words}}. For raw counts, 
+#' set \code{smoothed=F,normalized=F}.
+#'
+#' @seealso
+#' \code{\link{read_topic_words}},
+#' \code{\link{mallet:mallet.topic.words}},
+#' \code{\link{topic_word_scores}},
+#' \code{\link{weighted_keys_frame}} for just the "top" or key words in each topic.
+#'
+#' @export
+#'
 write_topic_words <- function(trainer,
                               topic_words_file="topics_words.csv",
                               vocab_file="vocab.txt",
