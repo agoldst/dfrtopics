@@ -150,8 +150,7 @@ output_model <- function(model_result,output_dir=".",
     diag_f <- file.path(output_dir,"diagnostics.xml") 
     write_diagnostics(model_result$trainer,
                       diag_f, 
-                      get_diagnostics(model_result$trainer,
-                        as.integer(sum(model_result$keys$topic==1))))
+                      num_top_words=as.integer(sum(model_result$keys$topic==1)))
     message("Wrote ",diag_f)
 
     if (save_instances) {
@@ -1111,130 +1110,102 @@ write_topic_words <- function(trainer,
     message("Saved vocabulary to ",vocab_file)
 }
 
-# read_topic_words_matrix
-#
-# Get the matrix with topics in rows and word counts in columns (columns
-# are in order of the vocabulary as known to the mallet instances).
-# Returns a sparseMatrix.
-#
-# tw_file: filename ("topic_words.csv")
-#
-# what: datatype to read in. integer() if raw counts, double() if
-# proportions
-
-read_topic_words_matrix <- function(tw_file,what=integer()) {
-    library(Matrix)
+#' Read in the topic-word matrix
+#'
+#' Get the matrix with topics in rows and word counts in columns.
+#' Returns a \code{\link{Matrix:sparseMatrix}}.
+#'
+#' Formerly known as \code{read_topic_words_matrix}.
+#'
+#' @return A \code{\link{Matrix:sparseMatrix}} with topics in rows and columns in 
+#' order of the vocabulary as known to the mallet instances)
+#'
+#' @param tw_file CSV filename, for example \code{topic_words.csv}.
+#'
+#' @param what datatype to read in (passed on to \code{\link{base:scan}}). 
+#' \code{integer()} by default; use double() you expect proportions.
+#'
+#' @seealso
+#' \code{\link{write_topic_words}},
+#' \code{\link{mallet:mallet.topic.words}} for online access to the same matrix.
+#'
+#' @export
+#'
+read_topic_words <- function(tw_file,what=integer()) {
     tw <- scan(tw_file,what=what,sep=",")
     n <- length(scan(tw_file,what=what,sep=",",nlines=1,quiet=T))
     as(matrix(tw,byrow=T,ncol=n),"sparseMatrix")
 }
 
-# read_topic_words (deprecated)
-#
-# get a "long" format dataframe of words in topics by reading in the
-# two files output by write_topic_words()
-#
-# result: data frame with three columns, topic, word, and weight.
-# 
-# NB. check the data: it may be weighted or unweighted, normalized or
-# unnormalized
-
-read_topic_words <- function(topic_words_file,vocab_file) {
-    vocab <- readLines(vocab_file)
-    tw <- read.csv(topic_words_file,header=F,as.is=T)
-    nwords <- length(vocab)
-    ntopics <- nrow(tw)
-
-    # matrices are unrolled column by column, so we need the transpose of the
-    # topic x word matrix
-
-    data.frame(topic=rep(1:ntopics,each=nwords),
-               word=rep(vocab,times=ntopics),
-               weight=as.vector(t(tw)),
-               stringsAsFactors=F)      # if you want to factorize it...
-}
-    
-# topic_words
-#
-# get a dataframe with topic,word,weight rows from the mallet trainer object
-#
-# not really as useful as just the topic word matrix you can get using the
-# mallet package function mallet.topic.words
-
-topic_words <- function(trainer,smoothed=T,normalized=T) {
-    tw <- mallet.topic.words(trainer,smoothed=smoothed,normalized=normalized)
-    vocab <- trainer$getVocabulary()
-    nwords <- length(vocab)
-    ntopics <- nrow(tw)
-
-    # matrices are unrolled column by column, so we need the transpose of the
-    # topic x word matrix
-
-    data.frame(topic=rep(1:ntopics,each=nwords),
-               word=rep(vocab,times=ntopics),
-               weight=as.vector(t(tw)),
-               stringsAsFactors=F)      # if you want to factorize it...
+#' Access MALLET's topic model diagnostics
+#'
+#' Get MALLET's suite of model diagnostics (as a string of XML)
+#'
+#'
+#' @return a reference to the MALLET diagnostics object.
+#'
+#' @seealso
+#' \code{\link{parse_diagnostics}},
+#' \code{\link{read_diagnostics}},
+#' \code{\link{write_diagnostics}}
+#'
+#' @export
+#'
 }
 
-# topic_words_wide (deprecated)
-#
-# Convert a long-format topic_words frame to wide (rows are topics,
-# variables are words). Or at least try. No promises on speed. The
-# result is like the topic-word matrix but has a first column labeling
-# the topic (and its variable names contain the actual words).
-
-topic_words_wide <- function(tw,assume_ordered=T) {
-    library(reshape2)
-    tw <- rename(tw,c("weight"="value"))
-    dcast(tw,topic ~ word)
-}
-
-# smooth_words (deprecated)
-
-smooth_words <- function(tw,beta) {
-    transform(tw,weight=weight + beta)
-}
-
-# normalize_words (deprecated)
-
-normalize_words <- function(tw,smoothed,beta=NULL) {
-    ddply(tw,"topic",transform,weight=weight/sum(weight))
-}
-
-# Basic access to mallet topic diagnostics
-
-get_diagnostics <- function(trainer,num_top_words=20L) {
-    .jnew("cc/mallet/topics/TopicModelDiagnostics",
-          trainer$model,num_top_words)
-}
-
+#' Save MALLET's topic model diagnostics as XML
+#'
+#' Write MALLET's model diagnostics to an XML file.
+#'
+#' @param trainer the \code{RTopicModel} object.
+#' @param output_file the name of a file to save XML to.
+#' @param num_top_words the number of top words per topic to calculate topic-word 
+#' diagnostics for.
+#'
+#' @seealso
+#' \code{\link{read_diagnostics}}
+#'
+#' @export
+#'
 write_diagnostics <- function(trainer,output_file="diagnostics.xml",
-                              diagnostics=get_diagnostics(trainer,20L)) {
-    xml <- diagnostics$toXML()
+                              num_top_words=50L)) {
+
+    d <- .jnew("cc/mallet/topics/TopicModelDiagnostics",
+          trainer$model,as.integer(num_top_words))
+    xml <- d$toXML()
     cat(xml,file=output_file)
 }
 
-# read_diagnostics
-#
-# Parses mallet diagnostic xml output in xml_file. Requires XML library
-# and libxml
-#
-# returns a list of two dataframes:
-#
-# topics: topic-level diagnostics.
-#
-#   the "topic" column is a 1-indexed topic number.
-#   the "corpus_dist" column gives the Jensen-Shannon divergence from the
-#       corpus 
-#   the "coherence" column gives the topic coherence measure defined
-#       by Mimno et al., "Optimizing Semantic Coherence in Topic Models",
-#       eq. (1) (sum of log-co-document-document frequency ratios for the
-#       num_top_words top words in the topic; num_top_words as set in
-#       get_diagnostics).
-#
-# words: word-level diagnostics about the num_top_words most probable words in 
-# each topic.
-
+#' Read MALLET model-diagnostic results.
+#'
+#' Uses the \pkg{XML} package and \code{libxml} to parse the MALLET
+#' diagnostic output.
+#'
+#' @param xml_file file holding XML to be parsed.
+#'
+#' @return a list of two dataframes, \code{topics} and \code{words}.
+#' The diagnostics are sparsely documented by the MALLET source
+#' code (\url{http://hg-iesl.cs.umass.edu/hg/mallet}: see
+#' \code{src/cc/mallet/topics/TopicModelDiagnostics.java}). In
+#' \code{topics}, columns include \code{topic}, the 1-indexed topic
+#' number; \code{corpus_dist}, the Jensen-Shannon divergence from the
+#' corpus; and \code{coherence}, the topic coherence measure defined by
+#' Mimno et al., eq. (1) (the sum of log-co-document-document frequency
+#' ratios for the top words in the topic [number of top words as set by
+#' \code{num_top_words} parameter to \code{\link{write_diagnostics}]).
+#'
+#' \code{words} gives word-level diagnostics about each of the most probable words in 
+#' each topic.
+#'
+#' @references
+#' David Mimno et al. Optimizing Semantic Coherence in Topic Models. \emph{EMNLP} 2011. 
+#' \url{http://www.cs.princeton.edu/~mimno/papers/mimno-semantic-emnlp.pdf}
+#'
+#' @seealso
+#' \code{\link{write_diagnostics}}
+#'
+#' @export
+#'
 read_diagnostics <- function(xml_file) {
     library(XML)
     d <- xmlParse(file=xml_file)
@@ -1269,33 +1240,23 @@ read_diagnostics <- function(xml_file) {
     list(topics=topics,words=words)
 }
 
-diagnostics_list <- function(trainer) {
-    # TODO implement online access
-    stop("online access to diagnostics not implemented.")
-    # from TopicModelDiagnostics constructor
-#		diagnostics.add(getTokensPerTopic(model.tokensPerTopic));
-#		diagnostics.add(getDocumentEntropy(model.tokensPerTopic));
-#		diagnostics.add(getWordLengthScores());
-#		diagnostics.add(getCoherence());
-#		diagnostics.add(getDistanceFromUniform());
-#		diagnostics.add(getDistanceFromCorpus());
-#		diagnostics.add(getEffectiveNumberOfWords());
-#		diagnostics.add(getTokenDocumentDiscrepancies());
-#		diagnostics.add(getRank1Percent());
-#		diagnostics.add(getDocumentPercentRatio(FIFTY_PERCENT_INDEX, TWO_PERCENT_INDEX));
-#		diagnostics.add(getDocumentPercent(5));
-}
     
 
-# model_params
-#
-# Collect together some overall parameters of a model into a one-row
-# data frame.
-#
-# Recall that the topic model is also estimating a beta parameter (just
-# one). Also: reminders of the final log-likelihood of the model and the
-# total number of tokens in the instances mallet operated on.
-
+#' Get miscellaneous model parameters
+#'
+#' Collect together some overall parameters of a model into a one-row
+#' data frame.
+#'
+#' The topic model is also estimates a \eqn{\beta} parameter.
+#' We can also remember the final log-likelihood of the model and the
+#' total number of tokens in the instances mallet operated on.
+#'
+#' @param trainer the \code{RTopicModel} object
+#'
+#' @return a data frame with one row and three columns, \code{beta,n_tokens,LL}.
+#'
+#' @export
+#'
 model_params <- function(trainer) {
     data.frame(beta=trainer$model$beta,
                n_tokens=trainer$model$totalTokens,
