@@ -67,7 +67,7 @@ read_instances <- function(filename) {
 #' For the idea of going sparse, h/t Ben Marwick. I also experimented with parallelization 
 #' using \code{doMC}, but not successfully.
 #'
-#' @return a \code{\link{Matrix:sparseMatrix}} with documents in columns and terms 
+#' @return a \code{\link[Matrix]{sparseMatrix}} with documents in columns and terms 
 #' in rows. The ordering of the terms
 #' is as in the vocabulary (\code{\link{instances_vocabulary}}), and the ordering of 
 #' documents is as in the
@@ -78,7 +78,7 @@ read_instances <- function(filename) {
 #' @param verbose if TRUE, give some progress messaging
 #'
 #' @seealso
-#' \code{\link{Matrix:sparseMatrix}},
+#' \code{\link[Matrix]{sparseMatrix}},
 #' \code{\link{instances_vocabulary}},
 #' \code{\link{instances_ids}},
 #' \code{\link{read_dfr}} for access to the unprocessed wordcounts data (i.e. before 
@@ -256,7 +256,7 @@ instance_vector <- function(instance) {
 #'
 #' @param instance reference to an instance
 #' @param vocab character vector giving the vocabulary
-#' @param collapse passed on to \code{\link{base:paste}}
+#' @param collapse passed on to \code{\link[base]{paste}}
 #' @return A string "spelling out" the instance text
 #'
 #' @export
@@ -299,7 +299,7 @@ instances_vocabulary <- function(instances) {
 #' @param vocabulary character vector mapping \code{tdm} rows to terms
 #'
 #' @return A two-element list: \describe{
-#'      \item{\code{tym}}{the term-year-matrix (as \code{\link{Matrix:sparseMatrix}})} 
+#'      \item{\code{tym}}{the term-year-matrix (as \code{\link[Matrix]{sparseMatrix}})} 
 #' \item{\code{yseq}}{a map from column indices to dates. Should be
 #' sequential but may not be evenly spaced if any year
 #' is missing from the data.}
@@ -464,13 +464,13 @@ term_year_matrix_journal <- function(journal,
 #' \code{\link{instances_term_document_matrix}} but also to a 
 #' \code{\link{term_document_topic_matrix}}.
 #'
-#' @param tdm matrix or \code{\link{Matrix:sparseMatrix}} with terms in rows and documents 
+#' @param tdm matrix or \code{\link[Matrix]{sparseMatrix}} with terms in rows and documents 
 #' in columns
 #' @param metadata metadata frame
 #' @param id_map character vector mapping \code{tdm} columns to \code{metadata$id} values
 #' @return an ordinary matrix with journals in rows and years in columns; the 
-#' \code{\link{base:rownames}} of the result give the \code{journaltitle} values and the 
-#' \code{\link{base:colnames}} give the dates as strings
+#' \code{\link[base]{rownames}} of the result give the \code{journaltitle} values and the 
+#' \code{\link[base]{colnames}} give the dates as strings
 #'
 #' @seealso
 #'
@@ -524,13 +524,13 @@ journal_year_matrix <- function(tdm,metadata,id_map) {
 
 #' Calculate tf*idf scores
 #'
-#' Calculates tf*idf scores from a term-document \code{\link{Matrix:sparseMatrix}}.
+#' Calculates tf*idf scores from a term-document \code{\link[Matrix]{sparseMatrix}}.
 #'
 #' May not be optimal for speed for calculating scores for the whole tdm.
 #'
 #' @param term numeric index into rows of \code{tdm} (can be a vector)
 #' @param doc numeric index into columns of \code{tdm} (can be a vector)
-#' @param tdm term-document \code{\link{Matrix:sparseMatrix}}
+#' @param tdm term-document \code{\link[Matrix]{sparseMatrix}}
 #'
 #' @seealso
 #' \code{\link{instances_term_document_matrix}}

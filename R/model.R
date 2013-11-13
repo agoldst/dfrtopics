@@ -206,12 +206,12 @@ output_model <- function(model_result,output_dir=".",
 #' @param java_heap if non-null, java is restarted with this heap parameter
 #'
 #' @return the trainer object, which holds a reference to the \code{RTopicModel}
-#' object constructed by \code{\link{mallet:MalletLDA}}. In order to access the full 
+#' object constructed by \code{\link[mallet]{MalletLDA}}. In order to access the full 
 #' MALLET Java API, use this object's reference to the \code{ParallelTopicModel}, which is 
 #' simply \code{trainer$model}. You can then call all the \code{ParallelTopicModel} 
 #' methods, though Java's strict typing means you'll have some funtimes with
-#' \code{\link{rJava:.jcall}}. To index into array-like objects from Java, apply 
-#' \code{\link{base:as.integer}} to parameters.
+#' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java, apply 
+#' \code{\link[base]{as.integer}} to parameters.
 #'
 #' @export
 #'
@@ -292,10 +292,10 @@ doc_topics_frame <- function(trainer,smoothed=F,normalized=F) {
 #' discarding the document id's.
 #'
 #' If you have the trainer object, you can simply use 
-#' \code{\link{mallet:mallet.doc.topics}}.
+#' \code{\link[mallet]{mallet.doc.topics}}.
 #'
 #' @param doctopics the data frame from \code{\link{doc_topics_frame}}
-#' @seealso \code{\link{mallet:mallet.doc.topics}},
+#' @seealso \code{\link[mallet]{mallet.doc.topics}},
 #' \code{\link{doc_topics_frame}}
 #'
 #' @export
@@ -333,7 +333,7 @@ normalize_doc_topics <- function(dtm) {
 #' \code{meta_keep}, a \code{variable} column with \code{topic<n>} labeling the topic, and 
 #' a \code{value} column with the topic score
 #'
-#' @seealso \code{\link{plyr:melt}}, \code{\link{doc_topics_frame}}, 
+#' @seealso \code{\link[plyr]{melt}}, \code{\link{doc_topics_frame}}, 
 #' \code{\link{doc_topics_wide}},
 #' \code{\link{read_metadata}}
 #'
@@ -358,7 +358,7 @@ doc_topics_long <- function(doctops,metadata,
 #' @return a data frame with an id column, one column for each element of 
 #' \code{meta_keep}, and \code{topic<n>} columns with topic weights
 #'
-#' @seealso \code{\link{plyr:melt}}, \code{\link{doc_topics_frame}}, 
+#' @seealso \code{\link[plyr]{melt}}, \code{\link{doc_topics_frame}}, 
 #' \code{\link{doc_topics_long}},
 #' \code{\link{read_metadata}}
 #'
@@ -389,7 +389,7 @@ doc_topics_wide <- function(doctops,metadata,
 #' topic hyperparameter \eqn{\alpha_k}. \code{topic} is numbered from 1. The returned 
 #' words are in rank order within each topic.
 #'
-#' @seealso \code{\link{mallet:mallet.topic.words}}
+#' @seealso \code{\link[mallet]{mallet.topic.words}}
 #' \code{\link{tw_wkf}}
 #'
 #' @export
@@ -427,7 +427,7 @@ weighted_keys_frame <- function(trainer,n_top=50,
 #' topic hyperparameter \eqn{\alpha_k}. \code{topic} is numbered from 1. The returned words are 
 #' in rank order within each topic.
 #'
-#' @seealso \code{\link{mallet:mallet.topic.words}},
+#' @seealso \code{\link[mallet]{mallet.topic.words}},
 #' \code{\link{weighted_keys_frame}}
 #'
 #' @export
@@ -529,13 +529,13 @@ topic_word_scores <- function(tw,b,method="blei_lafferty") {
 #' @param vocab_file name of a file to write the vocabulary corresponding to
 #' columns of topic_wordfile. One word per line.
 #'
-#' @param smoothed passed on to \code{\link{mallet:mallet.topic.words}}.
-#' @param normalized passed on to \code{\link{mallet:mallet.topic.words}}. For raw counts, 
+#' @param smoothed passed on to \code{\link[mallet]{mallet.topic.words}}.
+#' @param normalized passed on to \code{\link[mallet]{mallet.topic.words}}. For raw counts, 
 #' set \code{smoothed=F,normalized=F}.
 #'
 #' @seealso
 #' \code{\link{read_topic_words}},
-#' \code{\link{mallet:mallet.topic.words}},
+#' \code{\link[mallet]{mallet.topic.words}},
 #' \code{\link{topic_word_scores}},
 #' \code{\link{weighted_keys_frame}} for just the "top" or key words in each topic.
 #'
@@ -557,21 +557,22 @@ write_topic_words <- function(trainer,
 #' Read in the topic-word matrix
 #'
 #' Get the matrix with topics in rows and word counts in columns.
-#' Returns a \code{\link{Matrix:sparseMatrix}}.
+#' Returns a \code{\link[Matrix]{sparseMatrix}}.
 #'
 #' Formerly known as \code{read_topic_words_matrix}.
 #'
-#' @return A \code{\link{Matrix:sparseMatrix}} with topics in rows and columns in 
+#' @return A \code{\link[Matrix]{sparseMatrix}} with topics in rows and columns in 
 #' order of the vocabulary as known to the mallet instances)
 #'
 #' @param tw_file CSV filename, for example \code{topic_words.csv}.
 #'
-#' @param what datatype to read in (passed on to \code{\link{base:scan}}). 
-#' \code{integer()} by default; use double() you expect proportions.
+#' @param what datatype to read in (passed on to \code{\link[base]{scan}}). 
+#' \code{\link[base]{integer}()} by default; use \code{\link[base]{numeric}()} if 
+#' the datafile has proportions.
 #'
 #' @seealso
 #' \code{\link{write_topic_words}},
-#' \code{\link{mallet:mallet.topic.words}} for online access to the same matrix.
+#' \code{\link[mallet]{mallet.topic.words}} for online access to the same matrix.
 #'
 #' @export
 #'

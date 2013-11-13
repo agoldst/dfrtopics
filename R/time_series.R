@@ -86,7 +86,7 @@ topic_proportions_series_frame <- function(yearly,
 
 #' Convert a matrix of time series to a dataframe
 #'
-#' Utility wrapper for \code{\link{plyr:melt}} on matrices with parallel time series in 
+#' Utility wrapper for \code{\link[plyr]{melt}} on matrices with parallel time series in 
 #' rows.
 #'
 #' @param yearly matrix with variables in rows and time measurements in columns
@@ -154,7 +154,7 @@ series_frame_zoo <- function(s,date_col=2,value_col=3) {
 #'
 #' @param yearly a matrix with variables in rows and dates in string form in its 
 #' \code{colnames}
-#' @return a \code{\link{zoo:zoo}} object
+#' @return a \code{\link[zoo]{zoo}} object
 #'
 #' @seealso \code{\link{zoo_yearly}}
 yearly_zoo <- function(yearly) {
@@ -163,7 +163,7 @@ yearly_zoo <- function(yearly) {
 
 #' Convert a zoo object into a matrix with variables in rows
 #'
-#' @param z a \code{\link{zoo:zoo}} object
+#' @param z a \code{\link[zoo]{zoo}} object
 #' @return a matrix with variables in rows and dates in string form in its 
 #' \code{colnames}
 #'
@@ -176,7 +176,7 @@ zoo_yearly <- function(z) {
 
 #' Convert a zoo object into a "long" data frame
 #'
-#' @param z a \code{\link{zoo:zoo}} object
+#' @param z a \code{\link[zoo]{zoo}} object
 #' @param series_names the names for the three columns of the result
 #' @return the data frame from \code{\link{yearly_series_frame}}
 #' @seealso \code{\link{yearly_series_frame}},
@@ -191,13 +191,13 @@ zoo_series_frame <- function(z,series_names=c("word","year","weight")) {
 #'
 #' This takes rolling averages where adjacent time-slices are not given equal weights.
 #'
-#' @param the series (a \code{\link{zoo:zoo}} object, which can contain one or many 
+#' @param the series (a \code{\link[zoo]{zoo}} object, which can contain one or many 
 #' variables)
 #' @param totals the denominators used in weighting (must be parallel to \code{series})
 #' @param k the window to take the rolling average in
-#' @return a \code{\link{zoo:zoo}} object with the averaged values
+#' @return a \code{\link[zoo]{zoo}} object with the averaged values
 #'
-#' @seealso \code{\link{rollapply}}
+#' @seealso \code{\link[zoo]{rollapply}}
 series_rolling <- function(series,totals,k) {
     rollapply(series,k,sum) / rollapply(totals,k,sum)
 }

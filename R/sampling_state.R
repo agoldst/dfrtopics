@@ -21,7 +21,7 @@ write_mallet_state <- function(trainer,outfile="state.gz") {
 
 #' Reduce a MALLET sampling state on disk to a simplified form
 #'
-#' This function reads in the sampling state output by MALLET and writes a CSV file in 
+#' This function reads in the sampling state output by MALLET and writes a CSV file 
 #' giving the assignments of word types to topics in each document.
 #' 
 #' The resulting file has a header \code{document,word,topic,count} describing its 
@@ -87,8 +87,9 @@ simplify_state <- function(state_file,outfile) {
 #' @param data_type the C++ type to store the data in. If all values have magnitude 
 #' less than \eqn{2^15}, you can get away with \code{short}, but guess what? Linguistic
 #' data hates you, and a typical vocabulary can easily include more word types than that.
-#' @param big_wordkir the working directory where \code{\link{bigmemory:read.big.matrix}} 
-#' will store its temporary files. By default, uses \code{\link{base:tempdir}}, but if you 
+#' @param big_wordkir the working directory where \code{\link[bigmemory]{read.big.matrix}} 
+#' will store its temporary files. By default, uses \code{\link[base]{tempdir}}, but if 
+#' you 
 #' have more scratch space elsewhere, use that for handling large sampling states.
 #'
 #' @seealso
@@ -130,14 +131,14 @@ read_simplified_state <- function(infile,
 #' 
 #' @return a list similar to that returned by \code{\link{term_year_matrix}}:
 #' \describe{
-#'     \item{\code{tym}}{a \code{\link{Matrix:sparseMatrix}} with terms in vocab order in rows and years in columns}
+#'     \item{\code{tym}}{a \code{\link[Matrix]{sparseMatrix}} with terms in vocab order in rows and years in columns}
 #'     \item{\code{yseq}}{a character vector mapping columns to years}
 #'     \item{\code{topic}}{the value of the \code{topic} parameter}
 #' }
 #'
 #' @param topic one-based topic number
 #' @param ss a \code{big.matrix} holding the "simplified state" as returned by 
-#' \code{\link{read_simplified_state}}. Operated on using \code{\link{bigmemory:mwhich}}.
+#' \code{\link{read_simplified_state}}. Operated on using \code{\link[bigmemory]{mwhich}}.
 #'
 #' @param id_map a character vector mapping document numbers in \code{ss} to JSTOR id's 
 #' that can be matched against \code{metadata$id}
@@ -171,12 +172,12 @@ term_year_topic_matrix <- function(topic,ss,id_map,vocab,metadata) {
 #' Extracts a matrix of counts of words assigned to a given topic in each document from 
 #' the "simplified" sampling state.
 #'
-#' @return a \code{\link{Matrix:sparseMatrix}} with terms in rows (\code{vocab} 
+#' @return a \code{\link[Matrix]{sparseMatrix}} with terms in rows (\code{vocab} 
 #' order) and documents in columns (\code{id_map} order). No normalization or smoothing is 
 #' applied to word counts.
 #'
 #' @param ss a \code{big.matrix} holding the "simplified state" as returned by 
-#' \code{\link{read_simplified_state}}. Operated on using \code{\link{bigmemory:mwhich}}.
+#' \code{\link{read_simplified_state}}. Operated on using \code{\link[bigmemory]{mwhich}}.
 #'
 #' @param id_map a character vector mapping document numbers in \code{ss} to JSTOR id's 
 #'
