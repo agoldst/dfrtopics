@@ -570,17 +570,23 @@ doc_topics_long <- function(doctops,metadata,
     melt(wide,id.vars=meta)
 }
 
-# doc_topics_wide
-#
-# synthesize the above doc_topics frame with metadata into a "wide" format
-#
-# meta_keep: vector of names of columns of metadata to keep
-#
-# the result will look like:
-#
-# "id"      topic1  topic2  topic3  ... meta_keep[1]    meta_keep[2] ...
-# <docid>   <topic proportions...>      <metadata vals...>
-
+#' Get a wide document-topic-metadata frame
+#'
+#' Synthesizes a \code{\link{doc_topics_frame}} with metadata into a "wide" format
+#'
+#' @param doctops frame with document-topic weights and an id column
+#' @param metadata frame
+#' @param meta_keep vector of names of columns of metadata to keep
+#'
+#' @return a data frame with an id column, one column for each element of 
+#' \code{meta_keep}, and \code{topic<n>} columns with topic weights
+#'
+#' @seealso \code{\link{plyr:melt}}, \code{\link{doc_topics_frame}}, 
+#' \code{\link{doc_topics_long}},
+#' \code{\link{read_metadata}}
+#'
+#' @export
+#'
 doc_topics_wide <- function(doctops,metadata,
                             meta_keep="pubdate") {
     meta_keep <- unique(c("id",meta_keep))
