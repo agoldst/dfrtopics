@@ -1,5 +1,43 @@
 # Functions for extracting basic information about the model
 
+
+topic_name <- function(topic,wkf,n=0,threshold=0.5,
+                       name_format="%03d %s") {
+    words <- topic_top_words(topic,wkf,n,threshold)
+
+    words_str <- paste(words, collapse=" ")
+
+    sprintf(name_format,topic,words_str)
+}
+
+#' or the above applied to many topics at once
+topic_names <- function(wkf,n=2,topics=NULL,
+                        name_format="%03d %s") {
+    if(length(topics) == 0) {
+        topics <- 1:length(unique(wkf$topic))
+    }
+    ws <- lapply(topics,topic_name,wkf=wkf,n=n,
+                 name_format=name_format)
+    sapply(ws,paste,collapse=" ")
+}
+
+topic_labeller <- function(wkf,n=2,name_format="%03d %s") {
+    function (topic) { topic_name(topic,wkf,n=n,name_format=name_format) }
+}
+
+topic_top_words <- function(topic,wkf,n=0,threshold=0.5) {
+    wkf <- wkf[wkf$topic==topic,]
+    if(n <= 0) {
+        threshold <- max(wkf$weight) * 0.5
+        wkf <- wkf[wkf$weight >= threshold,]
+        words <- wkf$word[order(wkf$weight,decreasing=T)]
+    } else {
+        words <- wkf$word[order(wkf$weight,decreasing=T)[1:n]]
+    }
+
+    words
+}
+
 #' Get the "top" documents for a topic
 #'
 #' Constructs a dataframe with the id's and weights with the "top" documents for a topic.
@@ -71,45 +109,4 @@ top_topics <- function(id,doc_topics,id_map,n=5) {
     indices <- order(doc_topics[i,],decreasing=T)[1:n]
 
     data.frame(topic=indices,weight=doc_topics[i,indices])
-}
-
-#' ------------
-#' About topics
-#' ------------
-
-topic_name <- function(topic,wkf,n=0,threshold=0.5,
-                       name_format="%03d %s") {
-    words <- topic_top_words(topic,wkf,n,threshold)
-
-    words_str <- paste(words, collapse=" ")
-
-    sprintf(name_format,topic,words_str)
-}
-
-#' or the above applied to many topics at once
-topic_names <- function(wkf,n=2,topics=NULL,
-                        name_format="%03d %s") {
-    if(length(topics) == 0) {
-        topics <- 1:length(unique(wkf$topic))
-    }
-    ws <- lapply(topics,topic_name,wkf=wkf,n=n,
-                 name_format=name_format)
-    sapply(ws,paste,collapse=" ")
-}
-
-topic_labeller <- function(wkf,n=2,name_format="%03d %s") {
-    function (topic) { topic_name(topic,wkf,n=n,name_format=name_format) }
-}
-
-topic_top_words <- function(topic,wkf,n=0,threshold=0.5) {
-    wkf <- wkf[wkf$topic==topic,]
-    if(n <= 0) {
-        threshold <- max(wkf$weight) * 0.5
-        wkf <- wkf[wkf$weight >= threshold,]
-        words <- wkf$word[order(wkf$weight,decreasing=T)]
-    } else {
-        words <- wkf$word[order(wkf$weight,decreasing=T)[1:n]]
-    }
-
-    words
 }
