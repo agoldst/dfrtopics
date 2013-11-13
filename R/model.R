@@ -12,33 +12,64 @@
     }
 }
 
-# model_documents()
-#
-# Basic usage is wrapped up in this convenience function.
-#
-# Returns a list of:
-#
-# metadata: dataframe of metadata
-#
-# doc_topics: document-topic weights, with an id column on the right
-#
-# wkf: data frame with the weightiest words in each topic, plus topic alphas
-#
-# trainer: the RTopicModel object, after running LDA, holding the sampling 
-# state and references to the instance-list.
-#
-# To tweak modeling parameters, keep or fine-tune the instances, or work on the 
-# documents, run these steps individually.
-
-model_documents <- function(citations.file,dirs,stoplist.file,num.topics,
-                            seed=NULL,num.top.words=50L,java_heap=NULL) { 
+#' Make a topic model of DfR documents
+#'
+#' The basic usage of this package is wrapped up in this convenience
+#' function.
+#'
+#' Given wordcount and metadata files, this function sets up MALLET
+#' inputs and then runs MALLET to produce a topic model. For
+#' finer-grained control over the mallet inputs or to tweak more
+#' modeling parameters, follow the order of calls in this function.
+#' Invoke \code{\link{make_instances}} separately and pass the results
+#' to \code{\link{train_model}}.  
+#'
+#' If java gives out-of-memory errors, try passing a large value in the \code{java_heap} 
+#' parameter (\code{java_heap="4g"}, say).
+#'
+#' @return A list with the following members:
+#' \describe{
+#' \item{\code{metadata}}{dataframe of metadata}
+#' \item{\code{doc_topics}}{dataframe with documents in rows, topics in columns, and an 
+#' extra column with document id's}
+#' \item{\code{wkf}}{data frame of the weightiest words in each topic (as returned by 
+#' \code{\link{weighted_keys_frame}}); also stores topic alphas}
+#' \item{\code{trainer}}{reference to the \code{RTopicModel} object, which, with the LDA 
+#' run complete, holds the sampling state and references to the instance-list}
+#' \item{\code{seed}}{the random-number seed, or \code{NULL} to use default seeding}
+#' }
+#'
+#' @param citations_files character vector with names of DfR \code{citations.CSV} metadata 
+#' files 
+#' @param dirs character vector with names of directories holding \code{wordcounts*.CSV} 
+#' files
+#' @param stoplist_file name of stoplist (containing one stopword per line)
+#' @param num_topics number of topics to model
+#' @param seed integer random number seed for mallet
+#' @param num_top_words integer number of "key words" per topic
+#' @param java_heap if non-null, java is restarted with this heap parameter
+#' @seealso
+#' \code{\link{read_metadata}},
+#' \code{\link{read_dfr_wordcounts}},
+#' \code{\link{make_instances}},
+#' \code{\link{train_model}},
+#' \code{\link{doc_topics_frame}},
+#' \code{\link{weighted_keys_frame}},
+#' \code{\link{output_model}}
+#' @examples
+#' \dontrun{model_documents("citations.CSV","wordcounts","stoplist.txt",50)}
+#'
+#' @export
+#'
+model_documents <- function(citations_files,dirs,stoplist_file,num_topics,
+                            seed=NULL,num_top_words=50L,java_heap=NULL) { 
     .reload_mallet(java_heap=java_heap)
-    mf <- read_metadata(citations.file)
+    mf <- read_metadata(citations_files)
     texts <- read_dfr_wordcounts(dirs=dirs)
-    instances <- make_instances(texts,stoplist.file)
-    model <- train_model(instances,num.topics=num.topics,seed=seed)
+    instances <- make_instances(texts,stoplist_file)
+    model <- train_model(instances,num_topics=num_topics,seed=seed)
     doc_topics <- doc_topics_frame(model,smoothed=F,normalized=F)
-    keys <- weighted_keys_frame(model,num.top.words=num.top.words,
+    keys <- weighted_keys_frame(model,num_top_words=as_integer(num_top_words),
                                 smoothed=F,normalized=F)
 
     list(metadata=mf,
