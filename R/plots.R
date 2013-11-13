@@ -145,25 +145,28 @@ topic_keyword_plot <- function(wkf,topic,
     p
 }
 
-#' corpus_dist_plot
+#' Visualize topic-corpus distances
 #'
-#' a quick way to visualize a useful diagnostic calculated by mallet:
-#' the KL divergence between a topic and the corpus itself. These is
-#' calculated by mallet's diagnostics output. Use read_diagnostics() to
-#' get dataframes from the XML. Or you *could* calculate it yourself if
-#' you insist.
+#' This provides a quick way to visualize a useful diagnostic calculated by MALLET:
+#' the KL divergence between a topic and the corpus itself.
 #'
-#' topic_diagnostics: a dataframe
-#'
-#' wkf: the weighted keys frame (for naming topics)
+#' If a topic is too "close" to the corpus in this sense, it provides little additional information about patterns of word use. Thus topics that score low on this diagnostic may be "bad" for most purposes. Use \code{\link{read_diagnostics}}
+#' to get a dataframe from MALLET's XML diagnostic output to pass to this function.
 #'
 #' Pass in subsets of these by topics if you wish to plot only some
-#' topics. > 100 topics makes the labels hard to fit in a vertical stack.
-
-corpus_dist_plot <- function(topic_diagnostics,wkf) {
-    topic_order <- order(topic_diagnostics$corpus_dist,decreasing=T)
+#' topics. With more than 100 topics, the labels get hard to fit in a vertical stack.
+#'
+#' @param corpus_dist a vector of corpus distances in topic order. Normally, obtain this 
+#' from \code{\link{read_diagnostics("diagnostics.xml")$topics$corpus_dist)}}.
+#'
+#' @param wkf the weighted keys frame (for naming topics on the plot)
+#'
+#' @return a \link[ggplot2]{ggplot} object
+#'
+corpus_dist_plot <- function(corpus_dist,wkf) {
+    topic_order <- order(corpus_dist,decreasing=T)
     to_plot <- data.frame(topic=topic_names(wkf),
-                          distance=as.numeric(topic_diagnostics$corpus_dist))
+                          distance=corpus_dist)
 
     p <- ggplot(to_plot)
     p <- p + 
