@@ -1,10 +1,6 @@
-*.csv
-*.txt
-*.mallet
 .Rhistory
 .RData
 
-test_data
-scrap
-
 .Rproj.user
+
+man
