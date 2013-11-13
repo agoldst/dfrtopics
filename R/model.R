@@ -1510,21 +1510,26 @@ model_params <- function(trainer) {
 }
 
 
-# -------------------------------
-# Comparing topics (experimental)
-# -------------------------------
+#' -------------------------------
+#' Comparing topics (experimental)
+#' -------------------------------
 
-# JS_divergence
-#
-# computes the Jensen-Shannon divergence between two vectors, understood as
-# distributions over the index.
-#
-# See Mimno, D. 2012. Computational historiography: Data mining in
-# a century of classics journals. ACM J. Comput. Cult. Herit. 5, 1,
-# Article 3 (April 2012), 19 pages.
-#
-# http://doi.acm.org/10.1145/2160165.2160168
-
+#' Jensen-Shannon divergence between two vectors
+#'
+#' This function computes the Jensen-Shannon divergence between two vectors, understood as
+#' distributions over the index.
+#'
+#' @param P,Q vectors representing the distributions. Must be of same length.
+#'
+#' @return 
+#' \deqn{\sum_j \frac{1}{2}P(j)\textrm{log}\left(\frac{2P(j)}{P(j) + Q(j)}\right)
+#' + \frac{1}{2}Q(j)\textrm{log}\left(\frac{2P(j)}{P(j) + Q(j)}\right)}
+#'
+#' @seealso
+#' \code{\link{topic_divergences}}
+#'
+#' @export
+#'
 JS_divergence <- function(P,Q) {
     PQ_mean = (P + Q) / 2
     sum((1/2) * (P * log(P / PQ_mean) + Q * log(Q / PQ_mean)))
