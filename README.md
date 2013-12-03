@@ -35,3 +35,6 @@ Now in alpha release: another project of mine, [dfr-browser](http://github.com/a
 
 I have decided to apply the [MIT License](https://github.com/agoldst/dfr-analysis/tree/master/LICENSE) to this repository. That means you can pretty much do anything you want with it, provided you attribute stuff by me to me. And you can't hold me liable. I prefer the spirit of the GNU Public License, but I would like academics who use this code to be able to do so without being obliged to release their source, since that it is not always possible. I don't attempt to forbid commercial uses, but I don't welcome them.
 
+## Running the package tests
+
+The tests are based on a sample set of data from DfR downloaded using the following query: <http://dfr.jstor.org/fsearch/submitrequest?cs=year%3A[1980+TO+1989]+AND+jcode%3Apmla^1.0&sk=da&fs=yrm1%3Asnm1&view=text&>. At present I cannot distribute this sample with the code. In order to run the tests, then, it is necessary to first download that dataset and place it where the tests expect to find it. The tests look for the data in the `demo/data` subdirectory of the package directory pointed to by `path.package("dfrtopics")`.
