@@ -51,6 +51,7 @@
 #' @param seed integer random number seed for mallet
 #' @param num_top_words integer number of "key words" per topic
 #' @param java_heap if non-null, java is restarted with this heap parameter
+#' @param ... passed on to \code{\link{train_model}}
 #' @seealso
 #' \code{\link{read_metadata}},
 #' \code{\link{read_dfr_wordcounts}},
@@ -65,12 +66,13 @@
 #' @export
 #'
 model_documents <- function(citations_files,dirs,stoplist_file,num_topics,
-                            seed=NULL,num_top_words=50L,java_heap=NULL) { 
+                            seed=NULL,num_top_words=50L,java_heap=NULL,
+                            ...) {
     .reload_mallet(java_heap=java_heap)
     mf <- read_metadata(citations_files)
     texts <- read_dfr_wordcounts(dirs=dirs)
     instances <- make_instances(texts,stoplist_file)
-    model <- train_model(instances,num_topics=num_topics,seed=seed)
+    model <- train_model(instances,num_topics=num_topics,seed=seed,...)
     doc_topics <- doc_topics_frame(model,smoothed=F,normalized=F)
     keys <- weighted_keys_frame(model,num_top_words=as_integer(num_top_words),
                                 smoothed=F,normalized=F)
