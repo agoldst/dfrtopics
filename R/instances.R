@@ -3,11 +3,14 @@
 #' Create MALLET instances from a document frame
 #' 
 #' Given a frame like that returned by \code{\link{docs_frame}},
-#' create a MALLET \code{InstanceList} object
+#' create a MALLET \code{InstanceList} object.
+#'
+#' If java gives out-of-memory errors, try increasing the Java heap size to a 
+#' large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")} 
+#' \emph{before} loading this package (or rJava).
 #'
 #' @param docs data frame with \code{id} and \code{text} columns
 #' @param stoplist_file passed on to MALLET
-#' @param java_heap if non-null, java is restarted with this heap parameter
 #' @param ... passed on to \code{\link[mallet]{mallet.import}}
 #' @return an rJava reference to a MALLET \code{InstanceList}
 #' @seealso \code{\link{train_model}}
@@ -16,12 +19,11 @@
 #' @export
 #' 
 make_instances <- function(docs,stoplist_file,java_heap=NULL,...) {
-    .reload_mallet(java_heap)
 
     # token regex: letters only, by default
     # another possibility would be to include punctuation \p{P}
     mallet.import(docs$id,docs$text,
-                  stoplist.file=stoplist.file,
+                  stoplist.file=stoplist_file,
                   ...)
 }
 

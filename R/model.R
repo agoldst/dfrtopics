@@ -1,19 +1,5 @@
-# Core dfrtopics functions: running MALLET and extracting document-topic and topic-word 
-# information.
-
-# internal use only
-# reload mallet and rJava with a new heap parameter for java
-# no-op if java_heap is NULL
-#
-.reload_mallet <- function(java_heap=NULL) {
-    if(!is.null(java_heap)) {
-        message("Reloading mallet with rJava heap setting -Xmx ",java_heap)
-        options(java.parameters=paste("-Xmx",java_heap,sep=""))
-        detach("package:mallet",unload=T,character.only=T)
-        detach("package:rJava",unload=T,character.only=T)
-        library("mallet")
-    }
-}
+# Core dfrtopics functions: running MALLET and extracting document-topic
+# and topic-word information.
 
 #' Make a topic model of DfR documents
 #'
@@ -27,8 +13,9 @@
 #' Invoke \code{\link{make_instances}} separately and pass the results
 #' to \code{\link{train_model}}.  
 #'
-#' If java gives out-of-memory errors, try passing a large value in the \code{java_heap} 
-#' parameter (\code{java_heap="4g"}, say).
+#' If java gives out-of-memory errors, try increasing the Java heap size to a 
+#' large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")} 
+#' \emph{before} loading this package (or rJava).
 #'
 #' @return A list with the following members:
 #' \describe{

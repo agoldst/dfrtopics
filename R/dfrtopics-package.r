@@ -104,3 +104,30 @@
 #' @docType package
 #'
 NULL
+
+.onAttach <- function(libname,pkgname) {
+    jheap <- grep("-Xmx\\w+",options("java.parameters"),value=T)
+    heap_ok <- T
+
+    if(length(jheap) == 0) {
+        message("You are using the default Java heap setting (512 MB).")
+        heap_ok <- F
+    } else {
+        size <- substring(jheap,first=5))
+        if(!grep("([2-9]|\\d\\d\\d*)(g|G)",size)) {
+            message("Your current Java heap setting is ",size)
+            heap_ok <- F
+        }
+    }
+
+    if(!heap_ok) {
+        message(
+'I recommend giving Java at least 2GB of heap space.
+To do this, put the following command in your scripts *before* loading
+this package:
+    options(java.parameters="-Xmx2g")
+It is too late to change this option in this session. I apologize for this
+design flaw in R and rJava.'
+        )
+    }
+}
