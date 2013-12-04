@@ -86,7 +86,7 @@ topic_proportions_series_frame <- function(yearly,
 
 #' Convert a matrix of time series to a dataframe
 #'
-#' Utility wrapper for \code{\link[plyr]{melt}} on matrices with parallel time series in 
+#' Utility wrapper for \code{\link[reshape2]{melt}} on matrices with parallel time series in 
 #' rows.
 #'
 #' @param yearly matrix with variables in rows and time measurements in columns

@@ -539,7 +539,7 @@ term_yearly_topic_lineplot <- function(words,topic_label,
 #' @seealso
 #' \code{\link{topic_divergences}},
 #' \code{\link{read_topic_words}},
-#' \code{\link[base]{cmdscale}},
+#' \code{\link[stats]{cmdscale}},
 #' \code{\link{topic_labeller}}
 #'
 #' @export
