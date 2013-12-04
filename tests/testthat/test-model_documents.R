@@ -13,7 +13,7 @@ test_that("model_documents yields expected output on sample docs", {
                          dirs=file.path(data_dir,"wordcounts"),
                          stoplist_file=file.path(path.package("dfrtopics"),
                                                  "stoplist","stoplist.txt"),
-                         num_topics=16,
+                         n_topics=16,
                          n_iters=200,
                          seed=42,
                          threads=2L, 
