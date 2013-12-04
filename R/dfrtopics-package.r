@@ -51,7 +51,7 @@
 #' \code{\link{train_model}} function. After MALLET has run, access the
 #' model information with functions like \code{\link{doc_topics_frame}}
 #' and \code{\link{weighted_keys_frame}}, which are thin wrappers
-#' around similar functions provided in the \code\link[mallet]{mallet}}
+#' around similar functions provided in the \code{\link[mallet]{mallet}}
 #' package itself. For sustained analysis, it makes more sense to
 #' write results to disk: the package provides a convenience function
 #' for extracting and saving a lot of model information all at once:
