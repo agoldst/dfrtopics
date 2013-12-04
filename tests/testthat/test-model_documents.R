@@ -1,17 +1,18 @@
 test_that("model_documents yields expected output on sample docs", {
     
-    demo_files <- file.path(path.package("dfrtopics"),"demo","data")
+    data_dir <- file.path(path.package("dfrtopics"),"dfr_data")
 
     # check for presence of sample data
 
-    expect_that(file.exists(demo_files),is_true())
-    expect_that(file.exists(file.path(demo_files,"citations.CSV")),is_true())
-    expect_that(length(list.files(file.path(demo_files,"wordcounts"))),
+    expect_that(file.exists(data_dir),is_true())
+    expect_that(file.exists(file.path(data_dir,"citations.CSV")),is_true())
+    expect_that(length(list.files(file.path(data_dir,"wordcounts"))),
                 equals(665))
 
-    m <- model_documents(citations_files=file.path(demo_files,"citations.CSV"),
-                         dirs=file.path(demo_files,"wordcounts"),
-                         stoplist_file=file.path(demo_files,"stoplist.txt"),
+    m <- model_documents(citations_files=file.path(data_dir,"citations.CSV"),
+                         dirs=file.path(data_dir,"wordcounts"),
+                         stoplist_file=file.path(path.package("dfrtopics"),
+                                                 "stoplist","stoplist.txt"),
                          num_topics=16,
                          n_iters=200,
                          seed=42,
