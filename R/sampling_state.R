@@ -42,8 +42,8 @@ simplify_state <- function(state_file,outfile) {
         stop("Output file ",outfile," already exists.")
     }
     cmd <- paste("python",
-                 file.path(path.package("dfrtopics"),"inst","python",
-                                   "simplify_state.py"),
+                 file.path(path.package("dfrtopics"),"python",
+                           "simplify_state.py"),
                  state_file,">",infile)
     message("Executing ",cmd)
     system(cmd)
