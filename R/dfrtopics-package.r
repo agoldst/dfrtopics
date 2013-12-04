@@ -110,24 +110,29 @@ NULL
     heap_ok <- T
 
     if(length(jheap) == 0) {
-        message("You are using the default Java heap setting (512 MB).")
+        packageStartupMessage(
+            "You are using the default Java heap setting (512 MB).")
         heap_ok <- F
     } else {
-        size <- substring(jheap,first=5))
-        if(!grep("([2-9]|\\d\\d\\d*)(g|G)",size)) {
-            message("Your current Java heap setting is ",size)
+        size <- substring(jheap,first=5)
+        if(!grepl("([2-9]|\\d\\d\\d*)(g|G)",size)) {
+            packageStartupMessage("Your current Java heap setting is ",
+                                  size,".")
             heap_ok <- F
         }
     }
 
     if(!heap_ok) {
-        message(
+        packageStartupMessage(
 'I recommend giving Java at least 2GB of heap space.
 To do this, put the following command in your scripts *before* loading
 this package:
+
     options(java.parameters="-Xmx2g")
-It is too late to change this option in this session. I apologize for this
-design flaw in R and rJava.'
+
+If you change this option in this session, you must then detach and
+reload this package, mallet, and rJava. You can also simply restart R.
+I apologize for this design flaw in R and rJava.'
         )
     }
 }
