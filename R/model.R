@@ -34,10 +34,9 @@
 #' @param dirs character vector with names of directories holding \code{wordcounts*.CSV} 
 #' files
 #' @param stoplist_file name of stoplist (containing one stopword per line)
-#' @param num_topics number of topics to model
+#' @param n_topics number of topics to model
 #' @param seed integer random number seed for mallet
-#' @param num_top_words integer number of "key words" per topic
-#' @param java_heap if non-null, java is restarted with this heap parameter
+#' @param n_top_words integer number of "key words" per topic
 #' @param ... passed on to \code{\link{train_model}}
 #' @seealso
 #' \code{\link{read_metadata}},
@@ -52,16 +51,14 @@
 #'
 #' @export
 #'
-model_documents <- function(citations_files,dirs,stoplist_file,num_topics,
-                            seed=NULL,num_top_words=50L,java_heap=NULL,
-                            ...) {
-    .reload_mallet(java_heap=java_heap)
+model_documents <- function(citations_files,dirs,stoplist_file,n_topics,
+                            seed=NULL,n_top_words=50L,...) {
     mf <- read_metadata(citations_files)
     texts <- read_dfr_wordcounts(dirs=dirs)
     instances <- make_instances(texts,stoplist_file)
-    model <- train_model(instances,num_topics=num_topics,seed=seed,...)
+    model <- train_model(instances,n_topics=n_topics,seed=seed,...)
     doc_topics <- doc_topics_frame(model,smoothed=F,normalized=F)
-    keys <- weighted_keys_frame(model,num_top_words=as_integer(num_top_words),
+    keys <- weighted_keys_frame(model,n_top_words=as_integer(n_top_words),
                                 smoothed=F,normalized=F)
 
     list(metadata=mf,
@@ -91,7 +88,7 @@ model_documents <- function(citations_files,dirs,stoplist_file,num_topics,
 #' \item{\code{instances.mallet}}{save the source text "instances" file (not done by
 #' default)}
 #' \item{\code{topic_scaled.csv}}{CSV with scaled 2D coordinates for the topics. Obtained 
-#' by applying \code{\link{cmdscale}} to a matrix of topic divergences calculated by 
+#' by applying \code{\link[stats]{cmdscale}} to a matrix of topic divergences calculated by 
 #' \code{\link{topic_divergences}}}
 #' }
 #'
@@ -142,7 +139,7 @@ output_model <- function(model_result,output_dir=".",
     diag_f <- file.path(output_dir,"diagnostics.xml") 
     write_diagnostics(model_result$trainer,
                       diag_f, 
-                      num_top_words=as.integer(sum(model_result$keys$topic==1)))
+                      n_top_words=as.integer(sum(model_result$keys$topic==1)))
     message("Wrote ",diag_f)
 
     if (save_instances) {
@@ -170,9 +167,13 @@ output_model <- function(model_result,output_dir=".",
 #'
 #' Invokes MALLET's parallel topic modeling algorithm.
 #'
+#' If java gives out-of-memory errors, try increasing the Java heap size to a 
+#' large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")} 
+#' \emph{before} loading this package (or rJava).
+#'
 #' @param instances either an rJava reference to an \code{InstanceList} object or the 
 #' name of a MALLET instances file
-#' @param num_topics how many topics to train?
+#' @param n_topics how many topics to train?
 #' @param alpha_sum initial sum of hyperparameters \eqn{alpha_k}: priors of topics over 
 #' document
 #' @param beta initial value of hyperparameter \eqn{\beta}: prior of topics over words
@@ -192,7 +193,6 @@ output_model <- function(model_result,output_dir=".",
 #' @param seed MALLET's random number seed: set this to ensure a reproducible model.
 #' instances: can either be a mallet instances object or the name of a
 #' mallet instances file
-#' @param java_heap if non-null, java is restarted with this heap parameter
 #'
 #' @return the trainer object, which holds a reference to the \code{RTopicModel}
 #' object constructed by \code{\link[mallet]{MalletLDA}}. In order to access the full 
@@ -209,7 +209,7 @@ output_model <- function(model_result,output_dir=".",
 #' \code{\link{model_documents}},
 #' \code{\link{output_model}}
 #' 
-train_model <- function(instances,num_topics,
+train_model <- function(instances,n_topics,
                         alpha_sum=5,beta=0.01,
                         n_iters=200,
                         n_max_iters=10,
@@ -218,12 +218,9 @@ train_model <- function(instances,num_topics,
                         n_burn_in=50,
                         symmetric_alpha=F,
                         threads=4L,
-                        seed=NULL,
-                        java_heap=NULL) {
+                        seed=NULL) {
 
-    .reload_mallet(java_heap)
-
-    trainer <- MalletLDA(num_topics,alpha_sum,beta)
+    trainer <- MalletLDA(n_topics,alpha_sum,beta)
     trainer$model$setNumThreads(as.integer(threads))
     if(!is.null(seed)) {
         trainer$model$setRandomSeed(as.integer(seed))
@@ -369,7 +366,7 @@ doc_topics_wide <- function(doctops,metadata,
 #' The result also gives the estimated alpha hyperparameter value for each topic.
 #'
 #' @param trainer reference to the \code{RTopicModel} object
-#' @param n_top number of "top words" for each topic
+#' @param n_top_words number of "top words" for each topic
 #' @param smoothed if TRUE, smooth document-topic distribution using hyperparameters 
 #" \eqn{\alpha_k}
 #' @param normalized if TRUE, weights sum to 1
@@ -383,7 +380,7 @@ doc_topics_wide <- function(doctops,metadata,
 #'
 #' @export
 #'
-weighted_keys_frame <- function(trainer,n_top=50,
+weighted_keys_frame <- function(trainer,n_top_words=50,
                                 smoothed=F,normalized=F) {
     tw <- mallet.topic.words(trainer,
                              smoothed=smoothed,
@@ -391,7 +388,7 @@ weighted_keys_frame <- function(trainer,n_top=50,
     tw_wkf(tw,
            vocab=trainer$getVocabulary(),
            alpha=trainer$getAlpha(),
-           n_top=n_top)
+           n_top_words=n_top_words)
 }
 
 #' Topic key words from the topic-word matrix
@@ -409,7 +406,7 @@ weighted_keys_frame <- function(trainer,n_top=50,
 #'
 #' @param alpha a vector of \eqn{\alpha_k} values for the topics
 #'
-#' @param n_top number of top key words to store per topic
+#' @param n_top_words number of top key words to store per topic
 #'
 #' @return a data frame with \code{n} rows for each topic and four columns, \code{alpha,
 #' topic,word,weight}. \code{alpha} is repeated \code{n} times in each topic: it gives the 
@@ -421,20 +418,20 @@ weighted_keys_frame <- function(trainer,n_top=50,
 #'
 #' @export
 #'
-tw_wkf <- function(tw,vocab,alpha,n_top=50) {
+tw_wkf <- function(tw,vocab,alpha,n_top_words=50) {
     n <- nrow(tw)
-    reps <- rep(n_top,n)
+    reps <- rep(n_top_words,n)
 
     result <- data.frame(
         topic=rep(seq(n),times=reps),
         alpha=rep(alpha,times=reps),
-        word=character(n * n_top),
-        weight=numeric(n * n_top),
+        word=character(n * n_top_words),
+        weight=numeric(n * n_top_words),
         stringsAsFactors=F)
 
     for(i in seq(n)) {
-        rows <- 1 + (((i - 1) * n_top) :  ((i * n_top) - 1))
-        js <- order(tw[i,],decreasing=T)[1:n_top]
+        rows <- 1 + (((i - 1) * n_top_words) :  ((i * n_top_words) - 1))
+        js <- order(tw[i,],decreasing=T)[1:n_top_words]
         result$weight[rows] <- tw[i,js]
         result$word[rows] <- vocab[js]
     }
