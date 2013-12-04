@@ -1,0 +1,9 @@
+Job Title: pmla1980-89
+Job ID: 2013.12.3.ytyupqKP
+Requester: agoldst
+Query: http://dfr.jstor.org/fsearch/submitrequest?cs=year%3A%5B1980+TO+1989%5D+AND+jcode%3Apmla%5E1.0&sk=da&fs=yrm1%3Asnm1&view=text&
+View(s): citations|wordcounts
+Format: CSV
+Documents Requested: 25000
+Date Processed: 2013-12-03 15:04:01.412416
+
