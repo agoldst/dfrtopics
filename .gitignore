@@ -4,3 +4,10 @@
 .Rproj.user
 
 man
+*.zip
+*.mallet
+data.csv
+doc_topics.tsv
+keys.tsv
+wordcounts
+
