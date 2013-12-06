@@ -58,7 +58,7 @@ model_documents <- function(citations_files,dirs,stoplist_file,n_topics,
     instances <- make_instances(texts,stoplist_file)
     model <- train_model(instances,n_topics=n_topics,seed=seed,...)
     doc_topics <- doc_topics_frame(model,smoothed=F,normalized=F)
-    keys <- weighted_keys_frame(model,n_top_words=as_integer(n_top_words),
+    keys <- weighted_keys_frame(model,n_top_words=as.integer(n_top_words),
                                 smoothed=F,normalized=F)
 
     list(metadata=mf,
