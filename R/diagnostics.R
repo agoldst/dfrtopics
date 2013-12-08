@@ -6,7 +6,7 @@
 #'
 #' @param trainer the \code{RTopicModel} object.
 #' @param output_file the name of a file to save XML to.
-#' @param num_top_words the number of top words per topic to calculate topic-word 
+#' @param n_top_words the number of top words per topic to calculate topic-word 
 #' diagnostics for.
 #'
 #' @seealso
@@ -15,10 +15,10 @@
 #' @export
 #'
 write_diagnostics <- function(trainer,output_file="diagnostics.xml",
-                              num_top_words=50L) {
+                              n_top_words=50L) {
 
     d <- .jnew("cc/mallet/topics/TopicModelDiagnostics",
-          trainer$model,as.integer(num_top_words))
+          trainer$model,as.integer(n_top_words))
     xml <- d$toXML()
     cat(xml,file=output_file)
 }
@@ -43,7 +43,7 @@ write_diagnostics <- function(trainer,output_file="diagnostics.xml",
 #' \item{\code{coherence}}{The topic coherence measure defined by
 #' Mimno et al., eq. (1): the sum of log-co-document-document frequency
 #' ratios for the top words in the topic. The number of top words is set in the
-#' \code{num_top_words} parameter to \code{\link{write_diagnostics}}.}
+#' \code{n_top_words} parameter to \code{\link{write_diagnostics}}.}
 #' }
 #'
 #' The function attempts to coerce numeric values, which \pkg{XML} extracts as 
