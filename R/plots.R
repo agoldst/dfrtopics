@@ -20,11 +20,11 @@
 #' The plots are saved to \code{output_dir/<NNN>.png}. If you have more than 1000 topics, 
 #' other parts of this package will probably break too.
 #'
-#' @param doctopics document-topic frame from \code{\link{doc_topics_frame}}
+#' @param doc_topics document-topic frame from \code{\link{doc_topics_frame}}
 #' @param wkf topic key words frame from \code{\link{weighted_keys_frame}}
 #' @param metadata metadata frame from \code{\link{read_metadata}}
 #'
-#' @param topic: a vector of topics to generate plots for (by default, all)
+#' @param topic a vector of topics to generate plots for (by default, all)
 #'
 #' @param time_breaks time intervals by which to slice document-topic distributions for 
 #' the box plots: passed on to \code{\link{topic_time_boxplots}}.
@@ -44,22 +44,24 @@
 #' 
 #' @export
 #'
-topic_report <- function(doctopics,wkf,metadata,
-                         topics=1:(ncol(doctopics - 1)),
+topic_report <- function(doc_topics,wkf,metadata,
+                         topics=1:(ncol(doc_topics) - 1),
                          time_breaks="5 years",
                          log_scale=F,
                          output_dir="topic_report",
                          w=1200,h=800) {
 
-    dt_wide <- doc_topics_wide(doctops,metadata,meta_keep="pubdate")
-    dt_long <- doc_topics_long(doctops,metadata,meta_keep="pubdate")
+    dt_wide <- doc_topics_wide(doc_topics,metadata,meta_keep="pubdate")
+    dt_long <- doc_topics_long(doc_topics,metadata,meta_keep="pubdate")
 
     # scale so that keyword weight bars are appropriately colored
     color_scale <- scale_color_gradient(limits=range(wkf$alpha))
 
     # only calculate yearly totals once for all topics
 
-    yearly <- topic_year_matrix(tm_wide=dt_wide)
+    yearly <- topic_year_matrix(dt_wide=dt_wide)
+
+    series <- topic_proportions_series_frame(yearly,topics=topics)
 
     for(topic in topics) {
         filename <- file.path(output_dir,
@@ -72,8 +74,8 @@ topic_report <- function(doctopics,wkf,metadata,
         print(topic_keyword_plot(wkf,topic,color_scale),
               vp=viewport(layout.pos.row=c(1,2),layout.pos.col=1))
 
-        print(topic_yearly_lineplot(.yearly_totals=yearly,
-                                  topics=topic,raw_counts=raw_counts),
+        print(topic_yearly_lineplot(series[series$topic==topic,],
+                                    raw_counts=F),
               vp=viewport(layout.pos.row=1,layout.pos.col=2))
 
         print(topic_time_boxplots(subset(dt_long,
@@ -234,7 +236,7 @@ topic_yearly_lineplot <- function(series,
     if(length(unique(series$topic)) == 1) {
         result <- ggplot(series,aes(year,weight,group=1))
         result <- result + geom_line()
-        plot_title <- paste(plot_title,topics)
+        plot_title <- paste(plot_title,topic_label(unique(series$topic)))
 
         if(facet) {
             warning("Ignoring facet=TRUE for single topic")
