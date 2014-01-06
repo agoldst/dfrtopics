@@ -21,15 +21,3 @@ Suggests:
 SystemRequirements: python
 License: MIT
 LazyData: true
-Collate:
-    'dfrtopics-package.r'
-    'metadata.R'
-    'model.R'
-    'plots.R'
-    'dfr_docs.R'
-    'diagnostics.R'
-    'distances.R'
-    'instances.R'
-    'sampling_state.R'
-    'time_series.R'
-    'model_info.R'
