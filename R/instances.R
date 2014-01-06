@@ -18,7 +18,7 @@
 #'
 #' @export
 #' 
-make_instances <- function(docs,stoplist_file,java_heap=NULL,...) {
+make_instances <- function(docs,stoplist_file,...) {
 
     # token regex: letters only, by default
     # another possibility would be to include punctuation \p{P}
