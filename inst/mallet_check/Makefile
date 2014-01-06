@@ -9,11 +9,13 @@ threads := 2
 alpha_sum := 5
 beta := 0.01
 
-count_txt := ~/Developer/dfr-analysis/count2txt
-stoplist := ../stoplist.txt
+count_txt := ../python/count2txt.py
+stoplist := ../stoplist/stoplist.txt
 
-data.csv: ../data/citations.CSV
-	find .. -name 'wordcounts*.CSV' | xargs perl $(count_txt) > $@
+data_dir := ../dfr_data
+
+data.csv: $(data_dir)/citations.CSV
+	find $(data_dir)/wordcounts -name 'wordcounts*.CSV' | xargs python $(count_txt) > $@
 
 docs.mallet: data.csv $(stoplist)
 	mallet import-file --input $< --output $@ \
@@ -34,6 +36,9 @@ model: data.csv docs.mallet
 	    --output-topic-keys keys.tsv \
 	    --output-doc-topics doc_topics.tsv
 
-.PHONY: model
+clean:
+	rm -f data.csv docs.mallet state.gz keys.tsv doc_topics.tsv
+
+.PHONY: model clean
 
 .DEFAULT_GOAL := model
