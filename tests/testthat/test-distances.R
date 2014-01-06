@@ -24,3 +24,5 @@ test_that("JS_divergence works right", {
         message("flexmix library not available. Skipping test")
     }
 })
+
+# TODO test topic_divergences function
