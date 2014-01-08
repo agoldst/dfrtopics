@@ -487,8 +487,10 @@ topic_word_scores <- function(tw,b,method="blei_lafferty") {
     # ...
     log_tw <- log(tw)
 
-    # calculate down-weighting factor for each word
-    word_factor <- tw %*% Diagonal(x=colSums(log_tw) / n)
+    # calculate down-weighting factor for each word.
+    # for some unknown reason I seem to need to explicitly dispatch to
+    # the Matrix method here
+    word_factor <- tw %*% Diagonal(x=Matrix::colSums(log_tw) / n)
 
     tw * (log_tw) - word_factor
 }
