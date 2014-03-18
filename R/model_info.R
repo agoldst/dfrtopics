@@ -5,11 +5,11 @@
 #' Extracts the most salient words from the weighted key-words frame.
 #' 
 #' The "top" words are those with the maximum weightings for the
-#' topic in \code{wkf}. In addition to raw ranking (the default for
+#' topic in \code{keys}. In addition to raw ranking (the default for
 #' \code{\link{weighted_keys_frame}}, consider the "salience" score
 #' calculated by \code{\link{topic_word_scores}}.  
 #'
-#' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
+#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
 #' @param topic the topic number (one-based). Vectorized in topics. By default, 
 #' all topics are used.
 #' @param n the number of words to take. 
@@ -25,8 +25,8 @@
 #' 
 #' @export
 #'
-topic_top_words <- function(wkf,topic=wkf$topic,n=4) {
-    daply(wkf[wkf$topic %in% topic,],"topic",
+topic_top_words <- function(keys,topic=keys$topic,n=4) {
+    daply(keys[keys$topic %in% topic,],"topic",
           function (d) {
             d$word[order(d$weight,decreasing=T)[1:n]]
           })
@@ -37,7 +37,7 @@ topic_top_words <- function(wkf,topic=wkf$topic,n=4) {
 #' Returns a label for a topic based on the most prominent words
 #'
 #' @param topic the topic number (one-based)
-#' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
+#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
 #' @param fmt \code{\link[base]{sprintf}} format string with one slot 
 #' for the topic number and one for a string
 #' @param ... passed on to \code{\link{topic_top_words}}: for example, 
@@ -50,9 +50,9 @@ topic_top_words <- function(wkf,topic=wkf$topic,n=4) {
 #' 
 #' @export
 #'
-topic_name <- function(wkf,topic=unique(wkf$topic),
+topic_name <- function(keys,topic=unique(keys$topic),
                        fmt="%03d %s",...) {
-    words <- topic_top_words(wkf,topic,...)
+    words <- topic_top_words(keys,topic,...)
 
     if(length(unique(topic)) > 1) {
         words_str <- apply(words,1,paste,collapse=" ")
@@ -68,7 +68,7 @@ topic_name <- function(wkf,topic=unique(wkf$topic),
 #' Returns labels for the specified topics. Deprecated: use topic_name (which
 #' is vectorized).
 #'
-#' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
+#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
 #' @param topics which topics to get labels for (all, by default)
 #' @param name_format \code{\link[base]{sprintf}} format string with one slot for the 
 #" topic and one for a string
@@ -83,8 +83,8 @@ topic_name <- function(wkf,topic=unique(wkf$topic),
 #' 
 #' @export
 #'
-topic_names <- function(wkf,topics=unique(wkf$topic),name_format="%03d %s",...) {
-    topic_name(wkf,topics,name_format,...)
+topic_names <- function(keys,topics=unique(keys$topic),name_format="%03d %s",...) {
+    topic_name(keys,topics,name_format,...)
 }
 
 #' Get a function to label topics
@@ -93,7 +93,7 @@ topic_names <- function(wkf,topics=unique(wkf$topic),name_format="%03d %s",...) 
 #' function of a single argument, to be used in conjunction with some
 #' plotting functions. Can also be spelled \code{\link{topic_labeler}}.  
 #'
-#' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
+#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
 #' @param ... passed on to \code{\link{topic_name}}
 #'
 #' @return a function of a single variable, mapping topic numbers to labels
@@ -108,8 +108,8 @@ topic_names <- function(wkf,topics=unique(wkf$topic),name_format="%03d %s",...) 
 #' 
 #' @export
 #'
-topic_labeller <- function(wkf,...) {
-    function (topic) { topic_name(wkf=wkf,topic,...) }
+topic_labeller <- function(keys,...) {
+    function (topic) { topic_name(keys=keys,topic,...) }
 }
 
 #' Get a function to label topics
@@ -118,7 +118,7 @@ topic_labeller <- function(wkf,...) {
 #' function of a single argument, to be used in conjunction with some
 #' plotting functions. Can also be spelled \code{\link{topic_labeller}}.  
 #'
-#' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
+#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
 #' @param ... passed on to \code{\link{topic_name}}
 #'
 #' @return a function of a single variable, mapping topic numbers to labels
