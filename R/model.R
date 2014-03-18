@@ -85,17 +85,20 @@ model_documents <- function(citations_files,dirs,stoplist_file,n_topics,
 #' \code{\link{doc_topics_frame}} for the format}
 #' \item{\code{mallet_state.gz}}{MALLET sampling state (a big file)}
 #' \item{\code{diagnostics.xml}}{MALLET model diagnostics}
-#' \item{\code{instances.mallet}}{save the source text "instances" file (not done by
-#' default)}
-#' \item{\code{topic_scaled.csv}}{CSV with scaled 2D coordinates for the topics. Obtained 
-#' by applying \code{\link[stats]{cmdscale}} to a matrix of topic divergences calculated by 
-#' \code{\link{topic_divergences}}}
-#' }
+#' \item{\code{id_map.txt}}{instance id's, one per line}
+#' \item{\code{instances.mallet}}{save the source text "instances" file (not 
+#' done by default)}
+#' \item{\code{topic_scaled.csv}}{CSV with scaled 2D
+#' coordinates for the topics. Obtained by applying
+#' \code{\link[stats]{cmdscale}} to a matrix of topic divergences
+#' calculated by \code{\link{topic_divergences}}} } 
 #'
-#' @param model_result the result from \code{\link{model_documents}}, or, equivalently, a 
-#' list with 
-#' elements called \code{trainer}, \code{doc_topics}, \code{wkf}, and \code{seed}.
-#'
+#' @param model_result the result from \code{\link{model_documents}},
+#' or, equivalently, a list with elements called \code{trainer},
+#' \code{doc_topics}, \code{wkf}, and \code{seed}. If \code{doc_topics}
+#' or \code{wkf} are omitted, they will be calculated (unsmoothed and
+#' unnormalized).
+#' 
 #' @param output_dir where to save all the output files.
 #'
 #' @param save_instances if TRUE, extract the instance list from the trainer object and save it to \code{instances.mallet}; if FALSE (the default), don't
@@ -106,6 +109,10 @@ model_documents <- function(citations_files,dirs,stoplist_file,n_topics,
 #'
 output_model <- function(model_result,output_dir=".",
                          save_instances=F,save_scaled=T) {
+    if(!file.exists(output_dir)) {
+        message("Creating output directory ",output_dir)
+        dir.create(output_dir)
+    }
     tw_f <- file.path(output_dir,"topic_words.csv")
     vocab_f <- file.path(output_dir,"vocab.txt")
     write_topic_words(model_result$trainer,
@@ -122,11 +129,23 @@ output_model <- function(model_result,output_dir=".",
     message("Wrote ",params_f)
 
     keys_f <- file.path(output_dir,"keys.csv")
+    if(is.null(model_result$wkf)) {
+         message("wkf not supplied; using 50 top words, unsmoothed, unnormalized")
+         model_result$wkf <- weighted_keys_frame(model_result$trainer,
+                                                 n_top_words=50,
+                                                 smoothed=F,
+                                                 normalized=F)
+    }  
     write.table(model_result$wkf,keys_f,
                 quote=F,sep=",",row.names=F,col.names=T)
     message("Wrote ",keys_f)
 
     dt_f <- file.path(output_dir,"doc_topics.csv")
+    if(is.null(model_result$doc_topics)) {
+         message("doc_topics not supplied; using unsmoothed, unnormalized")
+         model_result$doc_topics <- doc_topics_frame(model_result$trainer,
+                                                     smoothed=F,normalized=F)
+    }
     write.table(model_result$doc_topics,
                 dt_f,
                 quote=F,sep=",",row.names=F,col.names=T)
@@ -141,6 +160,10 @@ output_model <- function(model_result,output_dir=".",
                       diag_f, 
                       n_top_words=as.integer(sum(model_result$keys$topic==1)))
     message("Wrote ",diag_f)
+
+    id_map_f <- file.path(output_dir,"id_map.txt")
+    writeLines(instances_ids(model_result$trainer$instances),id_map_f)
+    message("Wrote ",id_map_f)
 
     if (save_instances) {
         inst_f <- file.path(output_dir,"instances.mallet")
