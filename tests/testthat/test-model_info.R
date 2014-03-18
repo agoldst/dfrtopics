@@ -1,4 +1,6 @@
-test_that("Topic naming functions work as expected", {
+test_that("Topic info functions work as expected", {
+
+    # construct a small trial model
 
     data_dir <- file.path(path.package("dfrtopics"),"dfr_small")
 
@@ -49,4 +51,27 @@ test_that("Topic naming functions work as expected", {
 
     label <- topic_labeller(m$wkf,fmt="T%d %s",n=3)
     expect_that(label(2),equals("T2 baudelaire france tambour"))
+
+    # check top docs
+
+    docs5 <- top_documents(topic=5,
+                           doc_topics=doc_topics_matrix(m$doc_topics),
+                           id_map=m$doc_topics$id,
+                           n=3)
+
+    expect_that(as.character(docs5$id),
+                equals(c("10.2307/463450","10.2307/463235","10.2307/463234")))
+    expect_that(docs5$weight,
+                equals(c(3813,161,156)))
+
+    # check top topics
+
+    toptops <- top_topics("10.2307/463234",
+                           doc_topics=doc_topics_matrix(m$doc_topics),
+                           id_map=m$doc_topics$id,n=3)
+    expect_that(toptops$topic,
+                equals(c(8,10,6)))
+    expect_that(toptops$weight,
+                equals(c(612,256,177)))
+
 })
