@@ -3,19 +3,19 @@
 #' Get the "top" words in a topic
 #'
 #' Extracts the most salient words from the weighted key-words frame.
+#' 
+#' The "top" words are those with the maximum weightings for the
+#' topic in \code{wkf}. In addition to raw ranking (the default for
+#' \code{\link{weighted_keys_frame}}, consider the "salience" score
+#' calculated by \code{\link{topic_word_scores}}.  
 #'
-#' The "top" words are those with the maximum weightings for the topic in \code{wkf}. In 
-#' addition to raw ranking (the default for \code{\link{weighted_keys_frame}}, consider 
-#' the "salience" score calculated by \code{\link{topic_word_scores}}.
-#'
-#' @param topic the topic number (one-based)
 #' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
-#' @param n the number of words to take. If NULL, the \code{threshold} is used 
-#' instead.
-#' @param threshold if \code{n} is NULL, this is used to determine how many words to take: 
-#' all words with weight greater than \code{threshold * max(wkf$weight)} are kept.
+#' @param topic the topic number (one-based). Vectorized in topics. By default, 
+#' all topics are used.
+#' @param n the number of words to take. 
 #'
-#' @return a character vector of words
+#' @return a character matrix with the top words in rows and topics in columns. 
+#' The rownames give the topic numbers (as strings).
 #'
 #' @seealso
 #' \code{\link{topic_name}},
@@ -25,17 +25,11 @@
 #' 
 #' @export
 #'
-topic_top_words <- function(topic,wkf,n=4,threshold=0.5) {
-    wkf <- wkf[wkf$topic==topic,]
-    if(is.null(n)) {
-        threshold <- max(wkf$weight) * 0.5
-        wkf <- wkf[wkf$weight >= threshold,]
-        words <- wkf$word[order(wkf$weight,decreasing=T)]
-    } else {
-        words <- wkf$word[order(wkf$weight,decreasing=T)[1:n]]
-    }
-
-    words
+topic_top_words <- function(wkf,topic=wkf$topic,n=4) {
+    daply(wkf[wkf$topic %in% topic,],"topic",
+          function (d) {
+            d$word[order(d$weight,decreasing=T)[1:n]]
+          })
 }
 
 #' Get a label for a topic
@@ -44,10 +38,10 @@ topic_top_words <- function(topic,wkf,n=4,threshold=0.5) {
 #'
 #' @param topic the topic number (one-based)
 #' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
-#' @param name_format \code{\link[base]{sprintf}} format string with one slot for the 
-#" topic and one for a string
+#' @param fmt \code{\link[base]{sprintf}} format string with one slot 
+#' for the topic number and one for a string
 #' @param ... passed on to \code{\link{topic_top_words}}: for example, 
-#' \code{n,threshold}.
+#' \code{n}.
 #' @return a string
 #'
 #' @seealso
@@ -56,17 +50,23 @@ topic_top_words <- function(topic,wkf,n=4,threshold=0.5) {
 #' 
 #' @export
 #'
-topic_name <- function(topic,wkf,name_format="%03d %s",...) {
-    words <- topic_top_words(topic,wkf,...)
+topic_name <- function(wkf,topic=unique(wkf$topic),
+                       fmt="%03d %s",...) {
+    words <- topic_top_words(wkf,topic,...)
 
-    words_str <- paste(words, collapse=" ")
+    if(length(unique(topic)) > 1) {
+        words_str <- apply(words,1,paste,collapse=" ")
+    } else {
+        words_str <- paste(words,collapse=" ")
+    }
 
-    sprintf(name_format,topic,words_str)
+    sprintf(fmt,topic,words_str)
 }
 
 #' Get labels for many topics
 #'
-#' Returns labels for the specified topics.
+#' Returns labels for the specified topics. Deprecated: use topic_name (which
+#' is vectorized).
 #'
 #' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
 #' @param topics which topics to get labels for (all, by default)
@@ -84,14 +84,14 @@ topic_name <- function(topic,wkf,name_format="%03d %s",...) {
 #' @export
 #'
 topic_names <- function(wkf,topics=unique(wkf$topic),name_format="%03d %s",...) {
-    ws <- lapply(topics,topic_name,wkf=wkf,name_format=name_format,...)
-    sapply(ws,paste,collapse=" ")
+    topic_name(wkf,topics,name_format,...)
 }
 
 #' Get a function to label topics
 #'
-#' Convenience wrapper for currying \code{\link{topic_name}}  to give a function of a 
-#' single argument, to be used in conjunction with some plotting functions. 
+#' Convenience wrapper for currying \code{\link{topic_name}} to give a
+#' function of a single argument, to be used in conjunction with some
+#' plotting functions. Can also be spelled \code{\link{topic_labeler}}.  
 #'
 #' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
 #' @param ... passed on to \code{\link{topic_name}}
@@ -109,8 +109,31 @@ topic_names <- function(wkf,topics=unique(wkf$topic),name_format="%03d %s",...) 
 #' @export
 #'
 topic_labeller <- function(wkf,...) {
-    function (topic) { topic_name(topic,wkf=wkf,...) }
+    function (topic) { topic_name(wkf=wkf,topic,...) }
 }
+
+#' Get a function to label topics
+#'
+#' Convenience wrapper for currying \code{\link{topic_name}} to give a
+#' function of a single argument, to be used in conjunction with some
+#' plotting functions. Can also be spelled \code{\link{topic_labeller}}.  
+#'
+#' @param wkf the weighted key-word frame from \code{\link{weighted_keys_frame}}
+#' @param ... passed on to \code{\link{topic_name}}
+#'
+#' @return a function of a single variable, mapping topic numbers to labels
+#'
+#' @seealso
+#' \code{\link{topic_name}},
+#' \code{\link{topic_top_words}},
+#' \code{\link{weighted_keys_frame}},
+#' \code{\link{topic_yearly_lineplot}},
+#' \code{\link{topic_yearly_barplot}},
+#' \code{\link{topic_dist_plot}}
+#' 
+#' @export
+#'
+topic_labeler <- topic_labeller
 
 #' Get the "top" documents for a topic
 #'
