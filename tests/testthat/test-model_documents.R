@@ -87,4 +87,14 @@ test_that("Modeling on some sample data works", {
 
     clear_files(out_files)
 
+    # check that output_model fills in missing keys and doc_topics
+
+    m$wkf <- NULL
+    m$doc_topics <- NULL
+
+    output_model(m,out_dir,save_instances=T,save_scaled=T)
+
+    expect_that(all(sapply(out_files,file.exists)),is_true())
+
+    clear_files(out_files)
 }) 
