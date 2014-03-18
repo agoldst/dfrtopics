@@ -145,6 +145,8 @@ dfr_id_url <- function(id,jstor_direct=F,
 #' generate citations for all rows of \code{metadata}
 #' @return a character vector of citations
 #'
+#' @export
+#'
 cite_articles <- function(metadata,ids=NULL)  {
     if(!is.null(ids)) {
         metadata <- metadata[metadata$id %in% ids,] 

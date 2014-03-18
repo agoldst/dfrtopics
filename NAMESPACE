@@ -1,4 +1,5 @@
 export(JS_divergence)
+export(cite_articles)
 export(dfr_id_url)
 export(doc_lengths)
 export(doc_topics_frame)
