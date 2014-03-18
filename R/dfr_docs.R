@@ -93,6 +93,23 @@ read_dfr <- function(dirs=NULL,files=NULL,report_interval=100) {
 
 }
 
+#' Calculate document lengths
+#'
+#' Given a wordcounts long-format dataframe returned by \code{\link{read_dfr}},
+#' calculate document lengths. Useful for filtering a set of documents by
+#' (unstopped) length before modeling.
+#'
+#' @param counts The dataframe from \code{\link{read_dfr}}
+#' @return A dataframe with `id` and `length` columns
+#'
+#' @seealso \code{\link{read_dfr}}
+#'
+#' @export
+
+doc_lengths <- function(counts) {
+    ddply(counts,"id",summarize,length=sum(WEIGHT))
+}
+
 #' Calculate total corpus-wide feature counts
 #'
 #' Given a wordcounts long-format dataframe returned by \code{\link{read_dfr}},
