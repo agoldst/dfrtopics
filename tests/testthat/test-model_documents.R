@@ -67,6 +67,7 @@ test_that("Modeling on some sample data works", {
         "keys.csv",
         "mallet_state.gz",
         "diagnostics.xml",
+        "id_map.txt",
         "instances.mallet",
         "topic_scaled.csv"))
 
