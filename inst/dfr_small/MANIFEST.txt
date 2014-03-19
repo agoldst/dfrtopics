@@ -1,9 +1,0 @@
-Job Title: pmla_fla_2000
-Job ID: 2013.12.7.aqGecTUm
-Requester: agoldst
-Query: http://dfr.jstor.org/fsearch/submitrequest?cs=year%3A2000+AND+jcode%3Apmla+and+ty%3Afla%5E1.0&fs=tym1&view=text&
-View(s): citations|wordcounts
-Format: CSV
-Documents Requested: 25000
-Date Processed: 2013-12-07 10:56:01.314376
-

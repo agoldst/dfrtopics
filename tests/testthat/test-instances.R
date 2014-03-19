@@ -7,31 +7,33 @@ test_that("Instances are made as we expect", {
     expect_that(file.exists(data_dir),is_true())
     expect_that(file.exists(file.path(data_dir,"citations.CSV")),is_true())
     expect_that(length(list.files(file.path(data_dir,"wordcounts"))),
-                equals(665))
+                equals(60))
 
-    texts <- read_dfr_wordcounts(dirs=file.path(data_dir,"wordcounts"))
-    instances <- make_instances(texts,
-        stoplist_file=file.path(path.package("dfrtopics"),
-                                "stoplist","stoplist.txt"))
+    counts <- read_dfr(dirs=file.path(data_dir,"wordcounts"))
+    texts <- docs_frame(counts)
+
+    stop_f <- file.path(path.package("dfrtopics"), "stoplist","stoplist.txt")
+    instances <- make_instances(texts,stoplist_file=stop_f)
 
     metadata <- read_metadata(file.path(data_dir,"citations.CSV"))
 
     # check instance ids against metadata ids (not in same order)
-    expect_that(sort(instances_ids(instances)),
-                equals(sort(metadata$id)))
+    expect_that(all(instances_ids(instances) %in% metadata$id),is_true())
 
-    # check instances against cmd-line instances
-    ci_insts <- read_instances(file.path(path.package("dfrtopics"),
-                                         "mallet_check","docs.mallet"))
-
-    expect_that(instances$size(),equals(ci_insts$size()))
+    expect_that(instances$size(),equals(60))
     vocab <- instances_vocabulary(instances)
-    ci_vocab <- instances_vocabulary(ci_insts)
 
-    # check vocab
-    expect_that(vocab, equals(ci_vocab))
+    # spot-check vocabulary
+    expect_that(vocab[1:3],
+                equals(c("macbeth","king","words")))
 
-    # spot-check instance equality
+    # cross-check vocabulary
+    stopwords <- readLines(stop_f)
+    vocab2 <- setdiff(unique(counts$WORDCOUNTS),stopwords)
+
+    expect_that(sort(vocab),equals(sort(vocab2)))
+
     expect_that(instance_text(instances$get(29L),vocab),
-                equals(instance_text(ci_insts$get(29L),ci_vocab)))
+                matches("society incisive$"))
+
 }) 

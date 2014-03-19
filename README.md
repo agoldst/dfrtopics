@@ -37,4 +37,4 @@ I have decided to apply the [MIT License](https://github.com/agoldst/dfr-analysi
 
 ## Running the package tests
 
-The tests are based on a sample set of data from DfR downloaded using the following query: <http://dfr.jstor.org/fsearch/submitrequest?cs=year%3A[1980+TO+1989]+AND+jcode%3Apmla^1.0&sk=da&fs=yrm1%3Asnm1&view=text&>. At present I cannot distribute this sample with the code. In order to run the tests, then, it is necessary to first download that dataset and place it where the tests expect to find it. The tests look for the data in the `demo/data` subdirectory of the package directory pointed to by `path.package("dfrtopics")`.
+The tests are based on a sample set of data from DfR. I downloaded the results of the following query: <http://dfr.jstor.org/fsearch/submitrequest?cs=year%3A%5B1980+TO+1985%5D+AND+%28jcode%3APMLA+OR+jcode%3Aelh%29%5E1.0&view=text&>, then randomly selected five hits from each journal in each year. The chosen files are listed by id in `dfr_data/ids.txt`. 

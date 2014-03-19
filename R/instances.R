@@ -279,13 +279,28 @@ instance_text <- function(instance,
 #' \code{RTopicModel} method: \code{trainer$getVocabulary()}. But every 
 #' \code{InstanceList} knows its vocabulary.
 #'
+#'
 #' @param instances reference to the \code{InstanceList}
+#' @param newlines_significant if vocabulary terms include newlines,
+#' a slower method of extracting the vocabulary will be used (unusual for DfR)
 #' @return character vector mapping one-based word indices to terms as strings
 #'
 #' @export
 #'
-instances_vocabulary <- function(instances) {
-    sapply(.jevalArray(instances$getAlphabet()$toArray()),.jstrVal)
+instances_vocabulary <- function(instances,newlines_significant=F) {
+
+    if(newlines_significant) {
+        # .jevalArray is slow on even a moderate vocabulary.
+        vocab <- sapply(.jevalArray(instances$getAlphabet()$toArray()),
+                        .jstrVal)
+    } else {
+        # This silly-looking method is faster, though it assumes
+        # that none of the vocabulary items contain '\n'
+        vocab <- unlist(strsplit(instances$getAlphabet()$toString(),
+                                 "\n",fixed=T))
+    }
+
+    vocab
 }
 
 #' Aggregate word counts by years
