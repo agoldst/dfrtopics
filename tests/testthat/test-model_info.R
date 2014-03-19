@@ -2,7 +2,7 @@ test_that("Topic info functions work as expected", {
 
     # construct a small trial model
 
-    data_dir <- file.path(path.package("dfrtopics"),"dfr_small")
+    data_dir <- file.path(path.package("dfrtopics"),"dfr_data")
 
     # check for presence of sample data
 
@@ -15,7 +15,7 @@ test_that("Topic info functions work as expected", {
                          dirs=file.path(data_dir,"wordcounts"),
                          stoplist_file=file.path(path.package("dfrtopics"),
                                                  "stoplist","stoplist.txt"),
-                         n_topics=10,
+                         n_topics=8,
                          n_iters=140,
                          seed=42,
                          threads=1L, 
@@ -27,30 +27,30 @@ test_that("Topic info functions work as expected", {
     # check labeling functions on result
     # comes as a named vector, so strip names
     expect_that(as.character(topic_top_words(m$wkf,topic=1,n=3)),
-                equals(c("war","grant","civil")))
+                equals(c("university","new","address")))
 
-    name_m <- topic_top_words(m$wkf,topic=1:2,n=3)
+    name_m <- topic_top_words(m$wkf,topic=2:3,n=3)
 
     # matrix unrolled by column
     expect_that(as.character(name_m),
-                equals(c("war","baudelaire","grant","france",
-                         "civil","tambour")))
+                equals(c("new","language","child","man",
+                         "self","text")))
     expect_that(rownames(name_m),
-                equals(c("1","2")))
+                equals(c("2","3")))
 
-    expect_that(topic_name(m$wkf,topic=1,n=3),
-                equals("001 war grant civil"))
+    expect_that(topic_name(m$wkf,topic=5,n=3),
+                equals("005 social pastoral elizabethan"))
 
-    expect_that(topic_name(m$wkf,topic=1:2,n=3),
-                equals(c("001 war grant civil",
-                         "002 baudelaire france tambour")))
+    expect_that(topic_name(m$wkf,topic=c(5,7),n=3),
+                equals(c("005 social pastoral elizabethan",
+                         "007 poem paradise lost")))
 
-    expect_that(topic_name(m$wkf,topic=1:2,fmt="%d: %s",n=3),
-                equals(c("1: war grant civil",
-                         "2: baudelaire france tambour")))
+    expect_that(topic_name(m$wkf,topic=c(5,7),fmt="%d: %s",n=3),
+                equals(c("5: social pastoral elizabethan",
+                         "7: poem paradise lost")))
 
     label <- topic_labeller(m$wkf,fmt="T%d %s",n=3)
-    expect_that(label(2),equals("T2 baudelaire france tambour"))
+    expect_that(label(2),equals("T2 new child self"))
 
     # check top docs
 
@@ -60,18 +60,18 @@ test_that("Topic info functions work as expected", {
                            n=3)
 
     expect_that(as.character(docs5$id),
-                equals(c("10.2307/463450","10.2307/463235","10.2307/463234")))
+                equals(c("10.2307/2872864","10.2307/462129","10.2307/2872885")))
     expect_that(docs5$weight,
-                equals(c(3813,161,156)))
+                equals(c(4664,2363,1763)))
 
     # check top topics
 
-    toptops <- top_topics("10.2307/463234",
+    toptops <- top_topics("10.2307/462301",
                            doc_topics=doc_topics_matrix(m$doc_topics),
-                           id_map=m$doc_topics$id,n=3)
+                           id_map=m$doc_topics$id,n=2)
     expect_that(toptops$topic,
-                equals(c(8,10,6)))
+                equals(c(6,1)))
     expect_that(toptops$weight,
-                equals(c(612,256,177)))
+                equals(c(23593,783)))
 
 })
