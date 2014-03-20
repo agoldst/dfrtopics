@@ -25,4 +25,4 @@ test_that("JS_divergence works right", {
     }
 })
 
-# TODO test topic_divergences function
+# TODO test topic_divergences and topic_scaled_2d 
