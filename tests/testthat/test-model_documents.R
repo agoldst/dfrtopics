@@ -48,6 +48,7 @@ test_that("Modeling on some sample data works", {
     }
 
     out_files <- file.path(out_dir,c(
+        "doc_topics.csv",
         "topic_words.csv",
         "vocab.txt",
         "params.csv",
