@@ -114,3 +114,20 @@ topic_divergences <- function(twm,b) {
     twm <- diag(1 / rowSums(twm)) %*% twm
     row_dists(twm,method="JS")
 }
+
+#' Scaled topic coordinates in 2D space
+#'
+#' Use multidimensional scaling to obtain two-dimensional coordinates for
+#' each topic in a model.
+#'
+#' @param trainer pointer to a MalletLDA object with a trained model.
+#'
+#' @return a matrix with 2 columns and as many rows as \code{m}.
+#'
+#' @export
+#'
+topic_scaled_2d <- function(trainer) {
+    m <- mallet.topic.words(trainer,smoothed=F,normalized=F)
+    b <- trainer$model$beta
+    cmdscale(topic_divergences(m,b),k=2)
+}
