@@ -99,6 +99,12 @@
 #' and the term-document-topic array: \code{\link{term_yearly_lineplot}} and
 #' \code{\link{term_yearly_topic_lineplot}}.
 #'
+#' @section Interactive visualization:
+#' 
+#' A companion project, \url{http://agoldst.github.io/dfr-browser}{dfr-browser},
+#' uses JavaScript to create an interactive model browser in a web browser. To
+#' save the model outputs produced in this package into files formatted as 
+#' \code{dfr-browser} requires, use \code{\link{export_browser_data}}.
 #'
 #' @name dfrtopics
 #' @docType package
