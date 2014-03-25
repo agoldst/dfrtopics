@@ -44,7 +44,7 @@ simplify_state <- function(state_file,outfile) {
     cmd <- paste("python",
                  file.path(path.package("dfrtopics"),"python",
                            "simplify_state.py"),
-                 state_file,">",infile)
+                 state_file,">",outfile)
     message("Executing ",cmd)
     system(cmd)
 }
