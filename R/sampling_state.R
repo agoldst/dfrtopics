@@ -160,8 +160,7 @@ term_year_topic_matrix <- function(topic,ss,id_map,vocab,metadata) {
     result <- term_year_matrix(metadata=metadata,
                                tdm=tdm_topic,
                                id_map=id_map,
-                               vocabulary=vocab,
-                               big=T)
+                               vocabulary=vocab)
 
     result$topic <- topic
     result
