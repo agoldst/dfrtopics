@@ -136,13 +136,6 @@ export_browser_data <- function(
                       ']}')
         write_zip(function (f) { writeLines(json,f) },
                   file.path(out_dir,"dt"),".json",no_zip=!zipped)
-
-        # write out per-doc token totals (lengths excluding stopwords)
-        json <- str_c('{"doc_len":[',
-                      str_c(Matrix::rowSums(dtm),collapse=","),
-                      ']}')
-        write_zip(function (f) { writeLines(json,f) },
-                  file.path(out_dir,"doc_len"),".json",no_zip=!zipped)
     }
     else {
         warning("Unable to write doc-topics file.");
@@ -207,7 +200,7 @@ export_browser_data <- function(
 '{
     "title": "",
     "meta_info": "<h2><\\/h2>",
-    "VIS": { "prefab_plots": false } 
+    "VIS": { "overview_words": 15 }
 }'
             ,info_file)
         message(info_file," was missing. A stub file has been created.")

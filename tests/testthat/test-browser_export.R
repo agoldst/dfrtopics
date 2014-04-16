@@ -35,7 +35,6 @@ test_that("dfr-browser export produces the right files", {
     }
 
     out_files <- file.path(out_dir,c(
-        "doc_len.json.zip",
         "dt.json.zip",
         "info.json",
         "meta.csv.zip",
