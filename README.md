@@ -17,7 +17,7 @@ library(dfrtopics)
 # Run the model
 m <- model_documents(citations_files="~/dfr/test/citations.CSV",
          dirs="~/dfr/test/wordcounts/",stoplist_file="stoplist/long.txt",
-         num_topics=40)
+         n_topics=40)
 # Get doc-topic matrix joined with metadata
 dtw <- doc_topics_wide(m$doc_topics,m$metadata)
 # Convert that into a data frame of topic yearly time series
