@@ -113,7 +113,7 @@ test_that("Sampling state manipulation works as expected", {
         # weights for topic i; this is a plain vector, which sapply
         # understands as column when it glues together its results into a matrix
 
-        expect_that(all(dtm==sapply(tdtm,colSums)),
+        expect_that(all(dtm==sapply(tdtm,Matrix::colSums)),
                     is_true(),
                     info="column sums of tdtm's = rows of doc topic matrix")
 
