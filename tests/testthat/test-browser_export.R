@@ -29,9 +29,9 @@ test_that("dfr-browser export produces the right files", {
 
     # check that export works with data objects
 
-    out_dir <- tempdir()
+    out_dir <- file.path(tempdir(),"browser")
     if(!file.exists(out_dir)) {
-        dir.create(out_dir)
+        dir.create(out_dir,recursive=T)
     }
 
     out_files <- file.path(out_dir,c(
@@ -102,7 +102,7 @@ test_that("dfr-browser export produces the right files", {
     # clean up
 
     clear_files(out_files)
-    clear_files(file.path(out_dir,c(
+    model_files <- file.path(out_dir,c(
         "doc_topics.csv",
         "topic_words.csv",
         "vocab.txt",
@@ -111,8 +111,10 @@ test_that("dfr-browser export produces the right files", {
         "mallet_state.gz",
         "diagnostics.xml",
         "id_map.txt",
-        "topic_scaled.csv")))
+        "topic_scaled.csv"))
+    clear_files(model_files)
 
     expect_that(length(list.files(out_dir)),equals(0),
                 info="check that no files are left over")
+    clear_files(out_dir)
 }) 
