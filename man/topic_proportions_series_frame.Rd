@@ -1,0 +1,31 @@
+\name{topic_proportions_series_frame}
+\alias{topic_proportions_series_frame}
+\title{Get a dataframe suitable for plotting time series of topics}
+\usage{
+topic_proportions_series_frame(yearly, topics = 1:nrow(yearly),
+  denominator = colSums(yearly), rolling_window = 1)
+}
+\arguments{
+  \item{yearly}{the topic-year matrix, with dates as
+  colnames}
+
+  \item{topics}{which topics to keep in the dataframe: by
+  default, all are retained}
+
+  \item{denominator}{the totals to divide the yearly series
+  by. By default, the sums of the columns of \code{yearly}
+  are used, so that the resulting dataframe gives the
+  proportion of \emph{words} in the corpus for that year
+  assigned to the topic in question.}
+
+  \item{rolling_window}{the number of years to take rolling
+  averages over (default 1)}
+}
+\value{
+a dataframe with columns \code{topic,year,weight}
+}
+\description{
+Produces a dataframe suitable for plotting time series of
+topics on the basis of the yearly totals of topics.
+}
+

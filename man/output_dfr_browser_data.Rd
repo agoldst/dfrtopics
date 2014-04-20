@@ -1,0 +1,58 @@
+\name{output_dfr_browser_data}
+\alias{output_dfr_browser_data}
+\title{Output data files for dfr-browser}
+\usage{
+output_dfr_browser_data(out_dir = "data", metadata = file.path(out_dir,
+  "citations.CSV"), keys = file.path(out_dir, "keys.csv"),
+  doc_topics = file.path(out_dir, "doc_topics.csv"),
+  topic_scaled = file.path(out_dir, "topic_scaled.csv"), zipped = T)
+}
+\arguments{
+  \item{out_dir}{directory for output data files}
+
+  \item{metadata}{either a dataframe with metadata from
+  \code{\link{read_metadata}} or the name of file with the
+  DfR metadata}
+
+  \item{keys}{either the result of
+  \code{\link{weighted_keys_frame}} or the name of a CSV
+  file.}
+
+  \item{doc_topics}{either dataframe with documents in
+  rows, topic weights in columns, and a final \\code{id}
+  column with JSTOR document id's, or the name of a CSV
+  file.}
+
+  \item{topic_scaled}{either a dataframe with 2D
+  coordinates for each topic or the name of a file with
+  such coordinates. Calculate from the topic-word matrix
+  using \code{\link{topic_scaled_2d}}}
+
+  \item{zipped}{should data files be zipped? dfr-browser
+  supports client-side unzipping}
+}
+\description{
+Transform modeling results into a format suitable for use
+by \url{dfr-browser}{http://agoldst.github.io/dfr-browser},
+the web-browser based model browser. Supply either data
+frames of the kind returned by
+\code{\link{model_documents}} or the names of files of the
+kind saved by \code{\link{output_model}}.
+}
+\details{
+This routine reports on its progress.
+}
+\examples{
+\dontrun{
+m <- model_documents("citations.CSV","wordcounts","stoplist.txt",50)
+output_dfr_browser_data("data",
+     m$metadata,
+     m$wkf,
+     m$doc_topics,
+     topics_scaled_2d(m$trainer))
+}
+}
+\seealso{
+\code{\link{model_documents}} \code{\link{topic_scaled_2d}}
+}
+

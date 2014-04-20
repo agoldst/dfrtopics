@@ -1,0 +1,26 @@
+\name{get_instance}
+\alias{get_instance}
+\title{retrieve an instance from the instance list by id}
+\usage{
+get_instance(instances, id, id_map = instances_ids(instances))
+}
+\arguments{
+  \item{instances}{a reference to an \code{InstanceList}
+  object (from \code{\link{read_instances}} or
+  \code{trainer$instances})}
+
+  \item{id}{a document id}
+
+  \item{id_map}{map from instance index to id's, to match
+  against \code{id}. Calculated by default, but if you're
+  going to do this a lot, precalculate the \code{id_map}
+  just once.}
+}
+\value{
+reference to a MALLET \code{Instance}.
+}
+\description{
+Pulls out a single instance (document) from the instance
+list by id.
+}
+

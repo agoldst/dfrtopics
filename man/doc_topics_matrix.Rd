@@ -1,0 +1,23 @@
+\name{doc_topics_matrix}
+\alias{doc_topics_matrix}
+\title{Extract the numerical part of a doc_topics frame}
+\usage{
+doc_topics_matrix(doctopics)
+}
+\arguments{
+  \item{doctopics}{the data frame from
+  \code{\link{doc_topics_frame}}}
+}
+\description{
+A convenience function for extracting the numerical part of
+a doc_topics frame, discarding the document id's.
+}
+\details{
+If you have the trainer object, you can simply use
+\code{\link[mallet]{mallet.doc.topics}}.
+}
+\seealso{
+\code{\link[mallet]{mallet.doc.topics}},
+\code{\link{doc_topics_frame}}
+}
+

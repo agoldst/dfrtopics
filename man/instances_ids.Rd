@@ -1,0 +1,19 @@
+\name{instances_ids}
+\alias{instances_ids}
+\title{Extract document id's}
+\usage{
+instances_ids(instances)
+}
+\arguments{
+  \item{instances}{a reference to an \code{InstanceList}
+  object (from \code{\link{read_instances}} or
+  \code{trainer$instances})}
+}
+\value{
+a character vector of document ID's
+}
+\description{
+Returns a vector of id's ("names") from an
+\code{InstanceList}, in the order MALLET keeps them in
+}
+

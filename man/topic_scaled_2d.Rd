@@ -1,0 +1,18 @@
+\name{topic_scaled_2d}
+\alias{topic_scaled_2d}
+\title{Scaled topic coordinates in 2D space}
+\usage{
+topic_scaled_2d(trainer)
+}
+\arguments{
+  \item{trainer}{pointer to a MalletLDA object with a
+  trained model.}
+}
+\value{
+a matrix with 2 columns and as many rows as \code{m}.
+}
+\description{
+Use multidimensional scaling to obtain two-dimensional
+coordinates for each topic in a model.
+}
+

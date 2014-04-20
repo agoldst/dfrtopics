@@ -1,0 +1,37 @@
+\name{term_year_matrix_journal}
+\alias{term_year_matrix_journal}
+\title{Derive a term-year counts conditioned on a journal}
+\usage{
+term_year_matrix_journal(journal, metadata, tdm, id_map, vocabulary)
+}
+\arguments{
+  \item{journal}{the journal, matched against
+  \code{metadata$journaltitle} (so be careful about
+  trailing tabs in JSTOR metadata fields)}
+
+  \item{metadata}{the metadata frame}
+
+  \item{the}{term-document matrix from
+  \code{\link{instances_term_document_matrix}}}
+
+  \item{id_map}{character vector mapping \code{tdm} columns
+  to documents}
+
+  \item{vocabulary}{character vector mapping \code{tdm}
+  rows to terms}
+}
+\value{
+a two-element \code{list(tym=...,yseq...)} as in
+\code{\link{term_year_matrix}}
+}
+\description{
+Convenience wrapper for \code{\link{term_year_matrix}},
+summing counts only for documents in a given journal
+}
+\seealso{
+\code{\link{instances_term_document_matrix}}
+\code{\link{instances_ids}}
+\code{\link{instances_vocabulary}}
+\code{\link{term_year_matrix}}
+}
+

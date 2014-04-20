@@ -1,0 +1,72 @@
+\name{read_simplified_state}
+\alias{read_simplified_state}
+\title{Read in a Gibbs sampling state}
+\usage{
+read_simplified_state(infile, data_type = "integer",
+  big_workdir = tempdir())
+}
+\arguments{
+  \item{infile}{the name of a CSV file holding the
+  simplified state: a CSV with header row and four columns,
+  \code{document,word,topic,count}, where the documents,
+  words, and topics are \emph{zero-index}. Create the file
+  from MALLET output using \code{\link{simplify_state}}.}
+
+  \item{data_type}{the C++ type to store the data in. If
+  all values have magnitude less than \eqn{2^15}, you can
+  get away with \code{short}, but guess what? Linguistic
+  data hates you, and a typical vocabulary can easily
+  include more word types than that.}
+
+  \item{big_wordkir}{the working directory where
+  \code{\link[bigmemory]{read.big.matrix}} will store its
+  temporary files. By default, uses
+  \code{\link[base]{tempdir}}, but if you have more scratch
+  space elsewhere, use that for handling large sampling
+  states.}
+}
+\value{
+a \code{big.matrix} with four columns,
+\code{document,word,topic,count}. Documents, words, and
+topics are \emph{one-indexed} in the result.
+}
+\description{
+This function reads in a Gibbs sampling state represented
+by \code{document,word,topic,count} rows. The resulting
+dataframe or \code{big.matrix} gives access to the
+assignments of individual words to topics within documents.
+Because of the nature of the JSTOR data, the result
+aggregates all instances of a given word type in a given
+document; MALLET itself remembers token order, but this is
+meaningless when working with JSTOR \code{wordcounts.CSV}
+files.
+}
+\details{
+This uses the \pkg{bigmemory} package (q.v.) to read the
+simplified state instead of attempting to hold the result
+in memory in a data frame.
+
+MALLET writes out its final sampling state in a highly
+redundant form which R is not very happy to read in as is.
+In order to work with the sampling state in R, one first
+needs to toss out redundant columns. This package supplies
+a python script (\code{inst/python/simplify_state.py}) for
+this; if you set \code{generate_file=T} and
+\code{state_file}, this function will call that script for
+you.
+
+To recover the meaning of the integer codes for words and
+documents, use the functions for reading MALLET
+\code{InstanceList}s: \code{\link{instances_vocabulary}}
+and \code{\link{instances_ids}}. \emph{N.B.} the MALLET
+sampling state, and the "simplified state" output by this
+function to disk, index documents, words, and topics from
+zero, but the dataframe returned by this function indexes
+these from one for convenience within R.
+}
+\seealso{
+\code{\link{simplify_state}},
+\code{\link{write_mallet_state}},
+\code{\link{term_year_topic_matrix}}, \pkg{bigmemory}
+}
+

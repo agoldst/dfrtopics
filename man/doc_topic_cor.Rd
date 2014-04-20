@@ -1,0 +1,20 @@
+\name{doc_topic_cor}
+\alias{doc_topic_cor}
+\title{Take topic-topic correlations over documents}
+\usage{
+doc_topic_cor(doctops)
+}
+\arguments{
+  \item{doctops}{The document-topic matrix or dataframe
+  (from \code{\link{doc_topics_frame}}), assumed to be
+  smoothed and normalized.}
+}
+\value{
+a matrix of correlations between the series of log-document
+proportions.
+}
+\description{
+Calculates correlations between topics according to their
+log proportions in documents.
+}
+

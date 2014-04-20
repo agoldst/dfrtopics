@@ -1,0 +1,24 @@
+\name{topic_term_time_series}
+\alias{topic_term_time_series}
+\title{Get the time series of words within a topic}
+\usage{
+topic_term_time_series(word, tytm, vocab)
+}
+\arguments{
+  \item{word}{character vector of terms}
+
+  \item{tytm}{matrix with terms in rows and years in
+  columns}
+
+  \item{character}{vector mapping rows of \code{tytm} to
+  words (matched against \code{word})}
+}
+\description{
+A convenience function to access the yearly totals of a
+given word (or words) within a topic from the
+\code{\link{term_year_topic_matrix}} results
+}
+\seealso{
+\code{\link{term_year_topic_matrix}}
+}
+

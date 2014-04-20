@@ -1,0 +1,22 @@
+\name{doc_lengths}
+\alias{doc_lengths}
+\title{Calculate document lengths}
+\usage{
+doc_lengths(counts)
+}
+\arguments{
+  \item{counts}{The dataframe from \code{\link{read_dfr}}}
+}
+\value{
+A dataframe with `id` and `length` columns
+}
+\description{
+Given a wordcounts long-format dataframe returned by
+\code{\link{read_dfr}}, calculate document lengths. Useful
+for filtering a set of documents by (unstopped) length
+before modeling.
+}
+\seealso{
+\code{\link{read_dfr}}
+}
+

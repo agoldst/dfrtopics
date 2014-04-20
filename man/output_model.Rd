@@ -1,0 +1,50 @@
+\name{output_model}
+\alias{output_model}
+\title{A convenience function for saving all the model outputs at once.}
+\usage{
+output_model(model_result, output_dir = ".", save_instances = F,
+  save_scaled = T)
+}
+\arguments{
+  \item{model_result}{the result from
+  \code{\link{model_documents}}, or, equivalently, a list
+  with elements called \code{trainer}, \code{doc_topics},
+  \code{wkf}, and \code{seed}. If \code{doc_topics} or
+  \code{wkf} are omitted, they will be calculated
+  (unsmoothed and unnormalized).}
+
+  \item{output_dir}{where to save all the output files.}
+
+  \item{save_instances}{if TRUE, extract the instance list
+  from the trainer object and save it to
+  \code{instances.mallet}; if FALSE (the default), don't}
+
+  \item{save_scaled}{if TRUE (the default), write a file of
+  2D coordinate for the topics}
+}
+\description{
+Save a series of files with the results of an LDA run.
+}
+\details{
+The following files are written to \code{output_dir}:
+\describe{ \item{\code{topic_words.csv}}{unnormalized
+topic-word matrix, CSV format} \item{\code{vocab.txt}}{list
+of words (same order as columns of topic-word matrix), one
+per line} \item{\code{params.csv}}{CSV with one row of data
+holding miscellaneous model parameters}
+\item{\code{keys.csv}}{topic key words CSV; see
+\code{\link{weighted_keys_frame}} for the format}
+\item{\code{doc_topics.csv}}{document-topic matrix CSV; see
+\code{\link{doc_topics_frame}} for the format}
+\item{\code{mallet_state.gz}}{MALLET sampling state (a big
+file)} \item{\code{diagnostics.xml}}{MALLET model
+diagnostics} \item{\code{id_map.txt}}{instance id's, one
+per line} \item{\code{instances.mallet}}{save the source
+text "instances" file (not done by default)}
+\item{\code{topic_scaled.csv}}{CSV with scaled 2D
+coordinates for the topics. Obtained by applying
+\code{\link[stats]{cmdscale}} to a matrix of topic
+divergences calculated by \code{\link{topic_divergences}}}
+}
+}
+

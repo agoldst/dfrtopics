@@ -1,0 +1,33 @@
+\name{instance_text}
+\alias{instance_text}
+\title{Transform an instance back into text}
+\usage{
+instance_text(instance, vocab = instances_vocabulary(instance),
+  collapse = " ")
+}
+\arguments{
+  \item{instance}{reference to an instance}
+
+  \item{vocab}{character vector giving the vocabulary}
+
+  \item{collapse}{passed on to \code{\link[base]{paste}}}
+}
+\value{
+A string "spelling out" the instance text
+}
+\description{
+"Reads" a MALLET instance as a text string for quick
+inspection.
+}
+\details{
+In the case of DfR data, the resulting string will have all
+occurrences of each word type next to one another: not very
+informative except for spot-checks for garbage data,
+correct stop-wording, etc.
+
+Repeated calls will be much faster if you retrieve the
+vocabulary separately and pass that in as \code{vocab}. An
+\code{InstanceList} guarantees that all \code{Instances}
+have the same vocabulary.
+}
+

@@ -1,0 +1,20 @@
+\name{write_instances}
+\alias{write_instances}
+\title{Save a mallet InstanceList object to a file}
+\usage{
+write_instances(instances, output_file = "instances.mallet")
+}
+\arguments{
+  \item{instances}{reference to the \code{InstanceList}}
+
+  \item{output_file}{filename}
+}
+\description{
+Saves mallet instances to disk using MALLET's file writer.
+The result is then equivalent to \code{mallet import-dirs}
+or similar at the command line.
+}
+\seealso{
+\code{\link{read_instances}}, \code{\link{make_instances}}
+}
+

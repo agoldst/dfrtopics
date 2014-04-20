@@ -1,0 +1,22 @@
+\name{write_diagnostics}
+\alias{write_diagnostics}
+\title{Save MALLET's topic model diagnostics as XML}
+\usage{
+write_diagnostics(trainer, output_file = "diagnostics.xml",
+  n_top_words = 50L)
+}
+\arguments{
+  \item{trainer}{the \code{RTopicModel} object.}
+
+  \item{output_file}{the name of a file to save XML to.}
+
+  \item{n_top_words}{the number of top words per topic to
+  calculate topic-word diagnostics for.}
+}
+\description{
+Write MALLET's model diagnostics to an XML file.
+}
+\seealso{
+\code{\link{read_diagnostics}}
+}
+

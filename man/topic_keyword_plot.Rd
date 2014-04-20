@@ -1,0 +1,38 @@
+\name{topic_keyword_plot}
+\alias{topic_keyword_plot}
+\title{Plot a single topic's most probable words}
+\usage{
+topic_keyword_plot(wkf, topic, color_scale = scale_color_gradient())
+}
+\arguments{
+  \item{wkf}{weighted keys frame}
+
+  \item{topic}{topic number (matched against
+  \code{wkf$topic})}
+
+  \item{color_scale}{scale to use for mapping alpha value
+  to color. Not particularly useful for a single plot; if
+  you are making multiple plots, however, as
+  \code{\link{topic_report}} does, then specifying this is
+  handier.}
+}
+\value{
+a \link[ggplot2]{ggplot} object
+}
+\description{
+Creates a simple plot visualizing word weights in a topic
+as horizontal bars. The weightiest words appear at the top
+of the plot.
+}
+\details{
+The default \code{\link{weighted_keys_frame}} will simply
+rank words by frequency in the topic. However, nothing
+prevents you from using this function with the results of
+another scoring scheme, for example by taking
+\code{\link{tw_wkf}(\link{topic_word_scores})}.
+}
+\seealso{
+\code{\link{topic_report}},
+\code{\link{weighted_keys_frame}}
+}
+

@@ -1,0 +1,20 @@
+\name{read_instances}
+\alias{read_instances}
+\title{Read a mallet \code{InstanceList} object from a file}
+\usage{
+read_instances(filename)
+}
+\arguments{
+  \item{filename}{the instance file}
+}
+\value{
+a reference to the MALLET \code{InstanceList} object
+}
+\description{
+Reads a mallet \code{InstanceList} object from a file.
+}
+\seealso{
+\code{\link{write_instances}}, \code{\link{make_instances}}
+\code{\link{train_model}}
+}
+

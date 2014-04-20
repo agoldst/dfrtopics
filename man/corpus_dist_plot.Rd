@@ -1,0 +1,35 @@
+\name{corpus_dist_plot}
+\alias{corpus_dist_plot}
+\title{Visualize topic-corpus distances}
+\usage{
+corpus_dist_plot(corpus_dist, wkf)
+}
+\arguments{
+  \item{corpus_dist}{a vector of corpus distances in topic
+  order. Normally, obtain this from
+  \code{\link{read_diagnostics("diagnostics.xml")$topics$corpus_dist)}}.}
+
+  \item{wkf}{the weighted keys frame (for naming topics on
+  the plot)}
+}
+\value{
+a \link[ggplot2]{ggplot} object
+}
+\description{
+This provides a quick way to visualize a useful diagnostic
+calculated by MALLET: the KL divergence between a topic and
+the corpus itself.
+}
+\details{
+If a topic is too "close" to the corpus in this sense, it
+provides little additional information about patterns of
+word use. Thus topics that score low on this diagnostic may
+be "bad" for most purposes. Use
+\code{\link{read_diagnostics}} to get a dataframe from
+MALLET's XML diagnostic output to pass to this function.
+
+Pass in subsets of these by topics if you wish to plot only
+some topics. With more than 100 topics, the labels get hard
+to fit in a vertical stack.
+}
+

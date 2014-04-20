@@ -1,0 +1,22 @@
+\name{zoo_series_frame}
+\alias{zoo_series_frame}
+\title{Convert a zoo object into a "long" data frame}
+\usage{
+zoo_series_frame(z, series_names = c("word", "year", "weight"))
+}
+\arguments{
+  \item{z}{a \code{\link[zoo]{zoo}} object}
+
+  \item{series_names}{the names for the three columns of
+  the result}
+}
+\value{
+the data frame from \code{\link{yearly_series_frame}}
+}
+\description{
+Convert a zoo object into a "long" data frame
+}
+\seealso{
+\code{\link{yearly_series_frame}}, \code{\link{zoo_yearly}}
+}
+

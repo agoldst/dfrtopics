@@ -1,0 +1,25 @@
+\name{series_frame_zoo}
+\alias{series_frame_zoo}
+\title{Convert a yearly series data frame into a zoo object}
+\usage{
+series_frame_zoo(s, date_col = 2, value_col = 3)
+}
+\arguments{
+  \item{s}{three-column data frame}
+
+  \item{date_col}{index of date column (default 2)}
+
+  \item{value_col}{index of value column (default 3)}
+}
+\value{
+a \code{zoo} time series object
+}
+\description{
+Utility function for swapping between the long form
+dataframe of \code{\link{yearly_series_frame}} and a
+\pkg{zoo} object.
+}
+\seealso{
+\code{\link{yearly_series_frame}}, \pkg{zoo}
+}
+

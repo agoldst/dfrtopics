@@ -1,0 +1,29 @@
+\name{doc_topics_frame}
+\alias{doc_topics_frame}
+\title{Get the document-topic data frame}
+\usage{
+doc_topics_frame(trainer, smoothed = F, normalized = F)
+}
+\arguments{
+  \item{trainer}{The \code{RTopicModel} object, after a
+  training run}
+
+  \item{smoothed}{if TRUE, smooth document-topic
+  distribution using hyperparameters}
+
+  \item{normalized}{if TRUE, weights sum to 1}
+}
+\value{
+A dataframe with columns
+\code{topic1,topic2,...,topicN,id}.
+}
+\description{
+Create a data frame with topic proportions for each
+document in the first n columns and document ids in the
+last column.
+}
+\details{
+This is the document-topic matrix with an extra column to
+make merging against metadata easier.
+}
+

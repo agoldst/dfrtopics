@@ -1,0 +1,24 @@
+\name{read_citations}
+\alias{read_citations}
+\title{Read a single \code{citations.CSV} file.}
+\usage{
+read_citations(filename = NA, ...)
+}
+\arguments{
+  \item{filename}{the CSV file to read. If \code{NA}, opens
+  the file dialog.}
+
+  \item{...}{Passed on to \code{\link{read.csv}}.}
+}
+\value{
+A dataframe of metadata.
+}
+\description{
+This function is mostly a helper for
+\code{\link{read_metadata}}. It reads a single
+\code{citations.CSV file}.
+}
+\seealso{
+\code{\link{read_metadata}}
+}
+

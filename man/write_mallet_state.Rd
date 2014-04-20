@@ -1,0 +1,20 @@
+\name{write_mallet_state}
+\alias{write_mallet_state}
+\title{Save the Gibbs sampling state to a file}
+\usage{
+write_mallet_state(trainer, outfile = "state.gz")
+}
+\arguments{
+  \item{trainer}{the \code{RTopicModel} object}
+
+  \item{outfile}{the output file name}
+}
+\description{
+Saves the MALLET sampling state using MALLET's own
+state-output routine, which produces a ginormous gzipped
+textfile
+}
+\seealso{
+\code{\link{read_simplified_state}}
+}
+

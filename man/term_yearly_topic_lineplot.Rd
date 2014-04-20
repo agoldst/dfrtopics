@@ -1,0 +1,53 @@
+\name{term_yearly_topic_lineplot}
+\alias{term_yearly_topic_lineplot}
+\title{Plot words in a topic over time}
+\usage{
+term_yearly_topic_lineplot(words, topic_label, tytm, yseq, vocab, ...)
+}
+\arguments{
+  \item{words}{a vector of words}
+
+  \item{topic_label:}{a short label for the topic, to go in
+  the plot title}
+
+  \item{tytm}{the sparse matrix returned in the results of
+  \code{\link{term_year_topic_matrix}}}
+
+  \item{yseq}{map from columns of the tytm to dates (also
+  in results of \code{\link{term_year_topic_matrix}})}
+
+  \item{vocab}{map from rows of \code{tytm} to words (the
+  MALLET vocabulary)}
+
+  \item{...}{plotting parameters handed on to
+  \code{\link{term_yearly_lineplot}}. Be careful with the
+  \code{plot_freq} parameter: by default, this will give
+  the results normalized by column sums of \code{tytm},
+  which will give the proportion of words \emph{words
+  assigned to the topic} occupied by \code{words}. If you
+  want the denominator to be the proportion of words
+  \emph{in the processed corpus}, pass
+  \code{denominator=colSums(term_yearly_matrix(...))}.}
+}
+\value{
+A \link[ggplot2]{ggplot} object.
+}
+\description{
+Making use of the final Gibbs sampling state, this function
+makes a line plot showing the occurrence of individual
+words \emph{in a topic} over time. Whether you plot counts
+or ratios, this is not the same as the corpus frequency of
+the individual words; this is the time track of words
+assigned to the given topic.
+}
+\details{
+In fact this function is simply a convenience wrapper for
+\code{\link{term_yearly_lineplot}}, just passing that
+function the topic-conditioned term-document matrix instead
+of the overall term-document matrix.
+}
+\seealso{
+\code{\link{term_year_topic_matrix}},
+\code{\link{term_yearly_lineplot}}
+}
+

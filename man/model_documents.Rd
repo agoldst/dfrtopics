@@ -1,0 +1,70 @@
+\name{model_documents}
+\alias{model_documents}
+\title{Make a topic model of DfR documents}
+\usage{
+model_documents(citations_files, dirs, stoplist_file, n_topics, seed = NULL,
+  n_top_words = 50L, ...)
+}
+\arguments{
+  \item{citations_files}{character vector with names of DfR
+  \code{citations.CSV} metadata files}
+
+  \item{dirs}{character vector with names of directories
+  holding \code{wordcounts*.CSV} files}
+
+  \item{stoplist_file}{name of stoplist (containing one
+  stopword per line)}
+
+  \item{n_topics}{number of topics to model}
+
+  \item{seed}{integer random number seed for mallet}
+
+  \item{n_top_words}{integer number of "key words" per
+  topic}
+
+  \item{...}{passed on to \code{\link{train_model}}}
+}
+\value{
+A list with the following members: \describe{
+\item{\code{metadata}}{dataframe of metadata}
+\item{\code{doc_topics}}{dataframe with documents in rows,
+topics in columns, and an extra column with document id's}
+\item{\code{wkf}}{data frame of the weightiest words in
+each topic (as returned by
+\code{\link{weighted_keys_frame}}); also stores topic
+alphas} \item{\code{trainer}}{reference to the
+\code{RTopicModel} object, which, with the LDA run
+complete, holds the sampling state and references to the
+instance-list} \item{\code{seed}}{the random-number seed,
+or \code{NULL} to use default seeding} }
+}
+\description{
+The basic usage of this package is wrapped up in this
+convenience function.
+}
+\details{
+Given wordcount and metadata files, this function sets up
+MALLET inputs and then runs MALLET to produce a topic
+model. For finer-grained control over the mallet inputs or
+to tweak more modeling parameters, follow the order of
+calls in this function. Invoke \code{\link{make_instances}}
+separately and pass the results to
+\code{\link{train_model}}.
+
+If java gives out-of-memory errors, try increasing the Java
+heap size to a large value, like 4GB, by setting
+\code{options(java.parameters="-Xmx4g")} \emph{before}
+loading this package (or rJava).
+}
+\examples{
+\dontrun{model_documents("citations.CSV","wordcounts","stoplist.txt",50)}
+}
+\seealso{
+\code{\link{read_metadata}},
+\code{\link{read_dfr_wordcounts}},
+\code{\link{make_instances}}, \code{\link{train_model}},
+\code{\link{doc_topics_frame}},
+\code{\link{weighted_keys_frame}},
+\code{\link{output_model}}
+}
+
