@@ -6,11 +6,28 @@ The functions skew to my needs as a literary scholar and digital-humanist-in-pro
 
 Every function has online help in R. For an introduction, try `help("dfrtopics")`. I plan to write a fuller tutorial soon. The documentation will also be available on the web.
 
+## Installation
+
+For now, this is too messy for CRAN. The easiest way to install is to first install the [devtools](http://cran.r-project.org/web/packages/devtools/index.html) package, and then use it to install this package straight from github:
+
+```R
+library(devtools)
+install_github("dfrtopics","agoldst")
+```
+
+(This should work even if you don't have git or a github account.)
+
+I have been profligate with dependencies. Note that if you use RStudio, getting rJava to load can be a messy business. On my system (MacOS X 10.7.5) I have been forced to use the following shell alias to open RStudio:
+
+```
+alias rstudio="DYLD_FALLBACK_LIBRARY_PATH=/Library/Java/JavaVirtualMachines/jdk1.7.0_51.jdk/Contents/Home/jre/lib/server/: open -a RStudio"
+```
+
 ## Basic example usage within R
 
 Let's imagine you have downloaded and unzipped the results of a DfR request to 
-`~/dfr/test/`: you have metadata in `~/dfr/test/citations.CSV`
-and wordcounts per document in `~/dfr/test/wordcounts/*.CSV`.
+`~/dfr/test/`: you have metadata in `~/dfr/test/citations.CSV`,
+wordcounts per document in `~/dfr/test/wordcounts/*.CSV`, and a stoplist in `stoplist/long.txt`.
 
 ```R
 library(dfrtopics)
@@ -29,7 +46,7 @@ topic_yearly_lineplot(series,facet=T)
 
 ## Browsing the model interactively
 
-Now in alpha release: another project of mine, [dfr-browser](http://github.com/agoldst/dfr-browser), which makes topic models of DfR data into a javascript-based interactive browser.
+Now in alpha release: another project of mine, [dfr-browser](http://agoldst.github.io/dfr-browser), which makes topic models of DfR data into a javascript-based interactive browser.
 
 ## A note on licensing
 
