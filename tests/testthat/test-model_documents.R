@@ -13,6 +13,9 @@ test_that("Modeling on some sample data works", {
 
     n <- 8 # topics
     n_top_words <- 10 # key words
+
+    # the modeling run: we'll also check for valid messaging
+    expect_message((
     m <- model_documents(citations_files=file.path(data_dir,"citations.CSV"),
                          dirs=file.path(data_dir,"wordcounts"),
                          stoplist_file=file.path(path.package("dfrtopics"),
@@ -26,6 +29,7 @@ test_that("Modeling on some sample data works", {
                          n_burn_in=20,
                          n_max_iters=0,
                          n_top_words=n_top_words)
+    ), "MALLET random number seed set to 42")
 
     # remembered the seed?
     expect_that(m$seed,equals(42))

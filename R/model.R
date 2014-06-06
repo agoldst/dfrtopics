@@ -247,6 +247,7 @@ train_model <- function(instances,n_topics,
     trainer$model$setNumThreads(as.integer(threads))
     if(!is.null(seed)) {
         trainer$model$setRandomSeed(as.integer(seed))
+        message("MALLET random number seed set to ", seed)
     }
 
     trainer$loadDocuments(instances)
