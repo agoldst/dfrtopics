@@ -18,15 +18,14 @@ export_browser_data(out_dir = "data", metadata = file.path(out_dir,
 name of a CSV file.}
 
 \item{doc_topics}{either dataframe with documents in rows, topic weights in
-columns, and a final \\code{id} column with JSTOR document id's, or the name
+columns, and a final \code{id} column with JSTOR document id's, or the name
 of a CSV file.}
 
 \item{topic_scaled}{either a dataframe with 2D coordinates for each topic
 or the name of a file with such coordinates. Calculate from the topic-word
 matrix using \code{\link{topic_scaled_2d}}}
 
-\item{zipped}{should data files be zipped? dfr-browser supports client-side
-unzipping}
+\item{zipped}{should the larger data files be zipped?}
 }
 \description{
 Transform modeling results into a format suitable for use by
@@ -36,7 +35,12 @@ kind returned by \code{\link{model_documents}} or the names of files
 of the kind saved by \code{\link{output_model}}.
 }
 \details{
-This routine reports on its progress.
+This routine reports on its progress. By default, it saves zipped
+versions of the document-topics matrix and metadata files;
+dfr-browser supports client-side unzipping. This function compresses
+files using R's \code{\link{zip}} command. If that fails, set
+\code{zipped=F} (and, if you wish, zip the files using another
+program).
 }
 \examples{
 \dontrun{

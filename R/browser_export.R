@@ -2,8 +2,7 @@ write_zip <- function(writer,file_base,file_ext=".json",no_zip=F) {
     if(no_zip) {
         f_out <- str_c(file_base,file_ext)
         writer(f_out)
-    }
-    else {
+    } else {
         f_temp <- file.path(tempdir(),str_c(basename(file_base),file_ext))
         writer(f_temp)
         f_out <- str_c(file_base,file_ext,".zip")
@@ -11,10 +10,18 @@ write_zip <- function(writer,file_base,file_ext=".json",no_zip=F) {
             message("Removing existing ",f_out)
             unlink(f_out)
         }
-        zip(f_out,f_temp,flags="-9Xj")
+        status <- zip(f_out,f_temp,flags="-9Xj")
+        if (status != 0) {
+            message("zip ",f_out," failed")
+        }
         unlink(f_temp)
     }
-    message("Saved ",f_out)
+
+    if (file.exists(f_out)) {
+        message("Saved ",f_out)
+    } else {
+        message("Unable to save ",f_out)
+    }
 }
 
 #' Output data files for dfr-browser
@@ -25,7 +32,12 @@ write_zip <- function(writer,file_base,file_ext=".json",no_zip=F) {
 #' kind returned by \code{\link{model_documents}} or the names of files
 #' of the kind saved by \code{\link{output_model}}. 
 #'
-#' This routine reports on its progress. 
+#' This routine reports on its progress. By default, it saves zipped
+#' versions of the document-topics matrix and metadata files;
+#' dfr-browser supports client-side unzipping. This function compresses
+#' files using R's \code{\link{zip}} command. If that fails, set
+#' \code{zipped=F} (and, if you wish, zip the files using another
+#' program).
 #'
 #' @param out_dir directory for output data files
 #' @param metadata either a dataframe with metadata from 
@@ -33,13 +45,12 @@ write_zip <- function(writer,file_base,file_ext=".json",no_zip=F) {
 #' @param keys either the result of \code{\link{weighted_keys_frame}} or the 
 #' name of a CSV file.
 #' @param doc_topics either dataframe with documents in rows, topic weights in 
-#' columns, and a final \\code{id} column with JSTOR document id's, or the name 
+#' columns, and a final \code{id} column with JSTOR document id's, or the name 
 #' of a CSV file.
 #' @param topic_scaled either a dataframe with 2D coordinates for each topic
 #' or the name of a file with such coordinates. Calculate from the topic-word 
 #' matrix using \code{\link{topic_scaled_2d}}
-#' @param zipped should data files be zipped? dfr-browser supports client-side 
-#' unzipping 
+#' @param zipped should the larger data files be zipped?
 #'
 #' @examples
 #'
