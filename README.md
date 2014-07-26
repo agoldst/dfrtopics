@@ -20,8 +20,10 @@ install_github("dfrtopics","agoldst")
 I have been profligate with dependencies. Note that if you use RStudio, getting rJava to load can be a messy business. On my system (MacOS X 10.7.5) I have been forced to use the following shell alias to open RStudio:
 
 ```
-alias rstudio="DYLD_FALLBACK_LIBRARY_PATH=/Library/Java/JavaVirtualMachines/jdk1.7.0_51.jdk/Contents/Home/jre/lib/server/: open -a RStudio"
+alias rstudio="DYLD_FALLBACK_LIBRARY_PATH=/Library/Java/JavaVirtualMachines/jdk$(java -version 2>&1 | head -n 1 | cut -d'"' -f 2).jdk/Contents/Home/jre/lib/server/: open -a RStudio"
 ```
+
+(The `$(...)` bit is to avoid hardcoding the Java version.)
 
 ## Basic example usage within R
 
