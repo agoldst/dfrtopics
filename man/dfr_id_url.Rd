@@ -3,14 +3,18 @@
 \alias{dfr_id_url}
 \title{Convert a DfR ID into a JSTOR URL}
 \usage{
-dfr_id_url(id, jstor_direct = F, proxy = "")
+dfr_id_url(id, jstor_direct = T, proxy = "")
 }
 \arguments{
 \item{id}{a document id}
 
-\item{jstor_direct}{if TRUE, try to guess a direct \code{jstor.org/stable/} URL; if FALSE, supply a \code{dx.doi.org} URL (doesn't always resolve).}
+\item{jstor_direct}{if TRUE (default), try to guess a direct
+\code{jstor.org/stable/} URL; if FALSE, supply a \code{dx.doi.org}
+URL. In practice the direct link is much more likely to work than the
+DOI (go figure).}
 
-\item{proxy}{added to the URL domain for proxying (e.g. \code{".libraries.example.edu"})}
+\item{proxy}{added to the URL domain for proxying (e.g.
+\code{".libraries.example.edu"})}
 }
 \description{
 For viewing a document on JSTOR. This works often, but not always.

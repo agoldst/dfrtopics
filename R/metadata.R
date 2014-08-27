@@ -116,17 +116,19 @@ pubdate_Date <- function(pubdate) {
 #' For viewing a document on JSTOR. This works often, but not always.
 #'
 #' @param id a document id
-#' @param jstor_direct if TRUE, try to guess a direct \code{jstor.org/stable/} URL; if FALSE, supply a \code{dx.doi.org} URL (doesn't always resolve).
-#' @param proxy added to the URL domain for proxying (e.g. \code{".libraries.example.edu"})
+#' @param jstor_direct if TRUE (default), try to guess a direct
+#' \code{jstor.org/stable/} URL; if FALSE, supply a \code{dx.doi.org}
+#' URL. In practice the direct link is much more likely to work than the
+#' DOI (go figure).
+#' @param proxy added to the URL domain for proxying (e.g.
+#' \code{".libraries.example.edu"})
 #' @export
 #'
-dfr_id_url <- function(id,jstor_direct=F,
-                       proxy="") {
-    if(jstor_direct) {
-        sub("^.*\\/","http://www.jstor.org/stable/",id)
-    } else {
+dfr_id_url <- function(id,jstor_direct=T,proxy="") {
+    ifelse(jstor_direct,
+        paste("http://www.jstor.org",proxy,"/stable/",id,sep=""),
         paste("http://dx.doi.org",proxy,"/",id,sep="")
-    }
+    )
 }
 
 #' Generate simple citation strings from metadata

@@ -25,7 +25,7 @@ test_that("metadata functions work as expected", {
 
     # dx.doi url
     expect_that(dfr_id_url("10.2307/3175327"),
-                equals("http://dx.doi.org/10.2307/3175327"))
+                equals("http://www.jstor.org/stable/10.2307/3175327"))
 
     # citation generation
     expect_that(cite_articles(meta,"10.2307/2872914"),
