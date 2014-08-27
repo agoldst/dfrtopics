@@ -116,14 +116,24 @@ NULL
     heap_ok <- T
 
     if(length(jheap) == 0) {
+        # shouldn't get here since rJava loading should set java.parameters
+        # with a default value of "-Xmx512m"
         packageStartupMessage(
-            "You are using the default Java heap setting (512 MB).")
+            "You are using rJava's default Java heap setting (512MB).")
         heap_ok <- F
     } else {
-        size <- substring(jheap,first=5)
-        if(!grepl("([2-9]|\\d\\d\\d*)(g|G)",size)) {
+        size_str <- substring(jheap,first=5)
+        size_num <- gsub("\\D","",size_str)
+        size_unit <- switch(gsub("\\d","",size_str),
+                            k=2^10,K=2^10,
+                            m=2^20,M=2^20,
+                            g=2^30,G=2^30,
+                            t=2^40,T=2^40)
+        jheap_bytes <- as.numeric(size_num) * size_unit
+
+        if(is.na(jheap_bytes) | jheap_bytes < 2^31) {
             packageStartupMessage("Your current Java heap setting is ",
-                                  size,".")
+                                  size_str,".")
             heap_ok <- F
         }
     }
