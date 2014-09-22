@@ -48,18 +48,39 @@ read_metadata <- function(filenames,...) {
 read_citations <- function(filename=NA,...) { 
     f <- filename
     if(is.na(filename)) { 
-        cat("Select citations.CSV file from jstor dfr...\n")
+        cat("Select citations.CSV/.tsv file from jstor dfr...\n")
         ignore <- readline("(press return to open file dialog) ")
         f <- file.choose()
         print(f)
     }
 
-    # the nefarious trailing comma (see read_metadata docs)
-    cols <- scan(f,nlines=1,what=character(),sep=",",quiet=T)
-    cols <- c(cols,"unused")
+    if (grepl("\\.tsv",f,ignore.case=T)) {
+        # new (2014) metadata format: TSV
 
-    subset(read.csv(f,skip=1,header=F,col.names=cols,quote="",as.is=T,...),
-           select=-unused)
+        # nefarious trailing comma now a nefarious trailing tab
+        cols <- scan(f,nlines=1,what=character(),sep="\t",quiet=T)
+        if (length(cols) != 13) {
+            warning("Expected 13 tab-delimited columns but found ",length(cols),
+                    "\nResults may not be valid")
+        }
+        cols <- c(cols,"unused")
+
+        result <- read.table(f,header=F,skip=1,sep="\t",col.names=cols,quote="",
+                             as.is=T,...)
+        result <- result[,-length(cols)]
+    } else {
+        # assume old (2013) metadata format: CSV
+
+        # the nefarious trailing comma (see read_metadata docs)
+        cols <- scan(f,nlines=1,what=character(),sep=",",quiet=T)
+        cols <- c(cols,"unused")
+
+        result <- read.csv(f,skip=1,header=F,col.names=cols,quote="",
+                           as.is=T,...)
+        result <- result[,-length(cols)]
+    }
+
+    result
 }
 
     
@@ -137,7 +158,7 @@ dfr_id_url <- function(id,jstor_direct=T,proxy="") {
 #' return a character vector of citations.
 #'
 #' The generated citations are meant for quick reference, not formal
-#' use. They do not handle quotations with quotations correctly and make
+#' use. They do not handle quotations within quotations correctly and make
 #' no effort to scrub the cruft found in some journals' metadata on
 #' JSTOR. Authors are simply concatenated into a long "A and B and C"
 #' list.
@@ -145,16 +166,18 @@ dfr_id_url <- function(id,jstor_direct=T,proxy="") {
 #' @param metadata data frame (from e.g. \code{\link{read_metadata}}) 
 #' @param ids character vector of document id's to generate citations for. If NULL, 
 #' generate citations for all rows of \code{metadata}
+#' @param author_sep author separator in metadata author strings. Before 2014, 
+#' JSTOR used a tab character (the default); now, they use \code{", "}
 #' @return a character vector of citations
 #'
 #' @export
 #'
-cite_articles <- function(metadata,ids=NULL)  {
+cite_articles <- function(metadata,ids=NULL,author_sep="\t")  {
     if(!is.null(ids)) {
         metadata <- metadata[metadata$id %in% ids,] 
         metadata <- metadata[match(ids,metadata$id),]
     }
-    authors <- strsplit(metadata$author,"\t")
+    authors <- strsplit(metadata$author,author_sep)
     authors <- sapply(authors,paste,collapse=" and ")
     authors[authors==""] <- "[Anonymous]"
 

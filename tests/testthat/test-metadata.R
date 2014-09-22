@@ -13,6 +13,20 @@ test_that("metadata functions work as expected", {
     # correct columns?
     expect_that(colnames(meta),equals(c("id","doi","title","author","journaltitle","volume","issue","pubdate","pagerange","publisher","type","reviewed.work")))
 
+    meta_new_f <- file.path(path.package("dfrtopics"),
+                            "dfr_data_new","citations.tsv")
+    expect_that(file.exists(meta_new_f),is_true())
+    meta_new <- read_metadata(meta_new_f)
+    meta_lines_new <- readLines(meta_new_f)
+    meta_lines_new <- meta_lines_new[meta_lines_new != ""]
+
+    # correct number of rows?
+    expect_that(nrow(meta_new),equals(length(meta_lines_new) - 1))
+
+    # correct columns?
+    expect_that(colnames(meta_new),equals(c(
+"id","doi","title","author","journaltitle","volume","issue","pubdate","pagerange","publisher","type","reviewed.work","abstract")))
+
     # id-filename conversion
     expect_that(id_filename("10.2307/3175328"),
                 equals("wordcounts_10.2307_3175328.CSV"))
@@ -31,5 +45,7 @@ test_that("metadata functions work as expected", {
     expect_that(cite_articles(meta,"10.2307/2872914"),
                 equals('Sharon Cameron, "Ahab and Pip: Those Are Pearls That Were His Eyes," *ELH* 48, no. 3 (October 1981): 573-593.'))
 
+    expect_that(cite_articles(meta_new,"10.2307/462243",", "),
+                equals('Katharine T. Loesch and George T. Wright, "Hendiadys," *PMLA* 97, no. 1 (January 1982): 99-100.'))
 })
 
