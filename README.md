@@ -56,4 +56,10 @@ I have decided to apply the [MIT License](https://github.com/agoldst/dfr-analysi
 
 ## Running the package tests
 
-The tests are based on a sample set of data from DfR. I do not currently have permission to distribute that data, but you can recreate it if you wish to run the tests. My test data came from downloading the results of the following query: <http://dfr.jstor.org/fsearch/submitrequest?cs=year%3A%5B1980+TO+1985%5D+AND+%28jcode%3APMLA+OR+jcode%3Aelh%29%5E1.0&view=text&>, then randomly selecting five hits from each journal in each year. The chosen files are listed by id in `dfr_data/ids.txt`. As long as JSTOR does not change its wordcounts for those documents, if you download them and their associated metadata and put them where the tests expect to find them, you should be able to get all the tests to pass.
+The tests are based on a sample set of data from DfR. I do not currently have permission to distribute that data, but you can recreate it if you wish to run the tests. My test data came from downloading the results of the following query: <http://dfr.jstor.org/fsearch/submitrequest?cs=year%3A%5B1980+TO+1985%5D+AND+%28jcode%3APMLA+OR+jcode%3Aelh%29%5E1.0&view=text&>, then randomly selecting five hits from each journal in each year. The chosen files are listed by id in `dfr_data/ids.txt`. As long as JSTOR does not change its wordcounts for those documents, if you download them and their associated metadata and put them where the tests expect to find them, you should be able to get the tests that depend on them to pass.
+
+In 2014 JSTOR altered their metadata format. A further test uses the results of a newer query; see `dfr_data_new/MANIFEST.txt` for the query.
+
+Eventually I will substitute fake test data that I can distribute with the package.
+
+
