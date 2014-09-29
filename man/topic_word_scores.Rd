@@ -3,15 +3,18 @@
 \alias{topic_word_scores}
 \title{Convert raw topic-word counts to weighted scores}
 \usage{
-topic_word_scores(tw, b, method = "blei_lafferty")
+topic_word_scores(tw, b, method = "blei_lafferty", l = 0.6)
 }
 \arguments{
 \item{tw}{the topic-word matrix (assumed to be raw counts of word-topic assignments)}
 
 \item{b}{\eqn{beta}, the smoothing over words (zero counts are replaced with this value)}
 
-\item{method}{The scoring method. Only the default value, \code{blei_lafferty}, is
+\item{method}{The scoring method. Two methods, \code{blei_lafferty} and \code{sievert_shirley}, are
 currently supported.}
+
+\item{l}{For \code{sievert_shirley}, the
+weighting parameter \eqn{\lambda}, by default 0.6.}
 }
 \value{
 a matrix of weighted scores with topics in rows and words in columns.
@@ -21,16 +24,25 @@ Given an unweighted final sampling state of the assignment of words to topics, p
 a topic-word matrix with weighted scores instead.
 }
 \details{
-The only supported method is that given by Blei and Lafferty: the score for word {v} in topic \eqn{t} is
+The default method is that given by Blei and Lafferty: the score for word \eqn{v} in topic \eqn{t} is
 \deqn{p(t,v)\textrm{log}(p(t,v) / \prod_k p(k,v)^1/K)}
 where \eqn{K} is the number of topics. The score gives more weight to words which are
 ranked highly in fewer topics.
+
+Another method is the "relevance" score of Sievert and Shirley: in this case
+the score is given by
+\deqn{\lambda log (p(t,v) + (1 - \lambda) log (p(t,v) / p(v)}
+where \eqn{\lambda} is a weighting parameter which is by default set to 0.6 and
+which determines the amount by which words common in the whole corpus are
+penalized.
 
 To generate "key words" from the new scoring, apply \code{\link{tw_wkf}} to the results
 of this function.
 }
 \references{
 D. Blei and J. Lafferty. Topic Models. In A. Srivastava and M. Sahami, editors, \emph{Text Mining: Classification, Clustering, and Applications}. Chapman & Hall/CRC Data Mining and Knowledge Discovery Series, 2009. \url{http://www.cs.princeton.edu/~blei/papers/BleiLafferty2009.pdf}.
+
+C. Sievert and K.E. Shirley. LDAvis: A method for visualizing and interpreting topics. \url{http://nlp.stanford.edu/events/illvi2014/papers/sievert-illvi2014.pdf}.
 }
 \seealso{
 \code{\link{tw_wkf}},

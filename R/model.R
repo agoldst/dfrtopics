@@ -467,48 +467,65 @@ tw_wkf <- function(tw,vocab,alpha,n_top_words=50) {
 #' Given an unweighted final sampling state of the assignment of words to topics, produce 
 #' a topic-word matrix with weighted scores instead.
 #'
-#' The only supported method is that given by Blei and Lafferty: the score for word {v} in topic \eqn{t} is
+#' The default method is that given by Blei and Lafferty: the score for word \eqn{v} in topic \eqn{t} is
 #' \deqn{p(t,v)\textrm{log}(p(t,v) / \prod_k p(k,v)^1/K)}
 #' where \eqn{K} is the number of topics. The score gives more weight to words which are 
 #' ranked highly in fewer topics.
+#'
+#' Another method is the "relevance" score of Sievert and Shirley: in this case
+#' the score is given by
+#' \deqn{\lambda log (p(t,v) + (1 - \lambda) log (p(t,v) / p(v)}
+#' where \eqn{\lambda} is a weighting parameter which is by default set to 0.6 and 
+#' which determines the amount by which words common in the whole corpus are 
+#' penalized.
 #'
 #' To generate "key words" from the new scoring, apply \code{\link{tw_wkf}} to the results 
 #' of this function.
 #'
 #' @param tw the topic-word matrix (assumed to be raw counts of word-topic assignments)
 #' @param b \eqn{beta}, the smoothing over words (zero counts are replaced with this value)
-#' @param method The scoring method. Only the default value, \code{blei_lafferty}, is 
+#' @param method The scoring method. Two methods, \code{blei_lafferty} and \code{sievert_shirley}, are 
 #' currently supported.
+#' @param l For \code{sievert_shirley}, the 
+#' weighting parameter \eqn{\lambda}, by default 0.6.
 #' @return a matrix of weighted scores with topics in rows and words in columns.
 #'
 #' @references
 #' D. Blei and J. Lafferty. Topic Models. In A. Srivastava and M. Sahami, editors, \emph{Text Mining: Classification, Clustering, and Applications}. Chapman & Hall/CRC Data Mining and Knowledge Discovery Series, 2009. \url{http://www.cs.princeton.edu/~blei/papers/BleiLafferty2009.pdf}.
 #' 
+#' C. Sievert and K.E. Shirley. LDAvis: A method for visualizing and interpreting topics. \url{http://nlp.stanford.edu/events/illvi2014/papers/sievert-illvi2014.pdf}.
+#
 #' @seealso \code{\link{tw_wkf}},
 #' \code{\link{weighted_keys_frame}}
 #'
 #' @export
 #'
-topic_word_scores <- function(tw,b,method="blei_lafferty") {
-    if(method != "blei_lafferty") {
-        stop("I know only the blei_lafferty scoring method.")
-    }
+topic_word_scores <- function(tw,b,method="blei_lafferty",l=0.6) {
 
-
-    # score(t,v) = p(t,v) log (p(t,v) / Prod_k p(k,v) ^ 1 / K)
-    #            = p(t,v) ( log p(t,v) - (1 / K) log( Prod_k p(k,v) ) )
-    #            = p(t,v) ( log p(t,v) - (1 / K) Sum_k (log p(k,v) ) )
-
-    n <- nrow(tw)
     V <- ncol(tw)
 
     # smooth + normalize weights
     topic_totals <- rowSums(tw) + V * b
     tw <- tw + b
 
+    pw <- Matrix::colSums(tw) / sum(tw)
+
     tw <- Diagonal(x=1 / topic_totals) %*% tw
 
-    # ...
+
+    switch(method,
+        blei_lafferty=tw_blei_lafferty(tw),
+        sievert_shirley,tw_sievert_shirley(tw,pw,l),
+        warning("Unknown scoring method."))
+
+}
+
+tw_blei_lafferty <- function (tw) {
+    # score(t,v) = p(t,v) log (p(t,v) / Prod_k p(k,v) ^ 1 / K)
+    #            = p(t,v) ( log p(t,v) - (1 / K) log( Prod_k p(k,v) ) )
+    #            = p(t,v) ( log p(t,v) - (1 / K) Sum_k (log p(k,v) ) )
+
+    n <- nrow(tw)
     log_tw <- log(tw)
 
     # calculate down-weighting factor for each word.
@@ -519,6 +536,13 @@ topic_word_scores <- function(tw,b,method="blei_lafferty") {
     tw * (log_tw) - word_factor
 }
 
+tw_sievert_shirley <- function(tw,pw,l = 0.6) {
+    # score(t,v) = lambda log p(t,v) + (1 - lambda) log (p(t,v) / p(v))
+
+    log_tw <- log(tw)
+
+    l * log_tw + (1 - l) * t(apply(log_tw,1,'/',pw)) 
+}
 
 #' Write the topic-word matrix to disk
 #'
