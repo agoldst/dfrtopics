@@ -66,7 +66,7 @@ read_citations <- function(filename=NA,...) {
         cols <- c(cols,"unused")
 
         result <- read.table(f,header=F,skip=1,sep="\t",col.names=cols,quote="",
-                             as.is=T,...)
+                             as.is=T,comment="",...)
         result <- result[,-length(cols)]
     } else {
         # assume old (2013) metadata format: CSV
@@ -76,7 +76,7 @@ read_citations <- function(filename=NA,...) {
         cols <- c(cols,"unused")
 
         result <- read.csv(f,skip=1,header=F,col.names=cols,quote="",
-                           as.is=T,...)
+                           as.is=T,comment="",...)
         result <- result[,-length(cols)]
     }
 
