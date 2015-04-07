@@ -243,7 +243,14 @@ train_model <- function(instances,n_topics,
                         threads=4L,
                         seed=NULL) {
 
-    trainer <- MalletLDA(n_topics,alpha_sum,beta)
+    # Java number types are a problem with R's loose typing. RTopicModel
+    # expects doubles everywhere; ParallelTopicModel expects ints
+    # for integers. So we have to do some coercions to avoid rJava
+    # complaints.
+
+    trainer <- MalletLDA(as.numeric(n_topics),
+                         as.numeric(alpha_sum),
+                         as.numeric(beta))
     trainer$model$setNumThreads(as.integer(threads))
     if(!is.null(seed)) {
         trainer$model$setRandomSeed(as.integer(seed))
@@ -254,17 +261,18 @@ train_model <- function(instances,n_topics,
 
     if(optimize_hyperparameters) {
         trainer$model$setSymmetricAlpha(symmetric_alpha)
-        trainer$setAlphaOptimization(n_hyper_iters,n_burn_in)
+        trainer$setAlphaOptimization(as.numeric(n_hyper_iters),
+                                     as.numeric(n_burn_in))
     }
     else {
-        trainer$setAlphaOptimization(0,0)
+        trainer$setAlphaOptimization(0, 0)
     }
 
-    trainer$train(n_iters)
+    trainer$train(as.numeric(n_iters))
     # following from dmimno's mallet-example.R:
     # iterate picking "best" (?) topic for each token instead of sampling
     # from posterior distribution (?)
-    trainer$maximize(n_max_iters)
+    trainer$maximize(as.numeric(n_max_iters))
     trainer
 }
 
