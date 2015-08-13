@@ -343,10 +343,8 @@ term_year_matrix <- function(metadata,
     years <- cut(dates,breaks="years",ordered=T)
     years <- droplevels(years)
 
-    # indicator-matrix version of years
-    Y <- Matrix(0,nrow=length(years),ncol=nlevels(years))
-
-    Y[cbind(seq_along(years),years)] <- 1
+    # years as indicator matrix
+    Y <- sparse.model.matrix(~ years - 1)
 
     result <- tdm %*% Y
 
