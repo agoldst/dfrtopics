@@ -1,32 +1,50 @@
-test_that("metadata functions work as expected", {
-    data_dir <- file.path(path.package("dfrtopics"),"dfr_data")
-    
-    meta_f <- file.path(data_dir,"citations.CSV")
+test_that("metadata functions work as expected on old-style CSV", {
+
+    meta_f <- file.path(path.package("dfrtopics"), "test-data",
+                        "old-style", "citations.CSV")
     expect_that(file.exists(meta_f),is_true())
     meta <- read_metadata(meta_f)
     meta_lines <- readLines(meta_f)
     meta_lines <- meta_lines[meta_lines != ""]
 
     # correct number of rows?
-    expect_that(nrow(meta),equals(length(meta_lines) - 1))
+    expect_that(nrow(meta), equals(length(meta_lines) - 1))
 
     # correct columns?
-    expect_that(colnames(meta),equals(c("id","doi","title","author","journaltitle","volume","issue","pubdate","pagerange","publisher","type","reviewed.work")))
+    expect_that(colnames(meta), equals(c(
+        "id", "doi", "title", "author", "journaltitle", "volume", "issue",
+        "pubdate", "pagerange", "publisher", "type", "reviewed.work")
+    ))
+})
 
+test_that("metadata functions work as expected on new-style TSV", {
     meta_new_f <- file.path(path.package("dfrtopics"),
-                            "dfr_data_new","citations.tsv")
-    expect_that(file.exists(meta_new_f),is_true())
+                            "test-data", "pmla-modphil1905-1915",
+                            "citations.tsv")
+    expect_that(file.exists(meta_new_f), is_true())
     meta_new <- read_metadata(meta_new_f)
     meta_lines_new <- readLines(meta_new_f)
     meta_lines_new <- meta_lines_new[meta_lines_new != ""]
 
     # correct number of rows?
-    expect_that(nrow(meta_new),equals(length(meta_lines_new) - 1))
+    expect_that(nrow(meta_new), equals(length(meta_lines_new) - 1))
 
     # correct columns?
-    expect_that(colnames(meta_new),equals(c(
-"id","doi","title","author","journaltitle","volume","issue","pubdate","pagerange","publisher","type","reviewed.work","abstract")))
+    expect_that(colnames(meta_new), equals(c(
+        "id", "doi", "title", "author", "journaltitle", "volume", "issue",
+        "pubdate", "pagerange", "publisher", "type", "reviewed.work", 
+        "abstract")
+    ))
 
+    # citation generation
+    expect_that(cite_articles(meta_new[1, ]), equals(
+        "C. R. Baskervill, \"Sidney's \"Arcadia\" and \"The Tryall of Chevalry\",\" *Modern Philology* 10, no. 2 (October 1912): 197-201.")
+    )
+
+})
+
+
+test_that("metadata utility functions work correctly", {
     # id-filename conversion
     expect_that(id_filename("10.2307/3175328"),
                 equals("wordcounts_10.2307_3175328.CSV"))
@@ -40,12 +58,4 @@ test_that("metadata functions work as expected", {
     # dx.doi url
     expect_that(dfr_id_url("10.2307/3175327"),
                 equals("http://www.jstor.org/stable/10.2307/3175327"))
-
-    # citation generation
-    expect_that(cite_articles(meta,"10.2307/2872914"),
-                equals('Sharon Cameron, "Ahab and Pip: Those Are Pearls That Were His Eyes," *ELH* 48, no. 3 (October 1981): 573-593.'))
-
-    expect_that(cite_articles(meta_new,"10.2307/462243",", "),
-                equals('Katharine T. Loesch and George T. Wright, "Hendiadys," *PMLA* 97, no. 1 (January 1982): 99-100.'))
 })
-
