@@ -1,3 +1,5 @@
+context("MALLET instance lists")
+
 test_that("Instances are made as we expect", {
     
     data_dir <- file.path(path.package("dfrtopics"), "test-data",

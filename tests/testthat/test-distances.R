@@ -1,3 +1,5 @@
+context("Distance functions")
+
 # For testing JS_divergence against an "official" implementation of
 # KLdiv. Not faster on a single pair of rows, and can't use KLdiv's
 # vectorization to do lots of JS's at once, unfortunately.

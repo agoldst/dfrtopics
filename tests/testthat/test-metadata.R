@@ -1,3 +1,5 @@
+context("Document metadata")
+
 test_that("metadata functions work as expected on old-style CSV", {
 
     meta_f <- file.path(path.package("dfrtopics"), "test-data",
