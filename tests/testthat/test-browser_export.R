@@ -1,22 +1,18 @@
+context("dfr-browser export")
+
 test_that("dfr-browser export produces the right files", {
 
-    data_dir <- file.path(path.package("dfrtopics"),"dfr_data")
-
-    # check for presence of sample data
-
-    expect_that(file.exists(data_dir),is_true())
-    expect_that(file.exists(file.path(data_dir,"citations.CSV")),is_true())
-    expect_that(length(list.files(file.path(data_dir,"wordcounts"))),
-                equals(60))
+    data_dir <- file.path(path.package("dfrtopics"), "test-data",
+                          "pmla-modphil1905-1915")
 
     # run model
 
     n <- 8 # topics
     n_top_words <- 10 # key words
-    m <- model_documents(citations_files=file.path(data_dir,"citations.CSV"),
-                         dirs=file.path(data_dir,"wordcounts"),
+    m <- model_documents(citations_files=file.path(data_dir, "citations.tsv"),
+                         dirs=file.path(data_dir, "wordcounts"),
                          stoplist_file=file.path(path.package("dfrtopics"),
-                                                 "stoplist","stoplist.txt"),
+                                                 "stoplist", "stoplist.txt"),
                          n_topics=n,
                          n_iters=140,
                          seed=42,
@@ -29,12 +25,12 @@ test_that("dfr-browser export produces the right files", {
 
     # check that export works with data objects
 
-    out_dir <- file.path(tempdir(),"browser")
+    out_dir <- file.path(tempdir(), "browser")
     if(!file.exists(out_dir)) {
-        dir.create(out_dir,recursive=T)
+        dir.create(out_dir, recursive=T)
     }
 
-    out_files <- file.path(out_dir,c(
+    out_files <- file.path(out_dir, c(
         "dt.json.zip",
         "info.json",
         "meta.csv.zip",
@@ -49,10 +45,10 @@ test_that("dfr-browser export produces the right files", {
         }
     }
 
-    expect_files <- function (fs,desc="") {
+    expect_files <- function (fs, desc="") {
         for(f in fs) {
-            expect_that(file.exists(f),is_true(),
-                        info=paste(desc,"file:",f))
+            expect_that(file.exists(f), is_true(),
+                        info=paste(desc, "file:", f))
         }
     }
 
@@ -67,13 +63,13 @@ test_that("dfr-browser export produces the right files", {
         topic_scaled=topic_scaled_2d(m$trainer),
         zipped=T)
 
-    expect_files(out_files,"Export with data objects:")
+    expect_files(out_files, "Export with data objects:")
 
     clear_files(out_files)
 
     # check that non-zipped export produces files
 
-    out_files_non_zip <- gsub("\\.zip$","",out_files)
+    out_files_non_zip <- gsub("\\.zip$", "", out_files)
     export_browser_data(
         out_dir=out_dir,
         metadata=m$metadata,
@@ -82,27 +78,27 @@ test_that("dfr-browser export produces the right files", {
         topic_scaled=topic_scaled_2d(m$trainer),
         zipped=F)
 
-    expect_files(out_files_non_zip,"Non-zipped export:")
+    expect_files(out_files_non_zip, "Non-zipped export:")
 
     clear_files(out_files_non_zip)
 
     # check that export works with data files
 
-    output_model(m,out_dir,save_instances=F,save_scaled=T)
+    output_model(m, out_dir, save_instances=F, save_scaled=T)
 
     export_browser_data(out_dir=out_dir,
-                        metadata=file.path(data_dir,"citations.CSV"),
-                        keys=file.path(out_dir,"keys.csv"),
-                        doc_topics=file.path(out_dir,"doc_topics.csv"),
-                        topic_scaled=file.path(out_dir,"topic_scaled.csv"),
+                        metadata=file.path(data_dir, "citations.tsv"),
+                        keys=file.path(out_dir, "keys.csv"),
+                        doc_topics=file.path(out_dir, "doc_topics.csv"),
+                        topic_scaled=file.path(out_dir, "topic_scaled.csv"),
                         zipped=T)
 
-    expect_files(out_files,"Export with data files:")
+    expect_files(out_files, "Export with data files:")
 
     # clean up
 
     clear_files(out_files)
-    model_files <- file.path(out_dir,c(
+    model_files <- file.path(out_dir, c(
         "doc_topics.csv",
         "topic_words.csv",
         "vocab.txt",
@@ -114,7 +110,7 @@ test_that("dfr-browser export produces the right files", {
         "topic_scaled.csv"))
     clear_files(model_files)
 
-    expect_that(length(list.files(out_dir)),equals(0),
+    expect_that(length(list.files(out_dir)), equals(0),
                 info="check that no files are left over")
     clear_files(out_dir)
 }) 
