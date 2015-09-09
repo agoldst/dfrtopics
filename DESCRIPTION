@@ -5,16 +5,12 @@ Version: 0.1
 Author: Andrew Goldstone <andrew.goldstone@gmail.com>
 Maintainer: Andrew Goldstone <andrew.goldstone@gmail.com>
 Depends:
-    Matrix,
-    zoo,
+    mallet,
     stringr,
-    plyr,
-    reshape2,
-    grid,
-    ggplot2,
-    scales,
-    mallet
+    dplyr
 Suggests:
+    Matrix,
+    ggplot2,
     testthat,
     knitr,
     bigmemory,
