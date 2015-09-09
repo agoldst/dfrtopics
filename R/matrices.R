@@ -252,3 +252,32 @@ tf_idf <- function(term,doc,tdm) {
     idf <- log(ncol(tdm) / rowSums(tdm[term, , drop=F] != 0))
     Diagonal(n=length(term), x=idf) %*% tdm[term,doc]
 }
+
+
+
+#' Normalize columns to sum to one
+#'
+#' A convenience function for a frequent operation of normalizing the columns of a matrix. The typical application in document modeling is to to ensure that the columns sum to one (L1 normalization). Sometimes it is convenient instead to set the columns to have a unit Euclidean norm (L2 normalization).
+#'
+#' @param m a matrix or Matrix
+#' @param norm Either \code{"L1"}, the default (the sum of the absolute value of terms), or \code{"L2"}, the Euclidean norm
+#'
+#' @return the column-normalized matrix
+#'
+#' @export
+#'
+normalize_cols <- function (m, norm="L1") {
+    if (is(m, "Matrix")) {
+        dg <- function (x) Diagonal(x=x)
+    } else {
+        dg <- diag
+    }
+
+    if (norm == "L1") { 
+        m %*% dg(1 / colSums(abs(m)))
+    } else if (norm == "L2") {
+        m %*% dg(1 / colSums(sqrt(m * m)))
+    } else {
+        stop("norm must be L1 or L2")
+    }
+}
