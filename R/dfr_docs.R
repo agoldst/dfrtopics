@@ -1,195 +1,169 @@
 # Functions for wrangling the DfR wordcount files into MALLET-friendly forms.
 
-#' Convert DfR wordcount files to a single dataframe
-#'
-#' This function reads in \code{wordcounts*.CSV} files and produces a
-#' dataframe with one line for each document. A big waste of memory, but a simple 
-#' way to get these files into MALLET.
-#'
-#' @param dirs character vector of directories containing \code{wordcounts*.CSV} files
-#' @param files individual filenames to read.
-#' @return a dataframe with one line for each document with two fields, the document id 
-#' (from the filename) and the "text" of the document as an inflated bag of words.
-#'
-#' @seealso
-#' \code{\link{read_dfr}} and \code{\link{docs_frame}}, which this function wraps; 
-#' \code{\link{overall_counts}} for token frequencies \emph{before} stopword removal.
-#'
-#' @export
-#' 
-read_dfr_wordcounts <- function(dirs=NULL,files=NULL) {
-    counts <- read_dfr(dirs=dirs,files=files)
-    docs_frame(counts)
-}
-
 #' Convert DfR wordcount files to a long-format data frame
-#'
-#' Reads in a bunch of \code{wordcounts*.CSV} files and stacks them up in a
-#' single "long format" dataframe. Invoked by
-#' \code{\link{read_dfr_wordcounts}}.
-#'
-#' Empty documents are skipped; DfR supplies wordcounts files
-#' for documents that have no wordcount data. These will be in DfR's
-#' metadata but not in the output dataframe here.
-#'
-#' This is slow. An outboard script in python or Perl is
-#' faster, but this keeps us in R and does everything in memory.
-#' Memory usage: for N typical journal articles, the resulting dataframe
-#' needs about 20N K of memory. So R will hit its limits somewhere around
-#' 100K articles of typical length.
-#'
-#' @param dirs character vector of directories containing \code{wordcounts*.CSV} files
+#' 
+#' Reads in a bunch of \code{wordcounts*.CSV} files and stacks them up in a 
+#' single long-format dataframe. Invoked by \code{\link{read_dfr_wordcounts}}, 
+#' but use it on your own if you wish to operate on the aggregate word-count 
+#' frame before collapsing it back into documents.
+#' 
+#' Empty documents are skipped; DfR supplies wordcounts files for documents that
+#' have no wordcount data. These will be in DfR's metadata but not in the output
+#' dataframe here.
+#' 
+#' This is slow. An outboard script in python or Perl is faster, but this keeps 
+#' us in R and does everything in memory. Memory usage: for N typical journal 
+#' articles, the resulting dataframe seems to need about 20N K of memory. So R 
+#' on a laptop will hit its limits somewhere around 100K articles of typical 
+#' length.
+#' 
 #' @param files individual filenames to read.
-#' @return A dataframe with three columns: \code{id}, the document ID; 
-#' \code{WORDCOUNTS}, a feature counted by JSTOR (i.e. a word type); \code{WEIGHT}, the 
-#' count.
-#' @seealso
-#' \code{\link{read_dfr_wordcounts}},
-#' \code{\link{instances_term_document_matrix}} for 
-#' feature counts \emph{after} stopword removal (etc.).
-#'
+#' @return A data frame with three columns: \code{id}, the document ID; 
+#'   \code{feature}, a feature counted by JSTOR (i.e. a word type, called
+#'   \code{WORDCOUNTS} in the source data files); \code{weight}, the count.
+#' @seealso \code{\link{read_dfr_wordcounts}}, 
+#' \code{\link{instances_term_document_matrix}} for feature counts \emph{after}
+#' stopword removal (etc.).
+#' 
 #' @export
 #' 
-read_dfr <- function(dirs=NULL,files=NULL,report_interval=100) {
-    # aggregate all filenames in files
-    # and all wordcounts*.CSV files in each dir in dirs
-    # into a single vector
-    globs <- file.path(dirs,"wordcounts*.CSV")
-    fv <- c(files,Sys.glob(globs))
-    
-    if(any(!grepl("\\.CSV$",fv))) {
-        warning("Not all files specified for reading are named *.CSV")
-    }
-
-    counts <- vector("list",length(fv))
-    n_types <- integer(length(fv))
-    
-    for(i in seq_along(fv)) { 
-        counts[[i]] <- read.csv(fv[i],strip.white=T,header=T,as.is=T,
-                                colClasses=c("character","integer"))
-
-        
-        n_types[i] <- nrow(counts[[i]])
-
-        if(i %% report_interval == 0) {
-            message("Read ",i," files")
-        }
-    }
-
-    message("Preparing aggregate data frame...")
-
-    # infuriatingly, concatenating columns separately is a major
-    # performance improvement
-
-    wordtype <- do.call(c,lapply(counts,"[[","WORDCOUNTS"))
-    wordweight <- do.call(c,lapply(counts,"[[","WEIGHT"))
-
-    # add id column
-
-    data.frame(id=rep(filename_id(fv),times=n_types),
-               WORDCOUNTS=wordtype,
-               WEIGHT=wordweight,
-               stringsAsFactors=F)
-
+read_dfr <- function(files) {
+    result <- data_frame(filename=files) %>%
+        group_by(filename) %>%
+        do({
+            read.csv(.$filename,
+                     strip.white=T, header=T, as.is=T,
+                     colClasses=c("character", "integer"))
+        }) %>%
+        ungroup() %>%
+        transmute(id=filename_id(filename),
+                  feature=WORDCOUNTS,
+                  weight=WEIGHT)
 }
 
 #' Calculate document lengths
-#'
-#' Given a wordcounts long-format dataframe returned by \code{\link{read_dfr}},
-#' calculate document lengths. Useful for filtering a set of documents by
-#' (unstopped) length before modeling.
-#'
+#' 
+#' Given a wordcounts long-format dataframe returned by \code{\link{read_dfr}}, 
+#' calculate document lengths. This is just a convenience function for a
+#' straightforward \code{\link[dplyr]{summarize}}. It's often useful to filter a
+#' set of documents by (unstopped) length before modeling, and it's a good idea
+#' to check the distribution of document lengths before modeling, as this can
+#' substantially influence modeling outcomes.
+#' 
 #' @param counts The dataframe from \code{\link{read_dfr}}
-#' @return A dataframe with `id` and `length` columns
-#'
+#' @return A dataframe with \code{id} and \code{length} columns
+#'   
 #' @seealso \code{\link{read_dfr}}
-#'
+#'   
 #' @export
-
-doc_lengths <- function(counts) {
-    ddply(counts,"id",summarize,length=sum(WEIGHT))
-}
+#' 
+dfr_doc_lengths <- . %>%
+    group_by(id) %>%
+    summarize(length=sum(weight))
 
 #' Calculate total corpus-wide feature counts
-#'
-#' Given a wordcounts long-format dataframe returned by \code{\link{read_dfr}},
-#' calculate total
-#' corpus-wide counts for each word type
-#'
+#' 
+#' Given a wordcounts long-format dataframe returned by \code{\link{read_dfr}}, 
+#' calculate total corpus-wide counts for each word type. This is just a
+#' convenience function for a straightforward  \code{\link[dplyr]{summarize}}.
+#' 
 #' @param counts The dataframe from \code{\link{read_dfr}}
-#' @return a 1D table, i.e. a vector of counts with word types as the
-#' element names
-#' @seealso \code{\link{read_dfr}}, \code{\link{instances_term_document_matrix}} for 
-#' feature counts \emph{after} stopword removal (etc.).
-#'
+#' @return a data frame with \code{feature} and \code{weight} columns
+#' @seealso \code{\link{read_dfr}}, \code{\link{instances_term_document_matrix}}
+#'   for feature counts \emph{after} stopword removal (etc.).
+#'   
 #' @export
 #' 
-overall_counts <- function(counts) {
-    # the dumb way is surprisingly fast (lazy evaluation?)
-    # whereas ddply(counts,.(WORDCOUNTS),summarize,count=sum(WEIGHT))
-    # is very slow
-    with(counts,table(rep(WORDCOUNTS,times=WEIGHT)))
+dfr_feature_totals <- . %>%
+    group_by(feature) %>%
+    summarize(weight=sum(weight))
+
+#' Remove stopwords from a wordcounts data frame
+#' 
+#' Filter out a vector of words from a wordcounts dataframe.
+#' 
+#' @param counts The dataframe from \code{\link{read_dfr}}
+#' @param stoplist character vector
+#' @return A new data frame with stopwords removed
+#' @export
+#' 
+dfr_remove_stopwords <- function (counts, stoplist) {
+    counts %>%
+        filter(!(feature %in% stoplist))
 }
 
-#' Throw out words whose frequency in the corpus is below a threshold
-#'
-#' For filtering wordcounts before building MALLET instances.
-#'
-#' @param counts long-form dataframe as returned by \code{\link{read_dfr}}
-#' @param freq_threshold frequency threshold (NULL, or a number between 0 and 1)
-#' @param rank_threshold rank threshold (natural number): used if \code{freq_threshold} 
-#' is NULL
-#' @param .overall precalculated overall counts (if NULL, \code{\link{overall_counts}} is 
-#' invoked)
-#'
-#' @return A filtered feature-counts dataframe
+#' Remove infrequent terms
 #' 
+#' Filter out the features in a wordcounts dataframe whose overall frequency is 
+#' below a threshold.
+#' 
+#' It's often useful to prune documents of one-off features (many of which are 
+#' OCR errors) before building MALLET instances. This is a convenience function 
+#' for doing so.
+#' 
+#' @param counts The dataframe from \code{\link{read_dfr}}
+#' @param n The maximum rank to keep: all terms with frequency rank below 
+#'   \code{n} will be discarded
+#' @return A filtered feature-counts dataframe. Because of ties, do not expect 
+#'   it to have exactly \code{n} distinct features.
+#'   
 #' @export
 #' 
-remove_rare <- function(counts,freq_threshold=NULL,rank_threshold=NULL,
-                        .overall=NULL) { 
-    if(is.null(.overall)) {
-        overall <- overall_counts(counts)
-    }
-    else {
-        overall <- .overall
-    }
+dfr_remove_rare <- function (counts, n) {
+    feature_totals <- counts %>%
+        group_by(feature) %>%
+        summarize(weight=sum(weight)) %>%
+        # min_rank used here, giving a more aggressive filter than dense_rank
+        filter(min_rank(desc(weight)) <= n)
 
-    if(!is.null(freq_threshold)) {
-        message("applying freq_threshold ",freq_threshold)
-        total <- sum(overall)
-        result <- subset(counts,
-                         subset=(overall[WORDCOUNTS] / total >= freq_threshold))
-    }
-    else {
-        if(is.null(rank_threshold)) {
-            warning("No threshold provided.")
-            result <- counts
-        }
-        else { 
-            count_threshold <- sort(overall,decreasing=T)[rank_threshold]
-            result <- subset(counts,
-                             subset=(overall[WORDCOUNTS] >= count_threshold))
-        }
-    }
-
-    result
-} 
-                        
+    # You'd think you could semi_join here, but that will scramble the order of
+    # rows, so we'll use the ugly way:
+    counts %>%
+        filter(feature %in% feature_totals$feature)
+}
+    
 #' Convert long-format feature-counts into documents
-#'
-#' Naively "inflates" feature counts into a bag of words, for sending to MALLET.
-#'
-#' @param counts long-format data frame like that returned by \code{\link{read_dfr}}
-#'
-#' @return a dataframe with two columns: \code{id}, the document id; \code{text}, the full 
-#' document text (but with the words in meaningless order)
-#'
-#' @seealso \code{\link{read_dfr_wordcounts}}
 #' 
+#' This naively "inflates" feature counts into a bag of words, for sending to
+#' MALLET.
+#' 
+#' You can directly pass the result from \code{link{read_dfr}} to this function,
+#' but normally you'll want to filter or otherwise manipulate the features
+#' first.
+#' 
+#' It is not straightforward to supply feature vectors directly to MALLET;
+#' MALLET really wants to featurize each text itself. So our task is to take the
+#' wordcounts supplied from DfR and reassemble the texts. If DfR tells us word w
+#' occurs N times, we simply paste N copies of w together, separated by spaces
+#' (or the value of \code{sep} if given). Though LDA should not care about word
+#' order, if you are nervous about the effects of the decidedly non-natural
+#' ordering of words this produces on the modeling process, you can randomize
+#' the word order (it still won't be natural). Thanks to David Mimno for
+#' suggesting this via his own \code{\link[mallet]{mallet}} code.
+#' 
+#' A big waste of memory, but this is the simple way to get DfR files into
+#' MALLET.
+#' 
+#' @param counts long-format data frame like that returned by
+#'   \code{\link{read_dfr}}
+#' @param shuffle if \code{TRUE}, randomize word order within document before
+#'   pasting it together. \code{FALSE} by default.
+#' @param sep word separator in inflated bags. A space, by default.
+#'   
+#' @return a dataframe with two columns: \code{id}, the document id;
+#'   \code{text}, the full document text as a single line (with the words in
+#'   meaningless order)
+#'   
+#' @seealso \code{\link{read_dfr}}
+#'   
 #' @export
 #' 
-docs_frame <- function(counts) {
-    ddply(counts,.(id),summarize,
-          text=paste(rep(WORDCOUNTS,times=WEIGHT),collapse=" "))
+dfr_docs_frame <- function (counts, shuffle=F, sep=" ") {
+    counts <- counts %>% group_by(id)
+    if (shuffle) {
+        counts <- counts %>% sample_frac()
+    }
+            
+    counts %>% 
+        summarize(text=str_c(rep(feature, times=weight), collapse=sep))
 }
