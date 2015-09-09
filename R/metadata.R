@@ -194,14 +194,3 @@ cite_articles <- function(metadata,ids=NULL,author_sep="\t")  {
     result <- gsub("\t","",result)
     result
 }
-
-
-#copublication_matrix <- function(metadata) {
-#    stop("Unimplemented.")
-
-    # TODO implemement
-    # split author fields on tabs to get multiple authors
-    # determine issues by journaltitle + volume + issue
-    # M_ij = 1 iff author_i and author_j copublish in an issue
-    # return M and author index
-#}
