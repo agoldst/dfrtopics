@@ -1,8 +1,9 @@
-#' Make a dataframe from \code{citations.CSV} or \code{citations.tsv} metadata
+#' Make a dataframe from \code{citations.CSV} or \code{citations.tsv} metadata 
 #' files
 #' 
 #' Reads in metadata from any number of tabular data files and returns a 
-#' combined dataframe. Most of the work is done by \code{\link{read_dfr_citations}}.
+#' combined dataframe. Most of the work is done by
+#' \code{\link{read_dfr_citations}}.
 #' 
 #' @param filenames vector of \code{citations.CSV|tsv} filenames
 #' @return A dataframe with deduplicated metadata. The function issues a warning
@@ -22,34 +23,34 @@ read_dfr_metadata <- function(filenames) {
     result
 }
 
-#' Read a single \code{citations.CSV} file.
+#' Read a single \code{citations.CSV} or \code{citations.tsv} file.
 #' 
-#' This function reads in a single \code{citations.CSV} (2013 and earlier) or
-#' \code{citations.tsv} (2014 and after) from JSTOR DfR. It knows about the
-#' eccentricities of these formats. Use \code{\link{read_dfr_metadata}} to load and
-#' aggregate multiple files.
+#' This function reads in a single \code{citations.CSV} (2013 and earlier) or 
+#' \code{citations.tsv} (2014 and after) from JSTOR DfR. It knows about the 
+#' eccentricities of these formats. Use \code{\link{read_dfr_metadata}} to load
+#' and aggregate multiple files.
 #' 
-#' This function assumes that each file has a trailing delimeter at the end of
+#' This function assumes that each file has a trailing delimeter at the end of 
 #' every line. DfR has changed their output data format before, so check results
 #' carefully.
 #' 
-#' We leave other fields as we find them, so further processing is normally
-#' necessary. Use \code{\link{pubdate_Date}} to convert \code{pubdate} strings.
+#' We leave other fields as we find them, so further processing is normally 
+#' necessary. Use \code{\link{pubdate_Date}} to convert \code{pubdate} strings. 
 #' The \code{doi} column is, in my experience, always identical to the \code{id}
-#' field, but it is kept here just in case. \code{title} and \code{abstract}
-#' fields may contain markup (HTML or even LaTeX); \code{author} fields may
-#' contain multiple names (DfR has used varying in-field delimiters---tab or
-#' comma plus space---so inspect your data). Fields that can contain multiple
-#' entries may terminate with this within-field delimiter, so some
-#' whitespace-stripping may also be in order. Extra parameters to this function
+#' field, but it is kept here just in case. \code{title} and \code{abstract} 
+#' fields may contain markup (HTML or even LaTeX); \code{author} fields may 
+#' contain multiple names (DfR has used varying in-field delimiters---tab or 
+#' comma plus space---so inspect your data). Fields that can contain multiple 
+#' entries may terminate with this within-field delimiter, so some 
+#' whitespace-stripping may also be in order. Extra parameters to this function 
 #' are passed on to \code{read.csv} or \code{read.table}.
-
+#' 
 #' @param filename the file to read. If \code{NA}, opens the file dialog.
-#' @param ... Passed on to \code{\link{read.csv}}.
+#' @param ... Passed on to \code{\link{read.csv}} or \code{\link{read.table}}.
 #' @return A dataframe of metadata.
 #' @seealso \code{\link{read_dfr_metadata}}
 #' @export
-#'
+#' 
 read_dfr_citations <- function(filename=NA, ...) {
     f <- filename
     if(is.na(filename)) { 
