@@ -7,65 +7,50 @@
 #' function.
 #'
 #' Given wordcount and metadata files, this function sets up MALLET
-#' inputs and then runs MALLET to produce a topic model. For
-#' finer-grained control over the mallet inputs or to tweak more
-#' modeling parameters, follow the order of calls in this function.
-#' Invoke \code{\link{make_instances}} separately and pass the results
-#' to \code{\link{train_model}}.  
+#' inputs and then runs MALLET to produce a topic model. Normally you will want
+#' finer-grained control over the mallet inputs and 
+#' modeling parameters. The steps for that process are described in the package vignette. Once the model has been trained, the results can be saved to disk with \code{\link{write_dfr_lda}}
 #'
 #' If java gives out-of-memory errors, try increasing the Java heap size to a 
 #' large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")} 
 #' \emph{before} loading this package (or rJava).
 #'
-#' @return A list with the following members:
-#' \describe{
-#' \item{\code{metadata}}{dataframe of metadata}
-#' \item{\code{doc_topics}}{dataframe with documents in rows, topics in columns, and an 
-#' extra column with document id's}
-#' \item{\code{wkf}}{data frame of the weightiest words in each topic (as returned by 
-#' \code{\link{weighted_keys_frame}}); also stores topic alphas}
-#' \item{\code{trainer}}{reference to the \code{RTopicModel} object, which, with the LDA 
-#' run complete, holds the sampling state and references to the instance-list}
-#' \item{\code{seed}}{the random-number seed, or \code{NULL} to use default seeding}
-#' }
 #'
-#' @param citations_files character vector with names of DfR \code{citations.CSV} metadata 
+#' @param citations_files character vector with names of DfR \code{citations.CSV} or \code{citations.tsv} metadata files
 #' files 
-#' @param dirs character vector with names of directories holding \code{wordcounts*.CSV} 
+#' @param wordcounts_dirs character vector with names of directories holding \code{wordcounts*.CSV} 
 #' files
-#' @param stoplist_file name of stoplist (containing one stopword per line)
+#' @param stoplist_file name of stoplist file (containing one stopword per line)
 #' @param n_topics number of topics to model
-#' @param seed integer random number seed for mallet
-#' @param n_top_words integer number of "key words" per topic
 #' @param ... passed on to \code{\link{train_model}}
+#'
+#' @return a \code{\link{dfr_lda}} object holding the results
+#'
 #' @seealso
-#' \code{\link{read_metadata}},
+#' \code{\link{read_dfr_metadata}},
 #' \code{\link{read_dfr_wordcounts}},
 #' \code{\link{make_instances}},
 #' \code{\link{train_model}},
-#' \code{\link{doc_topics_frame}},
-#' \code{\link{weighted_keys_frame}},
 #' \code{\link{output_model}}
 #' @examples
-#' \dontrun{model_documents("citations.CSV","wordcounts","stoplist.txt",50)}
+#' # Make a 50-topic model of documents in the wordcounts folder
+#' \dontrun{model_dfr_documents("citations.CSV", "wordcounts", 50)}
 #'
 #' @export
 #'
-model_documents <- function(citations_files,dirs,stoplist_file,n_topics,
-                            seed=NULL,n_top_words=50L,...) {
-    mf <- read_metadata(citations_files)
-    texts <- read_dfr_wordcounts(dirs=dirs)
-    instances <- make_instances(texts,stoplist_file)
-    model <- train_model(instances,n_topics=n_topics,seed=seed,...)
-    doc_topics <- doc_topics_frame(model,smoothed=F,normalized=F)
-    keys <- weighted_keys_frame(model,n_top_words=as.integer(n_top_words),
-                                smoothed=F,normalized=F)
-
-    list(metadata=mf,
-         doc_topics=doc_topics,
-         wkf=keys,
-         trainer=model,
-         seed=seed)
+model_dfr_documents <- function(
+        citations_files,
+        wordcounts_dirs,
+        n_topics,
+        stoplist_file=file.path(path.package("dfrtopics"),
+                                "stoplist", "stoplist.txt"),
+        ...)  {
+    result <- read_dfr(list.files(wordcounts_dirs), full.names=T) %>%
+        dfr_docs_frame() %>%
+        make_instances(stoplist_file) %>%
+        train_model(n_topics, ...)
+    metadata(result) <- read_dfr_metadata(citations_files)
+    result
 }
 
 #' A convenience function for saving all the model outputs at once.
@@ -107,95 +92,78 @@ model_documents <- function(citations_files,dirs,stoplist_file,n_topics,
 #'
 #' @export
 #'
-output_model <- function(model_result,output_dir=".",
-                         save_instances=F,save_scaled=T) {
+write_dfr_lda <- function(m, output_dir=".",
+                          n_top_words=50,
+                          save_instances=F,
+                          save_scaled=T) {
     if(!file.exists(output_dir)) {
         message("Creating output directory ",output_dir)
         dir.create(output_dir)
     }
-    tw_f <- file.path(output_dir,"topic_words.csv")
-    vocab_f <- file.path(output_dir,"vocab.txt")
-    write_topic_words(model_result$trainer,
-                      topic_words_file=tw_f,
-                      vocab_file=vocab_f,
-                      smoothed=F, normalized=F)
+
+    tw_f <- file.path(output_dir, "topic_words.csv")
+    write_matrix_csv(topic_words(m), tw_f)
     message("Wrote ",tw_f)
+
+    vocab_f <- file.path(output_dir, "vocab.txt")
+    writeLines(vocabulary(m), vocab_f)
     message("Wrote ",vocab_f)
 
-    params <- model_params(model_result$trainer)
-    params$seed <- model_result$seed
-    params_f <- file.path(output_dir,"params.csv")
-    write.csv(params,params_f)
+    params <- modeling_parameters(m)
+    hyper <- hyperparameters(m)
+
+    params_f <- file.path(output_dir, "params.txt")
+    dput(list(params, hyper), params_f)
     message("Wrote ",params_f)
 
-    keys_f <- file.path(output_dir,"keys.csv")
-    if(is.null(model_result$wkf)) {
-         message("wkf not supplied; using 50 top words, unsmoothed, unnormalized")
-         model_result$wkf <- weighted_keys_frame(model_result$trainer,
-                                                 n_top_words=50,
-                                                 smoothed=F,
-                                                 normalized=F)
-    }  
-    write.table(model_result$wkf,keys_f,
-                quote=F,sep=",",row.names=F,col.names=T)
-    message("Wrote ",keys_f)
+    keys_f <- file.path(output_dir, "top_words.csv")
+    write.table(top_words(m, n_top_words), 
+                quote=F, sep=",", row.names=F, col.names=T)
+    message("Wrote ", keys_f)
 
     dt_f <- file.path(output_dir,"doc_topics.csv")
-    if(is.null(model_result$doc_topics)) {
-         message("doc_topics not supplied; using unsmoothed, unnormalized")
-         model_result$doc_topics <- doc_topics_frame(model_result$trainer,
-                                                     smoothed=F,normalized=F)
-    }
-    write.table(model_result$doc_topics,
-                dt_f,
-                quote=F,sep=",",row.names=F,col.names=T)
-    message("Wrote ",dt_f)
+    write.table(doc_topics(m), dt_f,
+                quote=F, sep=",", row.names=F, col.names=T)
+    message("Wrote ", dt_f)
 
-    state_f <- file.path(output_dir,"mallet_state.gz")
-    write_mallet_state(model_result$trainer,state_f)
-    message("Wrote ",state_f)
+    state_f <- file.path(output_dir, "mallet_state.gz")
+    write_sampling_state(m, state_f)
+    message("Wrote ", state_f)
 
-    diag_f <- file.path(output_dir,"diagnostics.xml") 
-    write_diagnostics(model_result$trainer,
-                      diag_f, 
-                      n_top_words=as.integer(sum(model_result$keys$topic==1)))
-    message("Wrote ",diag_f)
+    diag_f <- file.path(output_dir, "diagnostics.xml") 
+    write_diagnostics(m, diag_f, n_top_words=n_top_words)
+    message("Wrote ", diag_f)
 
-    id_map_f <- file.path(output_dir,"id_map.txt")
-    writeLines(instances_ids(model_result$trainer$instances),id_map_f)
-    message("Wrote ",id_map_f)
+    id_map_f <- file.path(output_dir, "doc_ids.txt")
+    writeLines(doc_ids(m), id_map_f)
+    message("Wrote ", id_map_f)
 
     if (save_instances) {
-        inst_f <- file.path(output_dir,"instances.mallet")
-        write_instances(model_result$trainer$instances,inst_f)
-        message("Wrote ",inst_f)
+        inst_f <- file.path(output_dir, "instances.mallet")
+        write_instances(instances(m), inst_f)
+        message("Wrote ", inst_f)
     }
 
     if (save_scaled) {
         scaled_f <- file.path(output_dir,"topic_scaled.csv")
-        scaled <- cmdscale(topic_divergences(
-            mallet.topic.words(model_result$trainer,
-                               smoothed=F,normalized=F),
-            params$beta),
-                           k=2)
-        write.table(scaled,scaled_f,
-                    quote=F,sep=",",row.names=F,col.names=F)
-        message("Wrote ",scaled_f)
+        write.table(scaled_topic_coordinates(m), scaled_f,
+                    quote=F, sep=",", row.names=F, col.names=F)
+        message("Wrote ", scaled_f)
     }
 }
 
-
-
 #' Train a topic model
 #'
-#' Invokes MALLET's parallel topic modeling algorithm.
+#' Invokes MALLET's parallel topic modeling algorithm on a set of documents represented as an InstanceList.
 #'
-#' If java gives out-of-memory errors, try increasing the Java heap size to a 
+#' Create the instance list object with \code{\link{make_instances}}. This function prints MALLET's progress reporting to the console.
+#'
+#' If Java gives out-of-memory errors, try increasing the Java heap size to a 
 #' large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")} 
 #' \emph{before} loading this package (or rJava).
 #'
 #' @param instances either an rJava reference to an \code{InstanceList} object or the 
-#' name of a MALLET instances file
+#' name of a file into which such an object has been serialized
 #' @param n_topics how many topics to train?
 #' @param alpha_sum initial sum of hyperparameters \eqn{alpha_k}: priors of topics over 
 #' document
@@ -213,18 +181,9 @@ output_model <- function(model_result,output_dir=".",
 #' will still be varied by the algorithm, but all the \eqn{\alpha_k}
 #' will be the same.
 #' @param threads number of threads to run in parallel. 
-#' @param seed MALLET's random number seed: set this to ensure a reproducible model.
-#' instances: can either be a mallet instances object or the name of a
-#' mallet instances file
+#' @param seed MALLET's random number seed: set this to ensure a reproducible run of the Gibbs sampling algorithm.
 #'
-#' @return the trainer object, which holds a reference to the \code{RTopicModel}
-#' object constructed by \code{\link[mallet]{MalletLDA}}. In order to access the full 
-#' MALLET Java API, use this object's reference to the \code{ParallelTopicModel}, which is 
-#' simply \code{trainer$model}. You can then call all the \code{ParallelTopicModel} 
-#' methods, though Java's strict typing means you'll have some funtimes with
-#' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java, apply 
-#' \code{\link[base]{as.integer}} to parameters.
-#'
+#' @return a \code{dfr_lda} object#'
 #' @export
 #'
 #' @seealso \code{\link{make_instances}},
@@ -232,8 +191,8 @@ output_model <- function(model_result,output_dir=".",
 #' \code{\link{model_documents}},
 #' \code{\link{output_model}}
 #' 
-train_model <- function(instances,n_topics,
-                        alpha_sum=5,beta=0.01,
+train_model <- function(instances, n_topics,
+                        alpha_sum=5, beta=0.01,
                         n_iters=200,
                         n_max_iters=10,
                         optimize_hyperparameters=T,
@@ -269,206 +228,269 @@ train_model <- function(instances,n_topics,
     }
 
     trainer$train(as.numeric(n_iters))
-    # following from dmimno's mallet-example.R:
-    # iterate picking "best" (?) topic for each token instead of sampling
-    # from posterior distribution (?)
     trainer$maximize(as.numeric(n_max_iters))
-    trainer
+
+    structure(
+        list(model=trainer,
+             params=list(
+                n_iters=n_iters,
+                n_max_iters=n_max_iters,
+                optimize_hyperparameters=optimize_hyperparameters,
+                n_hyper_iters=n_hyper_iters,
+                n_burn_in=n_burn_in,
+                symmetric_alpha=symmetric_alpha,
+                threads=threads,
+                seed=seed,
+                initial_alpha_sum=alpha_sum,
+                initial_beta=beta)
+        ),
+        class="dfr_lda"
+    )
 }
 
-#' Get the document-topic data frame
-#'
-#' Create a data frame with topic proportions for each document in the
-#' first n columns and document ids in the last column.
-#'
-#' This is the document-topic matrix with an extra column to make merging against metadata 
-#' easier. 
-#'
-#' @param trainer The \code{RTopicModel} object, after a training run
-#' @param smoothed if TRUE, smooth document-topic distribution using hyperparameters 
-#" \eqn{\alpha_k}
-#' @param normalized if TRUE, weights sum to 1
-#' @return A dataframe with columns \code{topic1,topic2,...,topicN,id}.
-#'
-#' @export
-#'
-doc_topics_frame <- function(trainer,smoothed=F,normalized=F) { 
-    # matrix of topic proportions (cols) in docs (rows)
-    # smoothing means nothing has 0 prob.
-    # normalized instead of raw counts 
-    doc.topics <- mallet.doc.topics(trainer,smoothed=smoothed,
-                                    normalized=normalized)
-
-    doc.frame <- as.data.frame(doc.topics) 
-    names(doc.frame) <- paste("topic",sep="",seq(trainer$model$numTopics))
-    cbind(doc.frame,id=trainer$getDocumentNames(),stringsAsFactors=F)
-}
-
-#' Extract the numerical part of a doc_topics frame
-#'
-#' A convenience function for extracting the numerical part of a doc_topics frame, 
-#' discarding the document id's.
-#'
-#' If you have the trainer object, you can simply use 
-#' \code{\link[mallet]{mallet.doc.topics}}.
-#'
-#' @param doctopics the data frame from \code{\link{doc_topics_frame}}
-#' @seealso \code{\link[mallet]{mallet.doc.topics}},
-#' \code{\link{doc_topics_frame}}
-#'
-#' @export
-#'
-doc_topics_matrix <- function(doctopics) {
-    as.matrix(doctopics[,-ncol(doctopics)])
-}
-
-#' Normalize columns to sum to one
-#'
-#' Normalize columns to sum to one
-#'
-#' A convenience function for expressing the process of normalizing the doc-topic matrix. 
-#' Actually valid for any matrix in which no column is entirely zero.
-#'
-#' @param dtm the doc_topics matrix (or any other matrix with weights in columns)
-#'
-#' @return a matrix
-#'
-#' @export
-#'
-normalize_doc_topics <- function(dtm) {
-    dtm <- dtm %*% diag(1 / colSums(dtm))
-}
-
-#' Get a melted document-topic-metadata frame
-#'
-#' Synthesizes a \code{\link{doc_topics_frame}} with metadata into a "long" format
-#'
-#' @param doctops frame with document-topic weights and an id column
-#' @param metadata frame
-#' @param meta_keep vector of names of columns of metadata to keep
-#'
-#' @return a data frame with an id column, one column for each element of 
-#' \code{meta_keep}, a \code{variable} column with \code{topic<n>} labeling the topic, and 
-#' a \code{value} column with the topic score
-#'
-#' @seealso \code{\link[reshape2]{melt}}, \code{\link{doc_topics_frame}}, 
-#' \code{\link{doc_topics_wide}},
-#' \code{\link{read_metadata}}
-#'
-#' @export
-#'
-doc_topics_long <- function(doctops,metadata,
-                            meta_keep=c("pubdate","journaltitle")) {
-    library(reshape2)
-    meta <- unique(c("id",meta_keep))
-    wide <- merge(doctops,metadata[,meta],by="id")
-    melt(wide,id.vars=meta)
-}
-
-#' Get a wide document-topic-metadata frame
-#'
-#' Synthesizes a \code{\link{doc_topics_frame}} with metadata into a "wide" format
-#'
-#' @param doctops frame with document-topic weights and an id column
-#' @param metadata frame
-#' @param meta_keep vector of names of columns of metadata to keep
-#'
-#' @return a data frame with an id column, one column for each element of 
-#' \code{meta_keep}, and \code{topic<n>} columns with topic weights
-#'
-#' @seealso \code{\link[reshape2]{melt}}, \code{\link{doc_topics_frame}}, 
-#' \code{\link{doc_topics_long}},
-#' \code{\link{read_metadata}}
-#'
-#' @export
-#'
-doc_topics_wide <- function(doctops,metadata,
-                            meta_keep="pubdate") {
-    meta_keep <- unique(c("id",meta_keep))
-    merge(doctops,metadata[,meta_keep],by="id")
-}
-
-
-
-#' Topic key words with weights
-#'
-#' A more informative topic key-words data frame, in "long" format.
-#'
-#' "Key words" are identified simply by rank order of weight within the topic.
-#' The result also gives the estimated alpha hyperparameter value for each topic.
-#'
-#' @param trainer reference to the \code{RTopicModel} object
-#' @param n_top_words number of "top words" for each topic
-#' @param smoothed if TRUE, smooth document-topic distribution using hyperparameters 
-#" \eqn{\alpha_k}
-#' @param normalized if TRUE, weights sum to 1
-#' @return a data frame with \code{n} rows for each topic and four columns, \code{alpha,
-#' topic,word,weight}. \code{alpha} is repeated \code{n} times in each topic: it gives the 
-#' topic hyperparameter \eqn{\alpha_k}. \code{topic} is numbered from 1. The returned 
-#' words are in rank order within each topic.
-#'
-#' @seealso \code{\link[mallet]{mallet.topic.words}}
-#' \code{\link{tw_wkf}}
-#'
-#' @export
-#'
-weighted_keys_frame <- function(trainer,n_top_words=50,
-                                smoothed=F,normalized=F) {
-    tw <- mallet.topic.words(trainer,
-                             smoothed=smoothed,
-                             normalized=normalized)
-    tw_wkf(tw,
-           vocab=trainer$getVocabulary(),
-           alpha=trainer$getAlpha(),
-           n_top_words=n_top_words)
-}
-
-#' Topic key words from the topic-word matrix
-#'
-#' Given a topic-word matrix, produce the weighted key-word dataframe.
-#'
-#' This gives the same result as \code{\link{weighted_keys_frame}} but can be used when
-#' you no longer have the reference to the \code{RTopicModel} but have saved the topic-word
-#' matrix.
-#'
-#' @param tw a matrix (not dataframe) with topics in rows and word weights in
-#' columns
-#'
-#' @param vocab a character vector with words in the same order as the columns of \code{tw}
-#'
-#' @param alpha a vector of \eqn{\alpha_k} values for the topics
-#'
-#' @param n_top_words number of top key words to store per topic
-#'
-#' @return a data frame with \code{n} rows for each topic and four columns, \code{alpha,
-#' topic,word,weight}. \code{alpha} is repeated \code{n} times in each topic: it gives the 
-#' topic hyperparameter \eqn{\alpha_k}. \code{topic} is numbered from 1. The returned words are 
-#' in rank order within each topic.
-#'
-#' @seealso \code{\link[mallet]{mallet.topic.words}},
-#' \code{\link{weighted_keys_frame}}
-#'
-#' @export
-#'
-tw_wkf <- function(tw,vocab,alpha,n_top_words=50) {
-    n <- nrow(tw)
-    reps <- rep(n_top_words,n)
-
-    result <- data.frame(
-        topic=rep(seq(n),times=reps),
-        alpha=rep(alpha,times=reps),
-        word=character(n * n_top_words),
-        weight=numeric(n * n_top_words),
-        stringsAsFactors=F)
-
-    for(i in seq(n)) {
-        rows <- 1 + (((i - 1) * n_top_words) :  ((i * n_top_words) - 1))
-        js <- order(tw[i,],decreasing=T)[1:n_top_words]
-        result$weight[rows] <- tw[i,js]
-        result$word[rows] <- vocab[js]
+n_topics <- function (x) UseMethod("n_topics")
+n_topics.dfr_lda <- function (x) {
+    if (!is.null(x$model)) {
+        x$model$model$numTopics
+    } else if (!is.null(x$doc_topics)) {
+        ncol(doc_topics(x))
+    } else {
+        NULL # return null if we haven't loaded enough information yet
     }
+}
+modeling_parameters  <- function (x) UseMethod("modeling_parameters")
+modeling_parameters.dfr_lda  <- function (x) x$params
+ 
+print.dfr_lda <- function (x) {
+    s <- str_c(
+"A topic model created by MALLET/dfrtopics
+
+Number of topics: ", n_topics(x), "
+Number of documents: ", n_docs(x))
+
+    cat(s)
+    invisible(x)
+}
+
+summary.dfr_lda <- function (x) {
+    print(x)
+}
+
+#' Access MALLET's glue model object
+#'
+#' This function returns a reference to the top-level Java object representing an LDA model.
+#'
+#' For its R interface, MALLET uses a class RTopicModel. This has some convenience methods for accessing and manipulating a topic model from R using rJava. Most of the modeling functionality is carried out by a ParallelTopicModel instance, which is a data member of this class.
+#'
+#' Java's strict typing means you'll have some funtimes with
+#' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java, apply 
+#' \code{\link[base]{as.integer}} to parameters.
+#'
+#' @param x a \code{dfr_lda} object
+#' @return a reference to the RTopicModel object
+#' @seealso \code{\link{ParallelTopicModel}}
+#' @export
+#' 
+RTopicModel <- function (x) UseMethod("RTopicModel")
+RTopicModel.dfr_lda <- function (x) x$model
+
+#' Access MALLET's model object
+#'
+#' This function returns a reference to the main Java object representing an LDA model in MALLET.
+#'
+#' For its R interface, MALLET uses a class RTopicModel, but most of the modeling functionality is carried out by a ParallelTopicModel instance. This object is reachable from R. Once you have the reference to it here, you can use rJava to access all its public methods and members.
+#'
+#' Java's strict typing means you'll have some funtimes with
+#' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java, apply 
+#' \code{\link[base]{as.integer}} to parameters.
+#'
+#' @param x a \code{dfr_lda} object
+#' @return a reference to the ParallelTopicModel object
+#' @seealso \code{\link{RTopicModel}}
+#' @export
+#' 
+ParallelTopicModel <- function (x) UseMethod("ParallelTopicModel")
+ParallelTopicModel.dfr_lda <- function (x) x$model$model
+
+#' Access the InstanceList stored by a model
+#'
+#' MALLET models store a reference to their source documents. This is an accessor function for that reference.
+#'
+#' @param x a \code{dfr_lda} object
+#' @return a reference to the InstanceList object, or NULL if not available
+#'
+#' @export
+#'
+instances <- function (x) UseMethod("instances")
+instances.dfr_lda <- function (x) if {
+    obj <- RTopicModel(x)
+    if (is.null(obj)) {
+        warning("The model object is not available")
+        NULL
+    } else {
+        obj$instances
+    }
+}
+
+
+#' The document-topic matrix
+#'
+#' Extracts the matrix from a \code{dfr_lda} model with documents in rows and topic weights in columns. The document order is the same as the ordering of the documents supplied to MALLET.
+#'
+#' The expectation throughout \code{dfrtopics} is that we keep unnormalized and unsmoothed weights as the "raw" form of the model; this is not strictly correct, it is easier to reason about and to do post-hoc calculations with. It is up to t user to apply normalization and smoothing where appropriate.
+#'
+#' @param x a \code{dfr_lda} object
+#' @return a numeric matrix
+#'
+#' @export
+#'
+doc_topics <- function (x) UseMethod("doc_topics")
+`doc_topics<-` <- function (x, value) UseMethod("doc_topics<-")
+doc_topics.dfr_lda <- function (x) {
+    if (!is.null(x$doc_topics)) {
+        x$doc_topics
+    } else if (!is.null(x$model)) {
+        x$doc_topics <<- mallet.doc.topics(x$model, smoothed=F,
+                                           normalized=F)
+        x$doc_topics
+    } else {
+        stop("Neither the model object nor a pre-calculated matrix are available.
+             To load the latter, use doc_topics(x) <- read.csv(...)")
+    }
+}
+`doc_topics<-.dfr_lda` <- function (x, value) {
+    x$doc_topics <- value
+    x
+}
+
+#' Retrieve document IDs
+#'
+#' Extracts a character vector of IDs of the modeled documents from a \code{dfr_lda} model.
+#'
+#' @param x a \code{dfr_lda} object
+#' @return a character vector
+#' 
+#' @export
+#'
+doc_ids <- function (x) UseMethod("doc_ids")
+`doc_ids<-` <- function (x, value) UseMethod("doc_ids<-")
+doc_ids.dfr_lda <- function (x) {
+    if (!is.null(x$ids)) {
+        x$ids
+    } else if (!is.null(x$model)) {
+        x$model$getDocumentNames()
+    } else {
+        stop("Neither the model object nor a pre-loaded list of IDs is available.
+             To load the latter, use doc_ids(x) <- readLines(...)")
+    }
+}
+`doc_ids<-.dfr_lda` <- function (x, value) {
+    x$doc_ids <- value
+    x
+}
+
+#' Retrieve model corpus vocabulary
+#'
+#' Extracts a character vector of the word types included in a \code{dfr_lda} model.
+#'
+#' @param x a \code{dfr_lda} object
+#' @return a character vector
+#' 
+#' @export
+#'
+vocabulary <- function (x) UseMethod("vocabulary")
+`vocabulary<-` <- function (x, value) UseMethod("vocabulary<-")
+vocabulary.dfr_lda <- function (x) {
+    if (!is.null(x$vocab)) {
+        x$vocab
+    } else if (!is.null(x$model)) {
+        x$vocab <<- x$model$getVocabulary()
+        x$vocab
+    } else {
+        stop("Neither the model object nor a pre-loaded vocbulary is available.
+             To load the latter, use vocabulary(x) <- readLines(...)")
+    }
+}
+`vocabulary<-.dfr_lda` <- function (x, value) {
+    x$vocab <- value
+    x
+}
+
+#' The topic-words matrix
+#'
+#' Extracts the matrix from a \code{dfr_lda} model with topics in rows and word weights in columns. The word order is the same as that of the vocabulary for the MALLET InstanceList.
+#'
+#' The expectation throughout \code{dfrtopics} is that we keep unnormalized and unsmoothed weights as the "raw" form of the model; this is not strictly correct, it is easier to reason about and to do post-hoc calculations with. It is up to the user to apply normalization and smoothing where appropriate.
+#'
+#' @param x a \code{dfr_lda} object
+#' @return a numeric matrix
+#'
+#' @export
+#'
+topic_words <- function (x, ...) UseMethod("topic_words")
+`topic_words<-` <- function (x, value) UseMethod("topic_words<-")
+topic_words.dfr_lda <- function (x, smoothed=F, normalized=F) {
+    if (!is.null(x$topic_words)) {
+        x$topic_words
+    } else if (!is.null(x$model)) {
+        x$topic_words <<- mallet.topic.words(x$model, smoothed=smoothed,
+                                             normalized=normalized)
+        x$topic_words
+    } else {
+        stop("Neither the model object nor a pre-calculated matrix are available.
+             To load the latter, use topic_words(x) <- read.csv(...)")
+    }
+}
+`topic_words<-.dfr_lda` <- function (x, value) {
+    x$topic_words <- value
+    x
+}
+
+#' Topic key words
+#'
+#' The most common way to summarize topics is to list their top-weighted words, 
+#' together with their topic weights. Though every topic assigns some probability to every term in the whole vocabulary, we often disregard all but its most frequent terms.
+#'
+#' @param x a \code{dfr_lda} object
+#' @return a data frame with three columns, \code{topic} (indexed from 1), \code{word} (character), and \code{weight}
+#' 
+top_words <- function (x, ...) UseMethod("top_words")
+`top_words<-` <- function (x, value) UseMethod("top_words<-")
+top_words.dfr_lda <- function (x, n=50) {
+    if (!is.null(x$top_words) && nrow(x$top_words) / n_topics(x) >= n) {
+        result <- x$top_words %>% group_by(topic) %>%
+            slice(1:n) %>%
+            ungroup()
+    } else {
+        js <- list()
+        tw <- topic_words(x)
+        for (i in 1:nrow(tw)) {
+            js[[i]] <- order(tw[i, ], decreasing=T)[1:n]
+        }
+        js <- do.call(c, js)
+        topics <- rep(1:nrow(tw), each=n)
+        x$top_words <<- data_frame(
+            topic=topics, 
+            word=vocabulary(x)[js],
+            weight=tw[matrix(c(topics, js), ncol=2)]
+        )
+
+        result <- x$top_words
+    } else {
+        stop(
+"The model object is not available, and the pre-loaded list of top words is 
+either missing or too short.  To load the latter, use
+    top_words(x) <- read.csv(...)"
+        )
+    }
+
     result
 }
+`top_words<-.dfr_lda` <- function (x, value) {
+    x$top_words <- value
+    x
+}
+
 
 #' Convert raw topic-word counts to weighted scores
 #'
@@ -508,7 +530,8 @@ tw_wkf <- function(tw,vocab,alpha,n_top_words=50) {
 #'
 #' @export
 #'
-topic_word_scores <- function(tw,b,method="blei_lafferty",l=0.6) {
+topic_word_scores <- function(x, method="blei_lafferty", l=0.6) {
+    tw <- topic_words(x)
 
     V <- ncol(tw)
 
@@ -549,6 +572,7 @@ tw_sievert_shirley <- function(tw,pw,l = 0.6) {
 
     log_tw <- log(tw)
 
+    # TODO not sure this works right
     l * log_tw + (1 - l) * t(apply(log_tw,1,'/',pw)) 
 }
 
@@ -591,41 +615,47 @@ write_topic_words <- function(trainer,
                               smoothed=T,
                               normalized=T) {
     tw <- mallet.topic.words(trainer,smoothed=smoothed,normalized=normalized)
-    write.table(tw,topic_words_file,sep=",",row.names=F,col.names=F) 
     message("Saved topic-word matrix to ",topic_words_file)
     vocab <- trainer$getVocabulary()
     writeLines(vocab,vocab_file)
     message("Saved vocabulary to ",vocab_file)
 }
 
-#' Read in the topic-word matrix
+#' Read in a numeric matrix
 #'
-#' Get the matrix with topics in rows and word counts in columns.
-#' Returns a \code{\link[Matrix]{sparseMatrix}}.
+#' Since R does not supply a matrix-reading function, here's one.
 #'
-#' Formerly known as \code{read_topic_words_matrix}.
+#' @return For \code{read_matrix_csv}, an ordinary matrix; for \code{read_Matrix_csv}, a \code{\link[Matrix]{sparseMatrix}}
 #'
-#' @return A \code{\link[Matrix]{sparseMatrix}} with topics in rows and columns in 
-#' order of the vocabulary as known to the mallet instances)
-#'
-#' @param tw_file CSV filename, for example \code{topic_words.csv}.
+#' @param f CSV filename, for example \code{topic_words.csv}.
 #'
 #' @param what datatype to read in (passed on to \code{\link[base]{scan}}). 
 #' \code{\link[base]{integer}()} by default; use \code{\link[base]{numeric}()} if 
 #' the datafile has proportions.
 #'
-#' @seealso
-#' \code{\link{write_topic_words}},
-#' \code{\link[mallet]{mallet.topic.words}} for online access to the same matrix.
-#'
 #' @export
 #'
-read_topic_words <- function(tw_file,what=integer()) {
-    tw <- scan(tw_file,what=what,sep=",")
-    n <- length(scan(tw_file,what=what,sep=",",nlines=1,quiet=T))
-    as(matrix(tw,byrow=T,ncol=n),"sparseMatrix")
+read_matrix_csv <- function (f, what=integer()) {
+    m <- scan(f, what=what, sep=",")
+    n <- length(scan(f, what=what, sep=",", nlines=1, quiet=T))
+    matrix(m, byrow=T, ncol=n)
+}
+read_Matrix_csv <- function (f, what=integer()) {
+    as(read_Matrix_csv(f, what), "sparseMatrix")
 }
 
+#' Write out a numeric matrix to a text file
+#'
+#' Convenience function for saving numeric matrices as text files (not a particularly space-efficient format).
+#'
+#' @param m matrix or Matrix (e.g. topic-words or document-topics)
+#' @param f file connection to write to
+#'
+#' @export
+write_matrix_csv <- function (m, f) {
+    write.table(as.matrix(m), f, sep=",",
+                row.names=F, col.names=F) 
+}
 
 #' Get miscellaneous model parameters
 #'
@@ -648,4 +678,216 @@ model_params <- function(trainer) {
                LL=trainer$model$modelLogLikelihood())
 }
 
+#' Retrieve metadata
+#'
+#' Get or set the metadata for an \code{dfr_lda} model.
+#'
+#' The setter method drops any metadata rows that do not match the document IDs
+#' for the model.
+#'
+#' @param x a \code{dfr_lda} object
+#' @param value a metadata data frame
+#' @return a character vector
+#' 
+#' @export
+#'
+doc_metadata <- function (x) UseMethod("doc_metadata")
+`doc_metadata<-` <- function (x, value) UseMethod("doc_metadata<-")
+doc_metadata.dfr_lda <- function (x) x$metadata
+`doc_metadata<-.dfr_lda` <- function (x, value) {
+    ids <- doc_ids(x)
+    i <- match(ids, value$id)
+    if (any(is.na(i))) {
+        stop("Supplied data frame does not have rows matching all document IDs.")
+    }
+    x$metadata <- value[i, ]
+    x
+}
 
+#' Retrieve estimated model hyperparameters
+#'
+#' Get or set the estimates for the model hyperparameters \eqn{\alpha} and \eqn{\beta}. These are used in smoothing the document-topic and topic-word matrices respectively.
+#'
+#' @param x a \code{dfr_lda} object
+#' @return a list with two elements, \code{alpha} (a vector, with one value per topic), and \code{beta} (a single number)
+#'
+#' @export
+#'
+hyperparameters <- function (x) UseMethod("hyperparameters")
+`hyperparameters<-` <- function (x, value) UseMethod("hyperparameters<-")
+hyperparameters.dfr_lda <- function (x) {
+    if (!is.null(x$hyper)) {
+        x$hyper
+    } else if (!is.null(x$model)) {
+        list(alpha=x$model$getAlpha(),
+             beta=x$model$model$beta)
+    } else {
+        stop(
+"Neither the model object nor pre-loaded hyperparameters are available."
+        )
+    }
+}
+`hyperparameters<-.dfr_lda` <- function (x, value) {
+    x$hyper <- value
+    x
+}
+
+#' The model object
+#'
+#' A topic model is a complicated beastie, and exploring it requires keeping track of a number of different kinds of data. The \code{dfr_lda} object strives to encapsulate some of this for you. Normally you will not have to use this explicit constructor.
+#' 
+#' Any of the parameters can be omitted.
+#'
+#' @param doc_topics document-topic matrix
+#' @param doc_ids vector of document ids corresponding to rows of \code{doc_topics}
+#' @param vocab vector of word types corresponding to columns of \code{topic_words}
+#' @param top_words data frame with top-ranked words and their weights for each topic
+#' @param topic_words topic-word matrix (expected to be sparse)
+#' @param params list of modeling parameters
+#' @param hyper list of estimated hyperparameters \eqn{\alpha} and \eqn{\beta}
+#' @param metadata data frame of metadata
+#' @param model reference to an RTopicModel object from MALLET
+#' @param state final Gibbs sampling state
+#' 
+#' @export
+dfr_lda <- function (doc_topics=NULL,
+                     doc_ids=NULL,
+                     vocab=NULL,
+                     top_words=NULL,
+                     topic_words=NULL,
+                     params=NULL,
+                     hyper=NULL,
+                     metadata=NULL,
+                     model=NULL,
+                     state=NULL) {
+    structure(list(doc_topics=doc_topics,
+                   doc_ids=doc_ids,
+                   vocab=vocab,
+                   top_words=top_words,
+                   topic_words=topic_words,
+                   hyper=hyper,
+                   metadata=metadata,
+                   model=model,
+                   params=params,
+                   state=state),
+              class="dfr_lda")
+}
+
+#' Read in model outputs from files
+#'
+#' Load a model object from a set of files (like those produced from \code{\link}{write_dfr_lda}). Leave a filename out to skip loading that piece of the puzzle.
+#'
+#' @param doc_topics_file document-topic matrix file (CSV)
+#' @param doc_ids_file document id file (text, one ID per line)
+#' @param vocab_file model vocabulary file (text, one word type per line)
+#' @param top_words_file topic top word data frame file (CSV)
+#' @param topic_words_file topic-word matrix file (CSV)
+#' @param metadata_file metadata file (CSV or TSV)
+#' @param params_file modeling parameters file (read with \code{\link[base]{dget}})
+#'
+#' @return a \code{dfr_lda} object
+#'
+#' @export
+load_dfr_lda <- function(
+        doc_topics_file,
+        doc_ids_file,
+        vocab_file,
+        top_words_file=NULL,
+        topic_words_file=NULL,
+        metadata_file=NULL,
+        params_file=NULL) {
+
+    if (!is.null(top_words_file)) {
+        top_words <- read.csv(top_words_file, as.is=T)
+    } else {
+        top_words <- NULL
+    }
+
+    if (!is.null(topic_words_file)) {
+        library("Matrix")
+        topic_words <- as(read_matrix_csv(topic_words_file), "sparseMatrix")
+    } else {
+        topic_words <- NULL
+    }
+
+    if (!is.null(metadata_file)) {
+        metadata <- read_dfr_metadata(metadata_file)
+    } else {
+        metadata <- NULL
+    }
+
+    if  (!is.null(params_file)) {
+        p <- dget(params_file)
+        params <- p$params
+        hyper <- p$hyper
+    } else {
+        params <- NULL
+        hyper <- NULL
+    }
+        
+
+    result <- dfr_lda(
+        doc_topics=read_matrix_csv(doc_topics_file),
+        doc_ids=readLines(doc_ids_file),
+        vocab=readLines(vocab_file),
+        top_words=top_words,
+        topic_words=topic_words,
+        params=params,
+        hyper=hyper)
+
+    doc_metadata(result) <- metadata
+
+    result
+}
+
+#' Load a model with conventional filenames from a directory
+#'
+#' If you accept the defaults from \code{\link{write_dfr_lda}}, you can read t results back in simply by passing the directory name here.
+#'
+#' The expected filenames are \code{doc_topics.csv}, \code{doc_ids.txt}, \code{vocabulary.txt}, \code{top_words.csv}, \code{topic_words.csv}, and \code{params.txt}.
+#'
+#' @param f directory name
+#' @param load_topic_words logical: load the full topic-word matrix?
+#' @param metadata_file document metadata file(s) (optional)
+#'
+#' @return \code{dfr_lda} object
+#'
+#' @export
+load_dfr_lda_directory <- function (f, load_topic_words=F,
+                                    metadata_file=NULL) {
+    tw <- if (load_topic_words) file.path(f, "topic_words.csv") else NULL
+    load_dfr_lda(doc_topics_file=file.path(f, "doc_topics.csv"),
+                 doc_ids_file=file.path(f, "doc_ids.txt"),
+                 vocab_file=file.path(f, "vocabulary.txt"),
+                 top_words_file=file.path(f, "top_words.csv"),
+                 topic_words_file=tw,
+                 metadata_file=metadata_file,
+                 params_file=file.path(f, "params.txt"))
+}
+                 
+#' Load a model with files from dfrtopics 0.1 (unimplemented)
+#'
+#' The convention for exporting model outputs differed in earlier versions of this package. This file loads in a folder of model outputs on the old conventions.
+#'
+#' @param f directory name
+#' @param load_topic_words
+#'
+#' @export
+load_dfr_lda_legacy <- function (f, load_topic_words=F,
+                                 metadata_file=NULL) {
+    stop("Unimplemented.")
+    # TODO implement this
+}
+
+
+
+
+scaled_topic_coordinates <- function (m) {
+    cmdscale(
+        topic_divergences(
+            topic_words(m),
+            hyperparameters(m)$beta
+        ),
+        k=2
+    )
+}
