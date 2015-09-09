@@ -2,7 +2,7 @@
 #' files
 #' 
 #' Reads in metadata from any number of tabular data files and returns a 
-#' combined dataframe. Most of the work is done by \code{\link{read_citations}}.
+#' combined dataframe. Most of the work is done by \code{\link{read_dfr_citations}}.
 #' 
 #' @param filenames vector of \code{citations.CSV|tsv} filenames
 #' @return A dataframe with deduplicated metadata. The function issues a warning
@@ -10,8 +10,8 @@
 #' @seealso \code{\link{pubdate_Date}}
 #' @export
 #' 
-read_metadata <- function(filenames) {
-    all_rows <- do.call(rbind, lapply(filenames, read_citations))
+read_dfr_metadata <- function(filenames) {
+    all_rows <- do.call(rbind, lapply(filenames, read_dfr_citations))
     # deduplicate
     result <- unique(all_rows)
 
@@ -26,7 +26,7 @@ read_metadata <- function(filenames) {
 #' 
 #' This function reads in a single \code{citations.CSV} (2013 and earlier) or
 #' \code{citations.tsv} (2014 and after) from JSTOR DfR. It knows about the
-#' eccentricities of these formats. Use \code{\link{read_metadata}} to load and
+#' eccentricities of these formats. Use \code{\link{read_dfr_metadata}} to load and
 #' aggregate multiple files.
 #' 
 #' This function assumes that each file has a trailing delimeter at the end of
@@ -47,10 +47,10 @@ read_metadata <- function(filenames) {
 #' @param filename the file to read. If \code{NA}, opens the file dialog.
 #' @param ... Passed on to \code{\link{read.csv}}.
 #' @return A dataframe of metadata.
-#' @seealso \code{\link{read_metadata}}
+#' @seealso \code{\link{read_dfr_metadata}}
 #' @export
 #'
-read_citations <- function(filename=NA, ...) { 
+read_dfr_citations <- function(filename=NA, ...) {
     f <- filename
     if(is.na(filename)) { 
         cat("Select citations.CSV/.tsv file from jstor dfr...\n")
@@ -76,7 +76,7 @@ read_citations <- function(filename=NA, ...) {
     } else {
         # assume old (2013) metadata format: CSV
 
-        # the nefarious trailing comma (see read_metadata docs)
+        # the nefarious trailing comma (see read_dfr_metadata docs)
         cols <- scan(f, nlines=1, what=character(), sep=",", quiet=T)
         cols <- c(cols, "unused")
 
@@ -165,7 +165,7 @@ dfr_id_url <- function(id, jstor_direct=T) {
 #' scrub the cruft found in some journals' metadata on JSTOR. Authors are simply
 #' concatenated into a long "A and B and C" list.
 #' 
-#' @param metadata data frame (from e.g. \code{\link{read_metadata}})
+#' @param metadata data frame (from e.g. \code{\link{read_dfr_metadata}})
 #' @param ids character vector of document id's to generate citations for. If
 #'   NULL, generate citations for all rows of \code{metadata}
 #' @param author_sep author separator in metadata author strings. Before 2014, 
