@@ -84,14 +84,10 @@ model_dfr_documents <- function(
 #' 
 #' }
 #' 
-#' @param model_result the result from \code{\link{model_documents}}, or,
-#'   equivalently, a list with elements called \code{trainer}, 
-#'   \code{doc_topics}, \code{wkf}, and \code{seed}. If \code{doc_topics} or
-#'   \code{wkf} are omitted, they will be calculated (unsmoothed and 
-#'   unnormalized).
+#' @param m \code{dfr_lda} object
 #'   
 #' @param output_dir where to save all the output files.
-#'   
+#'
 #' @param save_instances if TRUE, extract the instance list from the trainer
 #'   object and save it to \code{instances.mallet}; if FALSE (the default),
 #'   don't
@@ -126,7 +122,7 @@ write_dfr_lda <- function(m, output_dir=".",
     message("Wrote ", params_f)
 
     keys_f <- file.path(output_dir, "top_words.csv")
-    write.table(top_words(m, n_top_words), 
+    write.table(top_words(m, n_top_words), keys_f,
                 quote=F, sep=",", row.names=F, col.names=T)
     message("Wrote ", keys_f)
 
@@ -136,7 +132,7 @@ write_dfr_lda <- function(m, output_dir=".",
     message("Wrote ", dt_f)
 
     state_f <- file.path(output_dir, "mallet_state.gz")
-    write_sampling_state(m, state_f)
+    write_mallet_state(m, state_f)
     message("Wrote ", state_f)
 
     diag_f <- file.path(output_dir, "diagnostics.xml") 
@@ -155,7 +151,7 @@ write_dfr_lda <- function(m, output_dir=".",
 
     if (save_scaled) {
         scaled_f <- file.path(output_dir,"topic_scaled.csv")
-        write.table(scaled_topic_coordinates(m), scaled_f,
+        write.table(topic_scaled_2d(m), scaled_f,
                     quote=F, sep=",", row.names=F, col.names=F)
         message("Wrote ", scaled_f)
     }
@@ -226,14 +222,14 @@ train_model <- function(instances, n_topics,
                          as.numeric(alpha_sum),
                          as.numeric(beta))
     trainer$model$setNumThreads(as.integer(threads))
-    if(!is.null(seed)) {
+    if (!is.null(seed)) {
         trainer$model$setRandomSeed(as.integer(seed))
         message("MALLET random number seed set to ", seed)
     }
 
     trainer$loadDocuments(instances)
 
-    if(optimize_hyperparameters) {
+    if (optimize_hyperparameters) {
         trainer$model$setSymmetricAlpha(symmetric_alpha)
         trainer$setAlphaOptimization(as.numeric(n_hyper_iters),
                                      as.numeric(n_burn_in))
@@ -412,7 +408,7 @@ instances.dfr_lda <- function (x) {
 #'   
 #' @export
 #' 
-doc_topics <- function (x, ...) UseMethod("doc_topics")
+doc_topics <- function (x) UseMethod("doc_topics")
 
 #' @export
 `doc_topics<-` <- function (x, value) UseMethod("doc_topics<-")
@@ -422,7 +418,7 @@ doc_topics.dfr_lda <- function (x) {
     if (!is.null(x$doc_topics))  {
         x$doc_topics
     } else if (!is.null(x$model)) {
-        mallet.doc.topics(trainer, smoothed=F, normalized=F)
+        mallet.doc.topics(x$model, smoothed=F, normalized=F)
     } else {
         NULL
     }
@@ -556,7 +552,7 @@ topic_words.dfr_lda <- function (x) {
 #' @param x a \code{dfr_lda} object
 #' @param n number of top words per topic to return (omit for all available)
 #' @param weighting a function to transform the full topic-word matrix before
-#'   calculating top-ranked words. Apart from identity, possibilities include
+#'   calculating top-ranked words. If NULL, taken to be identity. Other possibilities include
 #'   \code{\link{tw_blei_lafferty}} and \code{\link{tw_sievert_shirley}}.
 #' @return a data frame with three columns, \code{topic} (indexed from 1),
 #'   \code{word} (character), and \code{weight}
@@ -570,7 +566,7 @@ top_words <- function (x, ...) UseMethod("top_words")
 `top_words<-` <- function (x, value) UseMethod("top_words<-")
 
 #' @export
-top_words.dfr_lda <- function (x, n=NULL, weighting=identity) {
+top_words.dfr_lda <- function (x, n=NULL, weighting=NULL) {
     result <- NULL
     K <- n_topics(x)
     if (!is.null(x$top_words) && is.null(weighting)) {
@@ -591,7 +587,9 @@ top_words.dfr_lda <- function (x, n=NULL, weighting=identity) {
             if (is.null(n)) {
                 stop("For the full topic-words matrix, use topic_words(x)")
             }
-            tw <- weighting(tw)
+            if (!is.null(weighting)) {
+                tw <- weighting(tw)
+            }
             js <- list()
             for (i in 1:nrow(tw)) {
                 js[[i]] <- order(tw[i, ], decreasing=T)[1:n]

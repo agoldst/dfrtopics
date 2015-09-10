@@ -16,103 +16,67 @@
 #'
 #' @export
 #'
-JS_divergence <- function(P,Q) {
+JS_divergence <- function(P, Q) {
     PQ_mean = (P + Q) / 2
     sum((1/2) * (P * log(P / PQ_mean) + Q * log(Q / PQ_mean)))
 
 }
 
-#' Measure distances between topics
+#' Measure matrix row distances
 #'
-#' Given a matrix with topics in rows, calculate a distance matrix between the rows using 
-#' one of the common heuristics for taking topic distances.
+#' In topic modeling, we generally deal with matrices whose rows represent probability distributions. To find the distance between such distributions, we normally do not use the Euclidean distance or the other options supplied by \code{\link[stats]{dist}}. This is a utility function for taking a matrix with \eqn{K} rows and producing the matrix of distances between those rows, given an arbitrary metric. It is not fast.
 #'
-#' The generic name is a reminder that there are multiple possible
-#' applications to a hierarchical model: we can consider topics as distributions over 
-#' documents as well as over words.
+#' The \pkg{flexmix} package supplies a K-L divergence function \code{KLdiv}, but I have not found an implementation of the symmetrized Jensen-Shannon divergence, so I have supplied one in \code{\link{JS_divergence}}.
 #'
-#' @param M matrix, with rows representing topics considered as distributiosn over the 
-#' column index
-#' @param method \code{JS} for the Jensen-
-#' Shannon divergence from \code{\link{JS_divergence}}, or \code{pearson} for the Pearson 
-#' correlation coefficient (recommended: take 
-#' logs first) or \code{spearman} for Spearman's \eqn{rho}, or 
+#' @param M matrix
+#' @param g metric (function of two vectors). J-S divergence by default
+#'
+#' @return matrix of distances between rows
 #'
 #' @seealso
 #' \code{\link{JS_divergence}},
 #' \code{\link{doc_topic_cor}},
-#' \code{\link{topic_divergences}}
 #'
 #' @export
 #'
-row_dists <- function(M,method="JS") {
-    if(method=="pearson" || method=="spearman") {
-        return(cor(t(M),method=method))
-    } else if(method=="JS") {
-        # FIXME failure to vectorize. Ugh.
+row_dists <- function(M, g=JS_divergence) {
+    # FIXME failure to vectorize. Ugh. Needs Rcpp
 
-        n <- nrow(M)
-        result <- matrix(0,nrow=n,ncol=n)
+    n <- nrow(M)
+    result <- matrix(0, nrow=n, ncol=n)
 
-        for(i in seq(n)) {
-            for(j in i:n) {
-                result[i,j] <- JS_divergence(M[i,],M[j,])
-            }
+    for (i in seq(n)) {
+        for (j in i:n) {
+            result[i, j] <- g(M[i, ], M[j, ])
         }
-        # at least take advantage of the symmetry
-        result[lower.tri(result)] <- t(result)[lower.tri(result)]
-        return(result)
-    } else {
-        stop("Unknown method.")
     }
+
+    # at least take advantage of the symmetry
+    result[lower.tri(result)] <- t(result)[lower.tri(result)]
+    result
 }
 
-#' Take topic-topic correlations over documents
+#' Topic distance functions
 #'
-#' Calculates correlations between topics according to their log proportions in documents.
+#' Two methods for extracting a matrix of topic-topic distances.
 #'
-#' @param doctops The document-topic matrix or dataframe (from 
-#' \code{\link{doc_topics_frame}}), assumed to be smoothed and normalized.
+#' @param m \code{dfr_lda} model object
 #'
-#' @return a matrix of correlations between the series of log-document proportions.
+#' @return For \code{doc_topic_cor}, a matrix of correlations between the series of log-document proportions; for \code{topic_divergences}, a matrix of J-S divergences between topic distributions over words.
 #'
-doc_topic_cor <- function(doctops) {
-    # copy on modify
-    doctops$id <- NULL
-    row_dists(log(t(doctops)),method="pearson")
-}
-
-#' Topic-topic divergences over words
-#'
-#' Calculates the J-S divergences between topics considered as
-#' distributions over words.
-#'
-#' Actually, nothing stops you setting \code{twm} to be the topic-\emph{document} matrix 
-#' and \code{b} to be the  vector of \eqn{\alpha_k}. That gives the distances among topics 
-#' as distributions over 
-#' documents.
-#'
-#' @param twm the topic-word matrix
-#'
-#' @param b the estimated \eqn{\beta} value of the model
-#'
-#' @references
-#' Mimno, D. 2012. Computational historiography: Data mining in
-#' a century of classics journals. \emph{ACM J. Comput. Cult. Herit.} 5, no. 1
-#' (April 2012): article 3. \url{http://doi.acm.org/10.1145/2160165.2160168}.
-#'
-#' @seealso
-#' \code{\link{row_dists}},
-#' \code{\link{JS_divergence}}
+#' @seealso \code{\link{row_dists}}, \code{\link{topic_scaled_2d}}
 #'
 #' @export
-#'
-topic_divergences <- function(twm,b) {
-    # smoothing
-    twm <- twm + b
-    # normalization
-    twm <- diag(1 / rowSums(twm)) %*% twm
-    row_dists(twm,method="JS")
+topic_divergences <- function (m) {
+    tw <- tw_smooth_normalize(m)(topic_words(m))
+    row_dists(tw)
+}
+
+#' @export
+#' @rdname topic_divergences
+doc_topic_cor <- function (m) {
+    x <- dt_smooth_normalize(m)(doc_topics(m))
+    cor(log(x))
 }
 
 #' Scaled topic coordinates in 2D space
@@ -120,14 +84,23 @@ topic_divergences <- function(twm,b) {
 #' Use multidimensional scaling to obtain two-dimensional coordinates for
 #' each topic in a model.
 #'
-#' @param trainer pointer to a MalletLDA object with a trained model.
+#' The coordinates are derived by finding the Jensen-Shannon divergences between topics considered as distributions over words and then scaling this matrix to two dimensions.
+#'
+#' @param m \code{dfr_lda} model object
 #'
 #' @return a matrix with 2 columns and as many rows as \code{m}.
 #'
+#' @seealso \code{\link{row_dists}}, \code{\link{topic_divergences}}
+#'
+#' @references
+#' Mimno, D. 2012. Computational historiography: Data mining in
+#' a century of classics journals. \emph{ACM J. Comput. Cult. Herit.} 5, no. 1
+#' (April 2012): article 3. \url{http://doi.acm.org/10.1145/2160165.2160168}.
+#'
 #' @export
 #'
-topic_scaled_2d <- function(trainer) {
-    m <- mallet.topic.words(trainer,smoothed=F,normalized=F)
-    b <- trainer$model$beta
-    cmdscale(topic_divergences(m,b),k=2)
+topic_scaled_2d <- function (m) {
+    d <- topic_divergences(m)
+    cmdscale(d, k=2)
 }
+

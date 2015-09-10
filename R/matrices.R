@@ -281,3 +281,161 @@ normalize_cols <- function (m, norm="L1") {
         stop("norm must be L1 or L2")
     }
 }
+
+
+
+#' Scoring methods for words in topics
+#'
+#' The "raw" final sampling state of words in topics may be transformed into either estimated probabilities or other kinds of salience scores. These methods produce \emph{functions} that operate on a topic-word matrix. They can be passed as the \code{weighting} parameter to \code{\link{top_words}}.
+#'
+#' The basic method is to recast the sampled word counts as probabilities by adding the estimated hyperparameter \eqn{\beta} and then normalizing rows so they add to 1. This is equivalent to \code{\link[mallet]{mallet.topic.words}} with \code{smooth} and \code{normalize} set to TRUE. Naturally this will not change the relative ordering of words within topics.
+#'
+#' A method that can re-rank words has been given by Blei and Lafferty: the score for word \eqn{v} in topic \eqn{t} is
+#' \deqn{p(t,v)\textrm{log}(p(t,v) / \prod_k p(k,v)^1/K)}
+#' where \eqn{K} is the number of topics. The score gives more weight to words which are 
+#' ranked highly in fewer topics.
+#'
+#' Another method is the "relevance" score of Sievert and Shirley: in this case
+#' the score is given by
+#' \deqn{\lambda log (p(t,v) + (1 - \lambda) log (p(t,v) / p(v)}
+#' where \eqn{\lambda} is a weighting parameter which is by default set to 0.6 and 
+#' which determines the amount by which words common in the whole corpus are 
+#' penalized.
+#'
+#' @param x a \code{\link{dfr_lda}} object
+#' @param l For \code{sievert_shirley}, the 
+#' weighting parameter \eqn{\lambda}, by default 0.6.
+#' @return a function of one variable, to be applied to the topic-word sparse matrix.
+#'
+#' @references
+#' D. Blei and J. Lafferty. Topic Models. In A. Srivastava and M. Sahami, editors, \emph{Text Mining: Classification, Clustering, and Applications}. Chapman & Hall/CRC Data Mining and Knowledge Discovery Series, 2009. \url{http://www.cs.princeton.edu/~blei/papers/BleiLafferty2009.pdf}.
+#' 
+#' C. Sievert and K.E. Shirley. LDAvis: A method for visualizing and interpreting topics. \url{http://nlp.stanford.edu/events/illvi2014/papers/sievert-illvi2014.pdf}.
+#'
+#' @examples
+#' \dontrun{top_words(x, n=10, weighting=tw_blei_lafferty(x))}
+#' \dontrun{tw_smooth_normalize(x)(topic_words(x))}
+#' 
+#' @export
+#'
+tw_smooth_normalize <- function (x) {
+    b <- hyperparameters(x)$beta
+
+    function (tw) {
+        Diagonal(x=1 / (Matrix::rowSums(tw) + b * ncol(tw))) %*% (tw + b)
+    }
+}
+
+#' @export
+#' @rdname tw_smooth_normalize
+tw_blei_lafferty <- function (x) {
+    
+    # score(t,v) = p(t,v) log (p(t,v) / Prod_k p(k,v) ^ 1 / K)
+    #            = p(t,v) ( log p(t,v) - (1 / K) log( Prod_k p(k,v) ) )
+    #            = p(t,v) ( log p(t,v) - (1 / K) Sum_k (log p(k,v) ) )
+
+    sn <- tw_smooth_normalize(x)
+
+    function (tw) {
+        tw <- sn(tw)
+        n <- nrow(tw)
+        log_tw <- log(tw)
+
+        # calculate down-weighting factor for each word.
+        # for some unknown reason I seem to need to explicitly dispatch to
+        # the Matrix method here
+        word_factor <- tw %*% Diagonal(x=Matrix::colSums(log_tw) / n)
+
+        tw * (log_tw) - word_factor
+    }
+}
+
+#' @export
+#' @rdname tw_smooth_normalize
+tw_sievert_shirley <- function(x, lambda=0.6) {
+    # score(t,v) = lambda log p(t,v) + (1 - lambda) log (p(t,v) / p(v))
+
+    b <- hyperparameters(x)$beta
+    
+    function (tw) {
+        V <- ncol(tw)
+
+        # smooth + normalize weights
+        topic_totals <- rowSums(tw) + V * b
+        tw <- tw + b
+
+        pw <- Matrix::colSums(tw) / sum(tw)
+
+        tw <- Diagonal(x=1 / topic_totals) %*% tw
+        
+        log_tw <- log(tw)
+
+        # TODO not sure this works right
+        lambda * log_tw + (1 - lambda) * t(apply(log_tw, 1, '/', pw)) 
+    }
+}
+
+#' Read in a numeric matrix
+#'
+#' Since R does not supply a matrix-reading function, here's one.
+#'
+#' @return For \code{read_matrix_csv}, an ordinary matrix; for \code{read_Matrix_csv}, a \code{\link[Matrix]{sparseMatrix}}
+#'
+#' @param f CSV filename, for example \code{topic_words.csv}.
+#'
+#' @param what datatype to read in (passed on to \code{\link[base]{scan}}). 
+#' \code{\link[base]{integer}()} by default; use \code{\link[base]{numeric}()} if 
+#' the datafile has proportions.
+#'
+#' @export
+#'
+read_matrix_csv <- function (f, what=integer()) {
+    m <- scan(f, what=what, sep=",")
+    n <- length(scan(f, what=what, sep=",", nlines=1, quiet=T))
+    matrix(m, byrow=T, ncol=n)
+}
+
+#' @export
+#' @rdname read_matrix_csv
+read_Matrix_csv <- function (f, what=integer()) {
+    as(read_Matrix_csv(f, what), "sparseMatrix")
+}
+
+#' Write out a numeric matrix to a text file
+#'
+#' Convenience function for saving numeric matrices as text files (not a particularly space-efficient format).
+#'
+#' @param m matrix or Matrix (e.g. topic-words or document-topics)
+#' @param f file connection to write to
+#'
+#' @export
+write_matrix_csv <- function (m, f) {
+    write.table(as.matrix(m), f, sep=",",
+                row.names=F, col.names=F) 
+}
+
+#' @export
+#' @rdname write_matrix_csv
+write_Matrix_csv <- write_matrix_csv
+
+#' Normalizing the document-topic matrix
+#'
+#' This package assumes that \code{doc_topics(x)} is the "raw" sampled weights of topics in documents. To represent the estimated probability of observing a topic in a particular document, these values should be smoothed and normalized. This function yields a \emph{function} which should in turn be applied to \code{doc_topics(x)}. The idea is to minimize the possibility of confusion over whether you are operating on smoothed weights or not.
+#'
+#' @param x \code{dfr_lda} object
+#' @return a function which operates on document-topic matrix
+#'
+#' @seealso \code{\link{doc_topics}}, \code{\link[mallet]{mallet.doc.topics}}
+#'
+#' @examples \dontrun{dt_smooth_normalize(x)(doc_topics(x))}
+#'
+#' @export 
+dt_smooth_normalize <- function (x) {
+    a <- hyperparameters(x)$alpha
+
+    function (m) {
+        m <- m + matrix(rep(a, each=nrow(m)), nrow=nrow(m))
+
+        diag(1 / rowSums(m)) %*% m
+    }
+}

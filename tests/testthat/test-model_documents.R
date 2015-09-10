@@ -16,38 +16,39 @@ n_topics <- 12 # topics
 n_top_words <- 10 # key words
 
 test_that("Modeling on some sample data works", {
-    
-    m <- list()
-    m$metadata <- read_metadata(file.path(data_dir, "citations.tsv"))
-    insts <- make_instances(read_dfr_wordcounts(files=fs),
-                            stoplist_file=stoplist_file)
+    insts <- read_dfr(fs) %>%
+        dfr_docs_frame() %>%
+        make_instances(stoplist_file)
 
-    m$trainer <- train_model(insts,
-                             n_topics=n_topics,
-                             n_iters=200,
-                             threads=1, 
-                             alpha_sum=5,
-                             beta=0.01,
-                             n_hyper_iters=20,
-                             n_burn_in=20,
-                             n_max_iters=10)
+    m <- train_model(insts,
+                     n_topics=n_topics,
+                     n_iters=200,
+                     threads=1, 
+                     alpha_sum=5,
+                     beta=0.01,
+                     n_hyper_iters=20,
+                     n_burn_in=20,
+                     n_max_iters=10)
 
-    expect_equal(class(m$trainer), "jobjRef", check.attributes=F)
-    expect_equal(.jstrVal(m$trainer$getClass()),
+    expect_equal(class(RTopicModel(m)), "jobjRef", check.attributes=F)
+    expect_equal(.jstrVal(RTopicModel(m)$getClass()),
                  "class cc.mallet.topics.RTopicModel")
 
-    m$wkf <- weighted_keys_frame(m$trainer, n_top_words)
-    m$doc_topics <- doc_topics_frame(m$trainer)
-
     # right number of rows in doc-topics?
-    expect_that(nrow(m$doc_topics), equals(length(fs)))
+    expect_that(nrow(doc_topics(m)), equals(length(fs)))
 
     # right number of cols?
-    expect_that(ncol(m$doc_topics), equals(n_topics + 1))
+    expect_that(ncol(doc_topics(m)), equals(n_topics))
 
+    keys <- top_words(m, n=n_top_words)
     # right number of key words in keys frame?
-    expect_that(nrow(m$wkf), equals(n_topics * n_top_words))
+    expect_that(nrow(keys), equals(n_topics * n_top_words))
 
+    tw <- topic_words(m)
+    expect_that(nrow(tw), equals(n_topics))
+    expect_that(ncol(tw), equals(length(vocabulary(m))))
+
+    expect_equal(vocabulary(m)[which.max(tw[1, ])], keys$word[1])
 
     # check that file output creates all the expected files
     out_dir <- tempdir()
@@ -59,11 +60,11 @@ test_that("Modeling on some sample data works", {
         "doc_topics.csv",
         "topic_words.csv",
         "vocab.txt",
-        "params.csv",
-        "keys.csv",
+        "params.txt",
+        "top_words.csv",
         "mallet_state.gz",
         "diagnostics.xml",
-        "id_map.txt",
+        "doc_ids.txt",
         "instances.mallet",
         "topic_scaled.csv"))
 
@@ -77,50 +78,39 @@ test_that("Modeling on some sample data works", {
 
     clear_files(out_files)
 
-    output_model(m, out_dir, save_instances=T, save_scaled=T)
+    write_dfr_lda(m, out_dir, save_instances=T, save_scaled=T)
 
-    expect_that(all(sapply(out_files,file.exists)), is_true())
-
-    clear_files(out_files)
-
-    # check that output_model fills in missing keys and doc_topics
-
-    m$wkf <- NULL
-    m$doc_topics <- NULL
-
-    output_model(m, out_dir, save_instances=T, save_scaled=T)
-
-    expect_that(all(sapply(out_files, file.exists)), is_true())
+    for (f in out_files) {
+        expect_true(file.exists(f),
+                    info=paste("Check creation of ", f))
+    }
 
     clear_files(out_files)
-
 }) 
 
-test_that("Convenience function model_documents completes", {
+test_that("Convenience function model_dfr_documents completes", {
     # the modeling run: we'll also check for valid messaging
     expect_message(
         (
-            m <- model_documents(file.path(data_dir, "citations.tsv"),
-                                 file.path(data_dir, "wordcounts"),
-                                 stoplist_file,
-                                 n_topics=n_topics,
-                                 seed=42,
-                                 n_top_words=n_top_words)
+            m <- model_dfr_documents(
+                file.path(data_dir, "citations.tsv"),
+                file.path(data_dir, "wordcounts"),
+                stoplist_file,
+                n_topics=n_topics,
+                seed=42
+            )
         ),
         "MALLET random number seed set to 42"
     )
 
 
     # remembered the seed?
-    expect_that(m$seed, equals(42))
+    expect_that(modeling_parameters(m)$seed, equals(42))
 
     # right number of rows in doc-topics?
-    expect_that(nrow(m$doc_topics),
+    expect_that(nrow(doc_topics(m)),
                 equals(length(list.files(file.path(data_dir, "wordcounts")))))
 
     # right number of cols?
-    expect_that(ncol(m$doc_topics), equals(n_topics + 1))
-
-    # right number of key words in keys frame?
-    expect_that(nrow(m$wkf), equals(n_topics * n_top_words))
+    expect_that(ncol(doc_topics(m)), equals(n_topics))
 })

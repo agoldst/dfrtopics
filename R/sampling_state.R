@@ -7,16 +7,20 @@
 #' Saves the MALLET sampling state using MALLET's own state-output routine, which produces 
 #' a ginormous gzipped textfile
 #'
-#' @param trainer the \code{RTopicModel} object
+#' @param m the \code{dfr_lda} model object
 #' @param outfile the output file name
 #'
 #' @seealso \code{\link{read_simplified_state}}
 #'
 #' @export
 #'
-write_mallet_state <- function(trainer,outfile="state.gz") {
-    fileobj <- new(J("java.io.File"),outfile)
-    trainer$model$printState(fileobj)
+write_mallet_state <- function(m, outfile="state.gz") {
+    ptm <- ParallelTopicModel(m)
+    if (is.null(ptm)) {
+        stop("MALLET model object is not available.")
+    }
+    fileobj <- new(J("java.io.File"), outfile)
+    ptm$printState(fileobj)
 }
 
 #' Reduce a MALLET sampling state on disk to a simplified form
@@ -37,12 +41,12 @@ write_mallet_state <- function(trainer,outfile="state.gz") {
 #'
 #' @export
 #'
-simplify_state <- function(state_file,outfile) {
+simplify_state <- function(state_file, outfile) {
     if(file.exists(outfile)) {
         stop("Output file ",outfile," already exists.")
     }
     cmd <- paste("python",
-                 file.path(path.package("dfrtopics"),"python",
+                 file.path(path.package("dfrtopics"), "python",
                            "simplify_state.py"),
                  state_file,">",outfile)
     message("Executing ",cmd)

@@ -14,13 +14,17 @@
 #'
 #' @export
 #'
-write_diagnostics <- function(trainer,output_file="diagnostics.xml",
+write_diagnostics <- function(m, output_file="diagnostics.xml",
                               n_top_words=50L) {
 
+    ptm <- ParallelTopicModel(m)
+    if (is.null(ptm)) {
+        stop("MALLET model object is not available.")
+    }
     d <- .jnew("cc/mallet/topics/TopicModelDiagnostics",
-          trainer$model,as.integer(n_top_words))
+          ptm, as.integer(n_top_words))
     xml <- d$toXML()
-    cat(xml,file=output_file)
+    cat(xml, file=output_file)
 }
 
 #' Read MALLET model-diagnostic results.
