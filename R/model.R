@@ -43,11 +43,11 @@ model_dfr_documents <- function(
         stoplist_file=file.path(path.package("dfrtopics"),
                                 "stoplist", "stoplist.txt"),
         ...)  {
-    result <- read_dfr(list.files(wordcounts_dirs), full.names=T) %>%
+    result <- read_dfr(list.files(wordcounts_dirs, full.names=T)) %>%
         dfr_docs_frame() %>%
         make_instances(stoplist_file) %>%
         train_model(n_topics, ...)
-    metadata(result) <- read_dfr_metadata(citations_files)
+    doc_metadata(result) <- read_dfr_metadata(citations_files)
     result
 }
 
@@ -96,7 +96,7 @@ model_dfr_documents <- function(
 #'   object and save it to \code{instances.mallet}; if FALSE (the default),
 #'   don't
 #'   
-#' @param save_scaled if TRUE (the default), write a file of 2D coordinate for
+#' @param save_scaled if TRUE (the default), write a file of 2D coordinates for
 #'   the topics
 #'   
 #' @export
@@ -199,10 +199,11 @@ write_dfr_lda <- function(m, output_dir=".",
 #'   returned by the function will store a reference to it if supplied
 #'   
 #' @return a \code{dfr_lda} object
-#' @export
 #' 
 #' @seealso \code{\link{make_instances}}, \code{\link{make_instances}}, 
 #'   \code{\link{model_documents}}, \code{\link{output_model}}
+#'
+#' @export
 #'   
 train_model <- function(instances, n_topics,
                         alpha_sum=5, beta=0.01,
@@ -264,7 +265,14 @@ train_model <- function(instances, n_topics,
     )
 }
 
+#' Access the number of topics in the model
+#'
+#' Returns the number of topics in a model.
+#'
+#' @export
 n_topics <- function (x) UseMethod("n_topics")
+
+#' @export
 n_topics.dfr_lda <- function (x) {
     if (!is.null(x$model)) {
         x$model$model$numTopics
@@ -276,7 +284,35 @@ n_topics.dfr_lda <- function (x) {
         NULL # return null if we haven't loaded enough information yet
     }
 }
+
+#' Access the number of documents modeled
+#'
+#' Returns the number of documents modeled.
+#'
+#' @export
+n_docs <- function (x) UseMethod("n_docs")
+
+#' @export
+n_docs.dfr_lda <- function (x) {
+    if (!is.null(x$doc_topics)) {
+        nrow(x$doc_topics)
+    } else if (!is.null(x$doc_ids)) {
+        length(x$doc_ids)
+    } else if (!is.null(x$model)) {
+        x$model$instances$size()
+    } else {
+        NULL # return null if we haven't loaded enough information yet
+    }
+}
+
+#' Access stored modeling parameters
+#'
+#' Returns a list of modeling parameters (number of iterations, initial hyperparameter values, etc.) used to create the model.
+#'
+#' @export
 modeling_parameters  <- function (x) UseMethod("modeling_parameters")
+
+#' @export
 modeling_parameters.dfr_lda  <- function (x) x$params
  
 
@@ -300,6 +336,8 @@ modeling_parameters.dfr_lda  <- function (x) x$params
 #' @export
 #' 
 RTopicModel <- function (x) UseMethod("RTopicModel")
+
+#' @export
 RTopicModel.dfr_lda <- function (x) x$model
 
 #' Access MALLET's model object
@@ -322,6 +360,8 @@ RTopicModel.dfr_lda <- function (x) x$model
 #' @export
 #' 
 ParallelTopicModel <- function (x) UseMethod("ParallelTopicModel")
+
+#' @export
 ParallelTopicModel.dfr_lda <- function (x) x$model$model
 
 #' Access the InstanceList stored by a model
@@ -335,7 +375,11 @@ ParallelTopicModel.dfr_lda <- function (x) x$model$model
 #' @export
 #' 
 instances <- function (x) UseMethod("instances")
+
+#' @export
 `instances<-` <- function (x, value) UseMethod("instances<-")
+
+#' @export
 instances.dfr_lda <- function (x) {
     obj <- RTopicModel(x)
     if (is.null(obj)) {
@@ -345,6 +389,8 @@ instances.dfr_lda <- function (x) {
         obj$instances
     }
 }
+
+#' @export
 `instances<-.dfr_lda` <- function (x, value) {
     x$instances <- value
     x
@@ -367,7 +413,11 @@ instances.dfr_lda <- function (x) {
 #' @export
 #' 
 doc_topics <- function (x, ...) UseMethod("doc_topics")
+
+#' @export
 `doc_topics<-` <- function (x, value) UseMethod("doc_topics<-")
+
+#' @export
 doc_topics.dfr_lda <- function (x) {
     if (!is.null(x$doc_topics))  {
         x$doc_topics
@@ -377,6 +427,8 @@ doc_topics.dfr_lda <- function (x) {
         NULL
     }
 }
+
+#' @export
 `doc_topics<-.dfr_lda` <- function (x, value) {
     x$doc_topics <- value
     x
@@ -393,10 +445,14 @@ doc_topics.dfr_lda <- function (x) {
 #' @export
 #' 
 doc_ids <- function (x) UseMethod("doc_ids")
+
+#' @export
 `doc_ids<-` <- function (x, value) UseMethod("doc_ids<-")
+
+#' @export
 doc_ids.dfr_lda <- function (x) {
-    if (!is.null(x$ids)) {
-        x$ids
+    if (!is.null(x$doc_ids)) {
+        x$doc_ids
     } else if (!is.null(x$model)) {
         x$model$getDocumentNames()
     } else {
@@ -404,6 +460,8 @@ doc_ids.dfr_lda <- function (x) {
              To load the latter, use doc_ids(x) <- readLines(...)")
     }
 }
+
+#' @export
 `doc_ids<-.dfr_lda` <- function (x, value) {
     x$doc_ids <- value
     x
@@ -420,18 +478,23 @@ doc_ids.dfr_lda <- function (x) {
 #' @export
 #' 
 vocabulary <- function (x) UseMethod("vocabulary")
+
+#' @export
 `vocabulary<-` <- function (x, value) UseMethod("vocabulary<-")
+
+#' @export
 vocabulary.dfr_lda <- function (x) {
     if (!is.null(x$vocab)) {
         x$vocab
     } else if (!is.null(x$model)) {
-        x$vocab <<- x$model$getVocabulary()
-        x$vocab
+        x$model$getVocabulary()
     } else {
         stop("Neither the model object nor a pre-loaded vocbulary is available.
              To load the latter, use vocabulary(x) <- readLines(...)")
     }
 }
+
+#' @export
 `vocabulary<-.dfr_lda` <- function (x, value) {
     x$vocab <- value
     x
@@ -454,7 +517,11 @@ vocabulary.dfr_lda <- function (x) {
 #' @export
 #' 
 topic_words <- function (x, ...) UseMethod("topic_words")
+
+#' @export
 `topic_words<-` <- function (x, value) UseMethod("topic_words<-")
+
+#' @export
 topic_words.dfr_lda <- function (x) {
     m <- x$topic_words
     if (is.null(m) && !is.null(x$model)) {
@@ -465,6 +532,8 @@ topic_words.dfr_lda <- function (x) {
 
     m
 }
+
+#' @export
 `topic_words<-.dfr_lda` <- function (x, value) {
     x$topic_words <- value
     x
@@ -494,8 +563,13 @@ topic_words.dfr_lda <- function (x) {
 #'   
 #' @seealso \code{\link{tw_blei_lafferty}}, \code{\link{tw_sievert_shirley}}
 #'   
+#' @export
 top_words <- function (x, ...) UseMethod("top_words")
+
+#' @export
 `top_words<-` <- function (x, value) UseMethod("top_words<-")
+
+#' @export
 top_words.dfr_lda <- function (x, n=NULL, weighting=identity) {
     result <- NULL
     K <- n_topics(x)
@@ -540,6 +614,8 @@ either missing or too short.  To load the latter, use
 
     result
 }
+
+#' @export
 `top_words<-.dfr_lda` <- function (x, value) {
     x$top_words <- value
     x
@@ -560,8 +636,14 @@ either missing or too short.  To load the latter, use
 #' @export
 #' 
 doc_metadata <- function (x) UseMethod("doc_metadata")
+
+#' @export
 `doc_metadata<-` <- function (x, value) UseMethod("doc_metadata<-")
+
+#' @export
 doc_metadata.dfr_lda <- function (x) x$metadata
+
+#' @export
 `doc_metadata<-.dfr_lda` <- function (x, value) {
     ids <- doc_ids(x)
     i <- match(ids, value$id)
@@ -585,7 +667,11 @@ doc_metadata.dfr_lda <- function (x) x$metadata
 #' @export
 #' 
 hyperparameters <- function (x) UseMethod("hyperparameters")
+
+#' @export
 `hyperparameters<-` <- function (x, value) UseMethod("hyperparameters<-")
+
+#' @export
 hyperparameters.dfr_lda <- function (x) {
     if (!is.null(x$hyper)) {
         x$hyper
@@ -598,6 +684,8 @@ hyperparameters.dfr_lda <- function (x) {
         )
     }
 }
+
+#' @export
 `hyperparameters<-.dfr_lda` <- function (x, value) {
     x$hyper <- value
     x
@@ -652,6 +740,9 @@ dfr_lda <- function (doc_topics=NULL,
                    state=state),
               class="dfr_lda")
 }
+
+#' @export
+#' @rdname dfr_lda
 print.dfr_lda <- function (x) {
     s <- str_c(
 "A topic model created by MALLET
@@ -662,15 +753,22 @@ Number of documents: ", n_docs(x))
     cat(s)
     invisible(x)
 }
+
+#' @export
+#' @rdname dfr_lda
 summary.dfr_lda <- function (x) {
     members <- c("model", "instances", "doc_topics", "top_words", "topic_words",
                  "vocab", "doc_ids", "hyper")
     lst <- lapply(members, function (m) !is.null(x[[m]]))
+    names(lst) <- members
     lst$n_topics <- n_topics(x)
     lst$n_docs <- n_docs(x)
 
     structure(lst, class="dfr_lda_summary")
 }
+
+#' @export
+#' @rdname dfr_lda
 print.dfr_lda_summary <- function (x) {
     yesno <- function (m) ifelse(x[[m]], "yes", " no")
 
