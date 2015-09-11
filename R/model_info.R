@@ -17,8 +17,9 @@ topic_labels <- function (m, n=8) {
         slice(1:n) %>%
         summarize(label=str_c(word, collapse=" ")) %>%
         ungroup() %>%
-        transmute(label=str_c(topic, label)) %>%
-        unlist()
+        transmute(label=str_c(topic, label, sep=" ")) %>%
+        unlist() %>%
+        unname()
 }
 
 #' Top-ranked documents in topics
