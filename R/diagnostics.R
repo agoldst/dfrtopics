@@ -24,7 +24,7 @@ write_diagnostics <- function(m, output_file="diagnostics.xml",
     d <- .jnew("cc/mallet/topics/TopicModelDiagnostics",
           ptm, as.integer(n_top_words))
     xml <- d$toXML()
-    cat(xml, file=output_file)
+    writeLines(xml, output_file)
 }
 
 #' Read MALLET model-diagnostic results.
@@ -62,8 +62,11 @@ write_diagnostics <- function(m, output_file="diagnostics.xml",
 #'
 #' @export
 #'
-read_diagnostics <- function(xml_file) {
-    library(XML)
+read_diagnostics <- function (xml_file) {
+    if (!require("XML")) {
+        stop("The XML package is required to read MALLET diagnostics.")
+    }
+
     d <- xmlParse(file=xml_file)
     # xmlSApply returns a string matrix with topics in *columns*
     topic_attrs <- t(xmlSApply(getNodeSet(d,"/model/topic"),xmlAttrs))
