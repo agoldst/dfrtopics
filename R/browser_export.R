@@ -1,210 +1,119 @@
-write_zip <- function(writer,file_base,file_ext=".json",no_zip=F) {
+write_zip <- function (writer, file_base, file_ext=".json", no_zip=F) {
     if(no_zip) {
-        f_out <- str_c(file_base,file_ext)
+        f_out <- str_c(file_base, file_ext)
         writer(f_out)
     } else {
-        f_temp <- file.path(tempdir(),str_c(basename(file_base),file_ext))
+        f_temp <- file.path(tempdir(), str_c(basename(file_base), file_ext))
         writer(f_temp)
-        f_out <- str_c(file_base,file_ext,".zip")
+        f_out <- str_c(file_base, file_ext, ".zip")
         if(file.exists(f_out)) {
-            message("Removing existing ",f_out)
+            message("Removing existing ", f_out)
             unlink(f_out)
         }
-        status <- zip(f_out,f_temp,flags="-9Xj")
+        status <- zip(f_out, f_temp, flags="-9Xj")
         if (status != 0) {
-            message("zip ",f_out," failed")
+            message("zip ", f_out, " failed")
         }
         unlink(f_temp)
     }
 
     if (file.exists(f_out)) {
-        message("Saved ",f_out)
+        message("Saved ", f_out)
     } else {
-        message("Unable to save ",f_out)
+        message("Unable to save ", f_out)
     }
 }
 
 #' Output data files for dfr-browser
-#'
-#' Transform modeling results into a format suitable for use by
-#' \url{http://agoldst.github.io/dfr-browser}{dfr-browser}, the
-#' web-browser based model browser. Supply either data frames of the
-#' kind returned by \code{\link{model_documents}} or the names of files
-#' of the kind saved by \code{\link{output_model}}. 
-#'
-#' This routine reports on its progress. By default, it saves zipped
-#' versions of the document-topics matrix and metadata files;
-#' dfr-browser supports client-side unzipping. This function compresses
-#' files using R's \code{\link{zip}} command. If that fails, set
-#' \code{zipped=F} (and, if you wish, zip the files using another
-#' program).
-#'
+#' 
+#' Transform and save modeling results in a format suitable for use by 
+#' \url{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser
+#' based model browser.
+#' 
+#' This routine reports on its progress. By default, it saves zipped versions of
+#' the document-topics matrix and metadata files; dfr-browser supports
+#' client-side unzipping. This function compresses files using R's
+#' \code{\link{zip}} command. If that fails, set \code{zipped=F} (and, if you
+#' wish, zip the files using another program).
+#' 
+#' @param m \code{dfr_lda} object from \code{\link{train_model}} or 
+#'   \code{\link{load_dfr_lda}}
 #' @param out_dir directory for output data files
-#' @param metadata either a dataframe with metadata from 
-#' \code{\link{read_metadata}} or the name of file with the DfR metadata
-#' @param keys either the result of \code{\link{weighted_keys_frame}} or the 
-#' name of a CSV file.
-#' @param doc_topics either dataframe with documents in rows, topic weights in 
-#' columns, and a final \code{id} column with JSTOR document id's, or the name 
-#' of a CSV file.
-#' @param topic_scaled either a dataframe with 2D coordinates for each topic
-#' or the name of a file with such coordinates. Calculate from the topic-word 
-#' matrix using \code{\link{topic_scaled_2d}}
 #' @param zipped should the larger data files be zipped?
-#'
+#' @param n_top_words how many top words per topic to save?
+#'   
 #' @examples
-#'
+#' 
 #' \dontrun{
-#' m <- model_documents("citations.CSV","wordcounts","stoplist.txt",50)
-#' export_browser_data("data",
-#'      m$metadata,
-#'      m$wkf,
-#'      m$doc_topics,
-#'      topic_scaled_2d(m$trainer))
+#' m <- model_documents("citations.CSV", "wordcounts", "stoplist.txt",
+#'                      n_topics=40)
+#' export_browser_data(m, out_dir="data")
 #' }
-#'      
+#' 
+#' @seealso \code{\link{model_documents}} \code{\link{topic_scaled_2d}}
+#' 
 #' @export
-#'
-#' @seealso
-#' \code{\link{model_documents}}
-#' \code{\link{topic_scaled_2d}}
-export_browser_data <- function(
-        out_dir="data",
-        metadata=file.path(out_dir,"citations.CSV"),
-        keys=file.path(out_dir,"keys.csv"),
-        doc_topics=file.path(out_dir,"doc_topics.csv"),
-        topic_scaled=file.path(out_dir,"topic_scaled.csv"),
-        zipped=T) {
-                         
+export_browser_data <- function (m, out_dir="data", zipped=T,
+                                 n_top_words=50) {
+    if (!require("jsonlite")) {
+        stop("jsonlite package required for browser export. Install from CRAN.")
+    }
+    library("Matrix")
+
     if(!file.exists(out_dir)) {
         dir.create(out_dir)
     }
 
-    if(is.character(keys)) {
-        if(!file.exists(keys)) {
-            warning("Keys file '",keys,"' not found.")
-        } else {
-            keys_frame <- read.csv(keys,as.is=T)
-        }
+    keys <- top_words(m, n_top_words)
+    if (!is.null(keys)) {
+        tw <- list(
+            alpha=hyperparameters(m)$alpha,
+            words=matrix(keys$word, nrow=n_topics(m), byrow=T),
+            weights=matrix(keys$weight, nrow=n_topics(m), byrow=T)
+        )
+
+        tw_file <- file.path(out_dir, "tw.json")
+        writeLines(toJSON(tw), tw_file)
+        message("Wrote ", tw_file)
     } else {
-        keys_frame <- keys
+        warning("Unable to write ", tw_file)
     }
 
-    if(is.data.frame(keys_frame)) {
-        tw <- ddply(keys_frame,.(topic),
-                    summarize,
-                    words=str_c(word[order(weight,decreasing=T)],
-                                collapse='","'),
-                    weights=str_c(sort(weight,decreasing=T),collapse=","),
-                    alpha=unique(alpha))
-        tw$words <- str_c('"',tw$words,'"')
-        tw <- tw[order(tw$topic),]
-        json <- str_c('{"alpha":[',
-                            str_c(tw$alpha,collapse=","),
-                            '],"tw":[')
 
-        json <- str_c(json,
-                      str_c('{"words":[',
-                            tw$words,
-                            '],"weights":[',
-                            tw$weights,
-                            ']}',
-                            collapse=","),
-                      ']}')
-
-        tw_file <- file.path(out_dir,"tw.json")
-        writeLines(json,tw_file)
-        message("Wrote ",tw_file)
-    }
-    else {
-        warning("Unable to create topic-words file.")
-    }
-
-    if(is.character(doc_topics)) {
-        if(!file.exists(doc_topics)) {
-            warning("Doc-topics file '",doc_topics,"' not found.")
-        } else {
-            dt_frame <- read.csv(doc_topics,as.is=T)
-        }
-    } else {
-        dt_frame <- doc_topics
-    }
-
-    if(is.data.frame(dt_frame)) {
-
-        ids <- dt_frame$id
-        dtm <- Matrix(doc_topics_matrix(dt_frame),sparse=T)
-
+    dtm <- Matrix(doc_topics(m), sparse=T)
         # could compress much more aggressively considering that weights are 
         # integers, so could be stored as binary data rather than ASCII
 
-        json <- str_c('{"i":[',
-                      str_c(dtm@i,collapse=","),
-                      '],"p":[',
-                      str_c(dtm@p,collapse=","),
-                      '],"x":[',
-                      str_c(dtm@x,collapse=","),
-                      ']}')
-        write_zip(function (f) { writeLines(json,f) },
-                  file.path(out_dir,"dt"),".json",no_zip=!zipped)
-    }
-    else {
-        warning("Unable to write doc-topics file.");
-    }
+    dtm_json <- toJSON(list(i=dtm@i, p=dtm@p, x=dtm@x))
+    write_zip(function (f) { writeLines(dtm_json, f) },
+              file.path(out_dir, "dt"), ".json", no_zip=!zipped)
 
-    if(is.character(metadata)) {
-        if(!file.exists(metadata)) {
-            warning("Metadata file '",metadata,"' not found.")
-        } else {
-            md_frame <- read_metadata(metadata)
-        }
+    md_frame <- metadata(m) %>%
+        select(-publisher, -reviewed.work, -doi) %>%
+        mutate(author=str_c(author, collapse="\t"))
+
+    write_zip(function (f) {
+        write.table(md_frame,f,
+                    quote=T, sep=",",
+                    col.names=F, row.names=F,
+                    # d3.csv.* expects RFC 4180 compliance
+                    qmethod="double")},
+                file.path(out_dir, "meta"),
+                ".csv", no_zip=!zipped)
+
+    if (!is.null(topic_words(m))) {
+        write.table(topic_scaled_2d(m), file.path(out_dir, "topic_scaled.csv"),
+                    quote=F, sep=",", row.names=F, col.names=F)
     } else {
-        md_frame <- metadata
-    }
-
-    if(is.data.frame(md_frame) && length(md_frame) > 0
-       && nrow(md_frame) > 0 && exists("ids")) {
-        i_md <- match(ids,md_frame$id)
-        md_frame <- md_frame[i_md,]
-
-        # throw out unneeded columns [doi === id]
-        drops <- match(c("publisher","reviewed.work","doi"),names(md_frame))
-        md_frame <- md_frame[,-drops]
-
-        write_zip(function (f) {
-            write.table(md_frame,f,
-                        quote=T,sep=",",
-                        col.names=F,row.names=F,
-                        # d3.csv.* expects RFC 4180 compliance
-                        qmethod="double")},
-                    file.path(out_dir,"meta"),
-                    ".csv",no_zip=!zipped)
-    }
-    else {
-        warning("Unable to write metadata.")
-    }
-
-    if(is.character(topic_scaled)) {
-        if(!file.exists(topic_scaled)) {
-            warning("Scaled coordinates file '",topic_scaled,"' not found.")
-        } else {
-            scaled_coords <- read.csv(topic_scaled,header=F)
-        }
-    } else {
-        scaled_coords <- topic_scaled
-    }
-
-    if(is.data.frame(scaled_coords) || is.matrix(scaled_coords)) {
-        write.table(scaled_coords,file.path(out_dir,"topic_scaled.csv"),
-                    quote=F,sep=",",row.names=F,col.names=F)
-    } else {
-        message("Unable to write scaled topic coordinates.")
+        warning(
+"Topic-word matrix unavailable, so scaled coordinates have not been written."
+        )
     }
 
     message("Checking for info.json file...")
-    info_file <- file.path(out_dir,"info.json")
+    info_file <- file.path(out_dir, "info.json")
     if(file.exists(info_file)) {
-        message(info_file," ok")
+        message(info_file, " ok")
     }
     else {
         writeLines(
@@ -213,8 +122,8 @@ export_browser_data <- function(
     "meta_info": "<h2><\\/h2>",
     "VIS": { "overview_words": 15 }
 }'
-            ,info_file)
-        message(info_file," was missing. A stub file has been created.")
+            , info_file)
+        message(info_file, " was missing. A stub file has been created.")
     }
-
 }
+
