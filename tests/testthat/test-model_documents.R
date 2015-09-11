@@ -50,42 +50,6 @@ test_that("Modeling on some sample data works", {
 
     expect_equal(vocabulary(m)[which.max(tw[1, ])], keys$word[1])
 
-    # check that file output creates all the expected files
-    out_dir <- tempdir()
-    if(!file.exists(out_dir)) {
-        dir.create(out_dir)
-    }
-
-    out_files <- file.path(out_dir,c(
-        "doc_topics.csv",
-        "topic_words.csv",
-        "vocab.txt",
-        "params.txt",
-        "top_words.csv",
-        "mallet_state.gz",
-        "diagnostics.xml",
-        "doc_ids.txt",
-        "instances.mallet",
-        "topic_scaled.csv"))
-
-    clear_files <- function (fs) {
-        for(f in fs) {
-            if (file.exists(f)) {
-                unlink(f)
-            }
-        }
-    }
-
-    clear_files(out_files)
-
-    write_dfr_lda(m, out_dir, save_instances=T, save_scaled=T)
-
-    for (f in out_files) {
-        expect_true(file.exists(f),
-                    info=paste("Check creation of ", f))
-    }
-
-    clear_files(out_files)
 }) 
 
 test_that("Convenience function model_dfr_documents completes", {

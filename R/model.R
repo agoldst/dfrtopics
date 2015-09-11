@@ -59,7 +59,7 @@ model_dfr_documents <- function(
 #' 
 #' \item{\code{topic_words.csv}}{unnormalized topic-word matrix, CSV format}
 #' 
-#' \item{\code{vocab.txt}}{list of words (same order as columns of topic-word
+#' \item{\code{vocabulary.txt}}{list of words (same order as columns of topic-word
 #' matrix), one per line}
 #' 
 #' \item{\code{params.txt}}{Various model parameters, including hyperparameters}
@@ -89,10 +89,9 @@ model_dfr_documents <- function(
 #' @param output_dir where to save all the output files.
 #'
 #' @param save_instances if TRUE, extract the instance list from the trainer
-#'   object and save it to \code{instances.mallet}; if FALSE (the default),
-#'   don't
+#'   object and save it to \code{instances.mallet}
 #'   
-#' @param save_scaled if TRUE (the default), write a file of 2D coordinates for
+#' @param save_scaled if TRUE write a file of 2D coordinates for
 #'   the topics
 #'   
 #' @export
@@ -100,7 +99,7 @@ model_dfr_documents <- function(
 write_dfr_lda <- function(m, output_dir=".",
                           n_top_words=50,
                           save_instances=F,
-                          save_scaled=T) {
+                          save_scaled=F) {
     if(!file.exists(output_dir)) {
         message("Creating output directory ",output_dir)
         dir.create(output_dir)
@@ -110,7 +109,7 @@ write_dfr_lda <- function(m, output_dir=".",
     write_matrix_csv(topic_words(m), tw_f)
     message("Wrote ",tw_f)
 
-    vocab_f <- file.path(output_dir, "vocab.txt")
+    vocab_f <- file.path(output_dir, "vocabulary.txt")
     writeLines(vocabulary(m), vocab_f)
     message("Wrote ",vocab_f)
 
@@ -118,7 +117,7 @@ write_dfr_lda <- function(m, output_dir=".",
     hyper <- hyperparameters(m)
 
     params_f <- file.path(output_dir, "params.txt")
-    dput(list(params, hyper), params_f)
+    dput(list(params=params, hyper=hyper), params_f)
     message("Wrote ", params_f)
 
     keys_f <- file.path(output_dir, "top_words.csv")
@@ -128,7 +127,7 @@ write_dfr_lda <- function(m, output_dir=".",
 
     dt_f <- file.path(output_dir,"doc_topics.csv")
     write.table(doc_topics(m), dt_f,
-                quote=F, sep=",", row.names=F, col.names=T)
+                quote=F, sep=",", row.names=F, col.names=F)
     message("Wrote ", dt_f)
 
     state_f <- file.path(output_dir, "mallet_state.gz")
@@ -500,7 +499,7 @@ vocabulary.dfr_lda <- function (x) {
     } else if (!is.null(x$model)) {
         x$model$getVocabulary()
     } else {
-        stop("Neither the model object nor a pre-loaded vocbulary is available.
+        stop("Neither the model object nor a pre-loaded vocabulary is available.
              To load the latter, use vocabulary(x) <- readLines(...)")
     }
 }
@@ -592,7 +591,7 @@ top_words.dfr_lda <- function (x, n=NULL, weighting=NULL) {
             result <- x$top_words
         } else if (nrow(x$top_words) >= n * K) {
             i <- rep(seq(n), times=K) +
-                rep(seq(0, nrow(x$top_words) / K * (K - 1), by=K), each=n)
+                rep(seq(0, nrow(x$top_words) / n * (n - 1), by=n), each=K)
             result <- x$top_words[i, ]
         }
     }
@@ -607,13 +606,13 @@ top_words.dfr_lda <- function (x, n=NULL, weighting=NULL) {
                 tw <- weighting(tw)
             }
             ij <- top_n_row(tw, n)
-            result <- data_frame(
-                topic=ij[ , 1],
-                word=vocabulary(x)[ij[ , 2]],
-                weight=tw[ij]
-            )
+            result <- data_frame_(list(
+                topic=~ ij[ , 1],
+                word=~ vocabulary(x)[ij[ , 2]],
+                weight=~ tw[ij]
+            ))
         } else {
-            stop(
+            warning(
 "The model object is not available, and the pre-loaded list of top words is 
 either missing or too short.  To load the latter, use
     top_words(x) <- read.csv(...)"
@@ -834,7 +833,7 @@ load_dfr_lda <- function(
         params_file=NULL) {
 
     if (!is.null(top_words_file)) {
-        top_w <- read.csv(top_words_file, as.is=T)
+        top_w <- tbl_df(read.csv(top_words_file, as.is=T))
     } else {
         top_w <- NULL
     }
