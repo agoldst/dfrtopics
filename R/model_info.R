@@ -1,211 +1,141 @@
 # Functions for extracting basic information about the model
 
-#' Get the "top" words in a topic
-#'
-#' Extracts the most salient words from the weighted key-words frame.
+#' Quick shorthands for topics
 #' 
-#' The "top" words are those with the maximum weightings for the
-#' topic in \code{keys}. In addition to raw ranking (the default for
-#' \code{\link{weighted_keys_frame}}, consider the "salience" score
-#' calculated by \code{\link{topic_word_scores}}.  
-#'
-#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
-#' @param topic the topic number (one-based). Vectorized in topics. By default, 
-#' all topics are used.
-#' @param n the number of words to take. 
-#'
-#' @return a character matrix with the top words in rows and topics in columns. 
-#' The rownames give the topic numbers (as strings).
-#'
-#' @seealso
-#' \code{\link{topic_name}},
-#' \code{\link{topic_names}},
-#' \code{\link{topic_labeller}},
-#' \code{\link{weighted_keys_frame}}
+#' These "labels" simply name each topic by its 1-indexed number and the top
+#' \code{n} words by weight.
 #' 
+#' @param m \code{dfr_lda} object
+#' @param n number of words to use in label
+#'   
+#' @return a character vector, one label for each topic
+#'   
 #' @export
-#'
-topic_top_words <- function(keys,topic=keys$topic,n=4) {
-    daply(keys[keys$topic %in% topic,],"topic",
-          function (d) {
-            d$word[order(d$weight,decreasing=T)[1:n]]
-          })
+topic_labels <- function (m, n=8) {
+    top_words(m, n) %>%
+        group_by(topic) %>%
+        slice(1:n) %>%
+        summarize(label=str_c(word, collapse=" ")) %>%
+        ungroup() %>%
+        transmute(label=str_c(topic, label)) %>%
+        unlist()
 }
 
-#' Get a label for a topic
-#'
-#' Returns a label for a topic based on the most prominent words
-#'
-#' @param topic the topic number (one-based)
-#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
-#' @param fmt \code{\link[base]{sprintf}} format string with one slot 
-#' for the topic number and one for a string
-#' @param ... passed on to \code{\link{topic_top_words}}: for example, 
-#' \code{n}.
-#' @return a string
-#'
-#' @seealso
-#' \code{\link{topic_top_words}},
-#' \code{\link{weighted_keys_frame}}
+#' Top-ranked documents in topics
 #' 
-#' @export
-#'
-topic_name <- function(keys,topic=unique(keys$topic),
-                       fmt="%03d %s",...) {
-    words <- topic_top_words(keys,topic,...)
-
-    if(length(unique(topic)) > 1) {
-        words_str <- apply(words,1,paste,collapse=" ")
-    } else {
-        words_str <- paste(words,collapse=" ")
-    }
-
-    sprintf(fmt,topic,words_str)
-}
-
-#' Get labels for many topics
-#'
-#' Returns labels for the specified topics. Deprecated: use topic_name (which
-#' is vectorized).
-#'
-#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
-#' @param topics which topics to get labels for (all, by default)
-#' @param name_format \code{\link[base]{sprintf}} format string with one slot for the 
-#" topic and one for a string
-#' @param ... passed on to \code{\link{topic_name}}: for example, 
-#' \code{n,threshold}.
-#' @return a character vector of labels
-#'
-#' @seealso
-#' \code{\link{topic_name}},
-#' \code{\link{topic_top_words}},
-#' \code{\link{weighted_keys_frame}}
+#' Extracts a data frame of documents scoring high in each topic. Documents are 
+#' represented as numeric indices. The scoring is done on the basis of the 
+#' document-topic matrix, but here some care is needed in deciding about cases
+#' in which a document has more of its words assigned to a given topic but a
+#' smaller proportion of that topic than some other, shorter document. By
+#' default all documents are normalized to length 1 before ranking here.
 #' 
-#' @export
-#'
-topic_names <- function(keys,topics=unique(keys$topic),name_format="%03d %s",...) {
-    topic_name(keys,topics,name_format,...)
-}
-
-#' Get a function to label topics
-#'
-#' Convenience wrapper for currying \code{\link{topic_name}} to give a
-#' function of a single argument, to be used in conjunction with some
-#' plotting functions. Can also be spelled \code{\link{topic_labeler}}.  
-#'
-#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
-#' @param ... passed on to \code{\link{topic_name}}
-#'
-#' @return a function of a single variable, mapping topic numbers to labels
-#'
-#' @seealso
-#' \code{\link{topic_name}},
-#' \code{\link{topic_top_words}},
-#' \code{\link{weighted_keys_frame}},
-#' \code{\link{topic_yearly_lineplot}},
-#' \code{\link{topic_yearly_barplot}},
-#' \code{\link{topic_dist_plot}}
+#' Note also that a topic may reach its maximum proportion in a document even if
+#' that document has a yet larger proportion of another topic. To adjust the
+#' scoring, pass a function to transform the document-topic matrix in the
+#' \code{weighting} parameter. If you wish to use raw weights rather than
+#' proportions to rank documents, set \code{weighting=identity}. Raw weights
+#' give longer documents an unfair advantage, whereas proportions often give
+#' shorter documents an advantage (because short documents tend to be dominated
+#' by single topics in LDA).
 #' 
-#' @export
-#'
-topic_labeller <- function(keys,...) {
-    function (topic) { topic_name(keys=keys,topic,...) }
-}
-
-#' Get a function to label topics
-#'
-#' Convenience wrapper for currying \code{\link{topic_name}} to give a
-#' function of a single argument, to be used in conjunction with some
-#' plotting functions. Can also be spelled \code{\link{topic_labeller}}.  
-#'
-#' @param keys the weighted key-word frame from \code{\link{weighted_keys_frame}}
-#' @param ... passed on to \code{\link{topic_name}}
-#'
-#' @return a function of a single variable, mapping topic numbers to labels
-#'
-#' @seealso
-#' \code{\link{topic_name}},
-#' \code{\link{topic_top_words}},
-#' \code{\link{weighted_keys_frame}},
-#' \code{\link{topic_yearly_lineplot}},
-#' \code{\link{topic_yearly_barplot}},
-#' \code{\link{topic_dist_plot}}
+#' TODO: alternative scoring methods.
 #' 
-#' @export
-#'
-topic_labeler <- topic_labeller
-
-#' Get the "top" documents for a topic
-#'
-#' Constructs a dataframe with the id's and weights with the "top" documents for a topic.
-#'
-#' @param topic The topic in question
-#' @param doc_topics matrix with documents in rows and topic weights in columns
-#' @param id_map character vector mapping rows of \code{doc_topic} to JSTOR doc id's: with 
-#' the \code{doc_topics_frame}, simply use the \code{id} column
+#' @param m \code{dfr_lda} object
 #' @param n number of top documents to extract
-#' @param method the notion of a "top" document is not well-specified. Currently this 
-#' function knows only two simple methods: \describe{
-#'      \item{\code{"raw"}}{maximum scores in the topic-column of the 
-#' \code{doc_topic}}
-#'      \item{\code{"max_frac"}}{maximum when document-topic scores are normalized to sum 
-#' to 1. Note that a topic may reach its maximum proportion in a document and yet that 
-#' document may yet have a larger proportion of another topic.}}
-#' @return a data frame with \code{n} rows ordered from weightiest to least weighty, and 
-#' two columns: \code{id} and \code{weight}. The id's can be passed to, e.g. 
-#' \code{\link{cite_articles}}.
-#'
-#' @seealso
-#' \code{\link{doc_topics_matrix}},
-#' \code{\link{doc_topics_frame}},
-#' \code{\link{cite_articles}}
-#'
-#' @export
-#'
-top_documents <- function(topic,doc_topics,id_map,n=5,method="raw") {
-    if(method=="raw") {
-        doc_scores <- doc_topics[,topic]
-    } else if(method=="max_frac") {
-        doc_scores <- doc_topics[,topic] / rowSums(doc_topics)
-    } else {
-        stop("Unknown method.")
-    }
-
-    indices <- order(doc_scores,decreasing=T)[1:n]
-    
-    ids <- id_map[indices]
-    wts <- doc_scores[indices]
-
-    data.frame(id=ids,weight=wts)
-}
-
-#' Get top topics for a document
-#'
-#' This function extracts the most salient topics for a document from a document-topic 
-#' matrix.
-#'
-#' The result means different things, depending on whether the matrix is
-#' normalized per topic. If not, one gets the topics that
-#' have been assigned the largest number of words in a document. But
-#' if of the matrix is column-normalized, then one gets the topics for which the
-#' document is comparatively most prominent within that topic.
-#'
-#' @param id a JSTOR document ID, matched against \code{id_map}
-#' @param doc_topics a matrix with documents in rows and topic scores in columns
-#' @param id_map mapping from rows of \code{doc_topics} to id's
-#' @param n number of topics to extract
-#'
-#' @return a dataframe with \code{n} rows and two columns, \code{topic} and \code{weight}.
-#'
-#' @seealso
-#' \code{\link{doc_topics_matrix}},
-#' \code{\link{doc_topics_frame}}
+#' @param weighting a function to transform the document-topic matrix. By
+#'   default \code{\link{dt_smooth_normalize}(m)}, a normalized weighting
+#'   function
+#' @return a data frame with three columns, \code{topic}, \code{doc}, the
+#'   numerical index of the document in \code{\link{doc_ids}(m)}, and
+#'   \code{weight}, the weight used in ranking (topic proportion, raw score,
+#'   ...)
+#'   
+#' @seealso \code{\link{doc_topics}}, \code{\link{dt_smooth_normalize}}
+#' 
+#' @examples
+#' \dontrun{
+#' # obtain citations for 3 documents with highest proportions of topic 4
+#' top_docs(m, 3) %>%
+#'     filter(topic == 4) %>%
+#'     select(-topic) %>%
+#'     mutate(citation=cite_articles(metadata(m)[doc, ]))
+#' }
 #' 
 #' @export
-#'
-top_topics <- function(id,doc_topics,id_map,n=5) {
-    i <- match(id,id_map)
-    indices <- order(doc_topics[i,],decreasing=T)[1:n]
+#' 
+top_docs <- function (m, n, weighting=dt_smooth_normalize(m)) {
+    dtm <- weighting(doc_topics(m))
 
-    data.frame(topic=indices,weight=doc_topics[i,indices])
+    ij <- top_n_col(dtm, n) 
+    data_frame(topic=ij[ , 2],
+               doc=ij[ , 1],
+               weight=dtm[ij])
+}
+
+#' Top-ranked topics for documents
+#' 
+#' This function extracts the most salient topics for all documents from the
+#' document-topic matrix.
+#' 
+#' Here as elsewhere "saliency" can be variously defined: though the easiest
+#' choice is to choose the topic which captures the largest proportion of a
+#' document, and that is the default, we might want to penalize topics which are
+#' widespread across the whole corpus. TODO: actually implement the alternative
+#' weighting.
+#' 
+#' @param m \code{dfr_lda} object
+#' @param n number of top topics to extract
+#' @param weighting a function to transform the document-topic matrix. By
+#'   default, the topic proportions are used (same rank as raw weights)
+#' @return a data frame with three columns, \code{doc}, the numerical index of
+#'   the document in \code{\link{doc_ids}(m)}, \code{topic}, and \code{weight},
+#'   the weight used in ranking (topic proportion, by default)
+#'   
+#' @return a dataframe with \code{n} rows and two columns, \code{topic} and
+#'   \code{weight}.
+#'   
+#' @seealso \code{\link{doc_topics}}
+#' 
+#' @export
+#' 
+docs_top_topics <- function (m, n, weighting=dt_smooth_normalize(m)) {
+    dtm <- weighting(doc_topics(m))
+
+    ij <- top_n_row(dtm, n)
+    data_frame(doc=ij[ , 1],
+               topic=ij[ , 2],
+               weight=dtm[ij])
+}
+
+#' Top-ranked topics for documents
+#' 
+#' This function extracts the most salient topics for all words in the topic- 
+#' word matrix (which must be available).
+#' 
+#' Here as elsewhere "saliency" can be variously defined: the easiest choice is
+#' to choose the topic which captures the largest proportion of a word's usage,
+#' and that is the default. TODO: actually implement the alternative weighting.
+#' 
+#' @param m \code{dfr_lda} object
+#' @param n number of top topics to extract
+#' @param weighting a function to transform the topic-word matrix. By default,
+#'   the topic proportions are used (same rank as raw weights)
+#' @return a data frame with three columns, \code{word}, \code{topic}, , and
+#'   \code{weight}, the weight used in ranking (topic proportion, by default)
+#'   
+#' @return a dataframe with \code{n} rows and two columns, \code{topic} and
+#'   \code{weight}.
+#'   
+#' @seealso \code{\link{topic_words}}
+#' 
+#' @export
+#' 
+words_top_topics <- function (m, n, weighting=tw_smooth_normalize(m)) {
+    tw <- weighting(topic_words(m))
+
+    ij <- top_n_col(dtm, n) 
+    data_frame(word=vocabulary(m)(ij[ , 2]),
+               topic=ij[ , 1],
+               weight=tw[ij])
 }

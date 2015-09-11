@@ -27,7 +27,7 @@
 #'   
 #' @return a \code{\link{dfr_lda}} object holding the results
 #'   
-#' @seealso \code{\link{read_dfr_metadata}}, \code{\link{read_dfr_wordcounts}}, 
+#' @seealso \code{\link{read_dfr_metadata}}, \code{\link{read_wordcounts}}, 
 #' \code{\link{make_instances}}, \code{\link{train_model}}, 
 #' \code{\link{output_model}}
 #' @examples
@@ -43,7 +43,7 @@ model_dfr_documents <- function(
         stoplist_file=file.path(path.package("dfrtopics"),
                                 "stoplist", "stoplist.txt"),
         ...)  {
-    result <- read_dfr(list.files(wordcounts_dirs, full.names=T)) %>%
+    result <- read_wordcounts(list.files(wordcounts_dirs, full.names=T)) %>%
         dfr_docs_frame() %>%
         make_instances(stoplist_file) %>%
         train_model(n_topics, ...)
@@ -316,9 +316,10 @@ n_docs.dfr_lda <- function (x) {
 }
 
 #' Access stored modeling parameters
-#'
-#' Returns a list of modeling parameters (number of iterations, initial hyperparameter values, etc.) used to create the model.
-#'
+#' 
+#' Returns a list of modeling parameters (number of iterations, initial
+#' hyperparameter values, etc.) used to create the model.
+#' 
 #' @export
 modeling_parameters  <- function (x) UseMethod("modeling_parameters")
 
@@ -552,23 +553,24 @@ topic_words.dfr_lda <- function (x) {
 #' Topic key words
 #' 
 #' The most common way to summarize topics is to list their top-weighted words, 
-#' together with their topic weights. Though every topic assigns some
+#' together with their topic weights. Though every topic assigns some 
 #' probability to every term in the whole vocabulary, we often disregard all but
 #' its most frequent terms.
 #' 
-#' The data frame returned by this function supplies no new information not
-#' already present in the topic-word matrix; it is in effect an aggressively
-#' sparse representation of the full topic-word matrix. But it is so commonly
-#' used that it makes more sense to store it on its own. Indeed, when analyzing
-#' model outputs, one will often prefer to load just this data frame and the
+#' The data frame returned by this function supplies no new information not 
+#' already present in the topic-word matrix; it is in effect an aggressively 
+#' sparse representation of the full topic-word matrix. But it is so commonly 
+#' used that it makes more sense to store it on its own. Indeed, when analyzing 
+#' model outputs, one will often prefer to load just this data frame and the 
 #' doc-topics matrix into memory, rather than the full topic-word matrix.
 #' 
 #' @param x a \code{dfr_lda} object
 #' @param n number of top words per topic to return (omit for all available)
-#' @param weighting a function to transform the full topic-word matrix before
-#'   calculating top-ranked words. If NULL, taken to be identity. Other possibilities include
-#'   \code{\link{tw_blei_lafferty}} and \code{\link{tw_sievert_shirley}}.
-#' @return a data frame with three columns, \code{topic} (indexed from 1),
+#' @param weighting a function to transform the full topic-word matrix before 
+#'   calculating top-ranked words. If NULL, taken to be identity. Other
+#'   possibilities include \code{\link{tw_blei_lafferty}} and
+#'   \code{\link{tw_sievert_shirley}}.
+#' @return a data frame with three columns, \code{topic} (indexed from 1), 
 #'   \code{word} (character), and \code{weight}
 #'   
 #' @seealso \code{\link{tw_blei_lafferty}}, \code{\link{tw_sievert_shirley}}

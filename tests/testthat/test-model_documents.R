@@ -16,7 +16,7 @@ n_topics <- 12 # topics
 n_top_words <- 10 # key words
 
 test_that("Modeling on some sample data works", {
-    insts <- read_dfr(fs) %>%
+    insts <- read_wordcounts(fs) %>%
         dfr_docs_frame() %>%
         make_instances(stoplist_file)
 

@@ -22,7 +22,7 @@ fake_counts <- data_frame(
 dummy <- tempfile()
 
 test_that("Loading wordcounts files works as expected", {
-    counts <- read_dfr(fs)
+    counts <- read_wordcounts(fs)
 
     n_feats <- sum(sapply(fs, function (f) length(readLines(f)) - 1))
     expect_equal(colnames(counts), c("id", "feature", "weight"))
@@ -33,7 +33,7 @@ test_that("Loading wordcounts files works as expected", {
 
     # now add in a header-only file
     writeLines("WORDCOUNTS,WEIGHT", dummy)
-    counts <- read_dfr(c(fs, dummy))
+    counts <- read_wordcounts(c(fs, dummy))
     expect_equal(nrow(counts), n_feats)
     expect_equal(n_distinct(counts$id), length(fs))
 })
@@ -79,7 +79,7 @@ test_that("Frequency filtering works correctly", {
 
 test_that("Loading a big folder of files completes", {
     ff <- list.files(file.path(data_dir, "wordcounts"), full.names=T)
-    counts <- read_dfr(ff)
+    counts <- read_wordcounts(ff)
     expect_equal(n_distinct(counts$id), length(ff))
 })
 

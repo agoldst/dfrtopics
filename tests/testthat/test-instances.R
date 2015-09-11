@@ -57,7 +57,8 @@ test_that("Instances are made from DfR data successfully", {
     expect_that(length(list.files(file.path(data_dir, "wordcounts"))),
                 equals(nrow(metadata)))
 
-    counts <- read_dfr(Sys.glob(file.path(data_dir, "wordcounts", "*.CSV")))
+    counts <- read_wordcounts(Sys.glob(file.path(data_dir,
+                                                 "wordcounts", "*.CSV")))
     texts <- dfr_docs_frame(counts)
 
     stop_f <- file.path(path.package("dfrtopics"), "stoplist", "stoplist.txt")
