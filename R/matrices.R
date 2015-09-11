@@ -485,28 +485,23 @@ dt_smooth_normalize <- function (x) {
 #' @export
 #' 
 top_n_row <- function (m, n) {
-    # TODO Rcpp
-    j <- integer(nrow(m) * n)
 
-    # TODO ties option (means unpredictable number of results)
-    for (k in 0:(nrow(m) - 1)) {
-        j[seq.int(1 + k * n, (k + 1) * n)] <- order(-m[k + 1, ])[1:n]
-    }
+    # TODO Rcpp
+
+    # apply pastes vectorial arguments back together as columns even when
+    # applying over rows: genius!
+    o <- apply(m, 1, order, decreasing=T)
     i <- rep(1:nrow(m), each=n)
 
-    matrix(c(i, j), ncol=2)
+    matrix(c(i, as.numeric(o[1:n, ])), ncol=2)
 }
 
 #' @export
 #' @rdname top_n_row
 top_n_col <- function (m, n) {
     # TODO Rcpp
-    i <- integer(ncol(m) * n)
-
-    for (k in 0:(ncol(m) - 1)) {
-        i[seq.int(1 + k * n, (k + 1) * n)] <- order(-m[ , k + 1])[1:n]
-    }
+    o <- apply(m, 2, order, decreasing=T)
     j <- rep(1:ncol(m), each=n)
 
-    matrix(c(i, j), ncol=2)
+    matrix(c(as.numeric(o[1:n, ]), j), ncol=2)
 }
