@@ -47,7 +47,7 @@ model_dfr_documents <- function(
         dfr_docs_frame() %>%
         make_instances(stoplist_file) %>%
         train_model(n_topics, ...)
-    doc_metadata(result) <- read_dfr_metadata(citations_files)
+    metadata(result) <- read_dfr_metadata(citations_files)
     result
 }
 
@@ -241,7 +241,7 @@ train_model <- function(instances, n_topics,
     trainer$train(as.numeric(n_iters))
     trainer$maximize(as.numeric(n_max_iters))
 
-    dfr_lda(
+    result <- dfr_lda(
         model=trainer,
         params=list(
             n_iters=n_iters,
@@ -256,9 +256,23 @@ train_model <- function(instances, n_topics,
             initial_beta=beta,
             final_ll=trainer$model$modelLogLikelihood()
         ),
-        doc_topics=mallet.doc.topics(trainer, smoothed=F, normalized=F),
-        metadata=metadata
+        doc_topics=mallet.doc.topics(trainer, smoothed=F, normalized=F)
     )
+
+    # assign metadata; issue warning if it doesn't match
+    if (!is.null(metadata)) {
+        if (all(trainer$getDocumentNames() %in% metadata$id)) {
+            metadata(result) <- metadata
+        } else {
+            warning(
+"Supplied metadata does not match instance document ID's.
+Model metadata will be NULL.
+To set metadata later, use metadata(m) <- ..."
+            )
+        }
+    }
+
+    result
 }
 
 #' Access the number of topics in the model
@@ -633,16 +647,16 @@ either missing or too short.  To load the latter, use
 #'   
 #' @export
 #' 
-doc_metadata <- function (x) UseMethod("doc_metadata")
+metadata <- function (x) UseMethod("metadata")
 
 #' @export
-`doc_metadata<-` <- function (x, value) UseMethod("doc_metadata<-")
+`metadata<-` <- function (x, value) UseMethod("metadata<-")
 
 #' @export
-doc_metadata.dfr_lda <- function (x) x$metadata
+metadata.dfr_lda <- function (x) x$metadata
 
 #' @export
-`doc_metadata<-.dfr_lda` <- function (x, value) {
+`metadata<-.dfr_lda` <- function (x, value) {
     ids <- doc_ids(x)
     i <- match(ids, value$id)
     if (any(is.na(i))) {
@@ -857,7 +871,7 @@ load_dfr_lda <- function(
         params=params,
         hyper=hyper)
 
-    doc_metadata(result) <- metadata
+    metadata(result) <- metadata
 
     result
 }
