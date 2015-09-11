@@ -757,7 +757,8 @@ print.dfr_lda <- function (x) {
 "A topic model created by MALLET
 
 Number of topics: ", n_topics(x), "
-Number of documents: ", n_docs(x))
+Number of documents: ", n_docs(x), "
+Number of word types: ", length(vocabulary(x)))
 
     cat(s)
     invisible(x)
@@ -772,6 +773,7 @@ summary.dfr_lda <- function (x) {
     names(lst) <- members
     lst$n_topics <- n_topics(x)
     lst$n_docs <- n_docs(x)
+    lst$n_words <- length(vocabulary(x))
 
     structure(lst, class="dfr_lda_summary")
 }
@@ -786,6 +788,7 @@ print.dfr_lda_summary <- function (x) {
 
 Number of topics: ", x$n_topics, "
 Number of documents: ", x$n_docs, "
+Number of word types: ", x$n_words, "
 
 Locally present:
 
