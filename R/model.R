@@ -604,16 +604,11 @@ top_words.dfr_lda <- function (x, n=NULL, weighting=NULL) {
             if (!is.null(weighting)) {
                 tw <- weighting(tw)
             }
-            js <- list()
-            for (i in 1:nrow(tw)) {
-                js[[i]] <- order(tw[i, ], decreasing=T)[1:n]
-            }
-            js <- do.call(c, js)
-            topics <- rep(1:nrow(tw), each=n)
+            ij <- top_n_row(tw, n)
             result <- data_frame(
-                topic=topics, 
-                word=vocabulary(x)[js],
-                weight=tw[matrix(c(topics, js), ncol=2)]
+                topic=ij[ , 1],
+                word=vocabulary(x)[ij[ , 2]],
+                weight=tw[ij]
             )
         } else {
             stop(

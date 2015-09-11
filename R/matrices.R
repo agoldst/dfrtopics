@@ -439,3 +439,57 @@ dt_smooth_normalize <- function (x) {
         diag(1 / rowSums(m)) %*% m
     }
 }
+
+#' Utility functions for finding top-ranking row/column elements
+#' 
+#' One often wants to know which are the largest n elements in each of the rows
+#' or columns of a matrix. These functions extract the indices of these elements
+#' (using naive ranking).
+#' 
+#' @param m matrix
+#' @param n number of elements to extract. Unlike dplyr's
+#'   \code{\link[dplyr]{top_n}}, no account is taken here of the possibility
+#'   that the \code{n}th element is tied with the \code{(n + 1)}th (etc).
+#'   
+#' @return a \emph{two-column subscript matrix} with row indices in the first
+#'   column and column indices in the second. This can be used as a single
+#'   subscript to the input matrix \code{m} to yield a vector.
+#'   
+#' @examples
+#' m <- matrix(1:9, ncol=3)
+#' ij_row <- top_n_row(m, 2)
+#' ij_col <- top_n_col(m, 2)
+#' 
+#' # note the resulting grouping by rows/cols
+#' m[ij_row]
+#' m[ij_col]
+#' data.frame(rownum=ij_row[ , 1], value=m[ij_row])
+#' 
+#' @export
+#' 
+top_n_row <- function (m, n) {
+    # TODO Rcpp
+    j <- integer(nrow(m) * n)
+
+    # TODO ties option (means unpredictable number of results)
+    for (k in 0:(nrow(m) - 1)) {
+        j[seq.int(1 + k * n, (k + 1) * n)] <- order(-m[k + 1, ])[1:n]
+    }
+    i <- rep(1:nrow(m), each=n)
+
+    matrix(c(i, j), ncol=2)
+}
+
+#' @export
+#' @rdname top_n_row
+top_n_col <- function (m, n) {
+    # TODO Rcpp
+    i <- integer(ncol(m) * n)
+
+    for (k in 0:(ncol(m) - 1)) {
+        i[seq.int(1 + k * n, (k + 1) * n)] <- order(-m[ , k + 1])[1:n]
+    }
+    j <- rep(1:ncol(m), each=n)
+
+    matrix(c(i, j), ncol=2)
+}
