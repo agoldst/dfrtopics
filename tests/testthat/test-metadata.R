@@ -48,9 +48,9 @@ test_that("metadata functions work as expected on new-style TSV", {
 
 test_that("metadata utility functions work correctly", {
     # id-filename conversion
-    expect_that(id_filename("10.2307/3175328"),
+    expect_that(id_dfr_filename("10.2307/3175328"),
                 equals("wordcounts_10.2307_3175328.CSV"))
-    expect_that(filename_id("path/to/wordcounts_10.2307_3175328.CSV"),
+    expect_that(dfr_filename_id("path/to/wordcounts_10.2307_3175328.CSV"),
                 equals("10.2307/3175328"))
 
     # pubdate-Date conversion
