@@ -61,4 +61,7 @@ test_that("Topic info functions work as expected", {
     expect_equal(tt_check$topic, c(5, 8))
     expect_equal(tt_check$weight, c(2654, 1102))
 
+    wtopics <- words_top_topics(m, n=3)
+    expect_equal(wtopics$topic[wtopics$word == "latin"],
+                 c(3, 2, 6))
 })
