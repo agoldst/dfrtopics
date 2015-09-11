@@ -135,8 +135,8 @@ docs_top_topics <- function (m, n, weighting=dt_smooth_normalize(m)) {
 words_top_topics <- function (m, n, weighting=tw_smooth_normalize(m)) {
     tw <- weighting(topic_words(m))
 
-    ij <- top_n_col(dtm, n) 
-    data_frame(word=vocabulary(m)(ij[ , 2]),
+    ij <- top_n_col(tw, n)
+    data_frame(word=vocabulary(m)[ij[ , 2]],
                topic=ij[ , 1],
                weight=tw[ij])
 }
