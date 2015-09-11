@@ -409,7 +409,7 @@ read_matrix_csv <- function (f, what=integer()) {
 #' @export
 #' @rdname read_matrix_csv
 read_Matrix_csv <- function (f, what=integer()) {
-    as(read_Matrix_csv(f, what), "sparseMatrix")
+    as(read_matrix_csv(f, what), "sparseMatrix")
 }
 
 #' Write out a numeric matrix to a text file
