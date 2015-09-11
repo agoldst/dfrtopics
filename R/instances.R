@@ -25,7 +25,7 @@
 #'   
 #' @export
 #' 
-make_instances <- function(docs, stoplist_file=NULL, ...) { 
+make_instances <- function (docs, stoplist_file=NULL, ...) { 
     no_stop <- is.null(stoplist_file)
     if (!no_stop && !file.exists(stoplist_file)) {
         warning("Stoplist file not found. Using an empty stoplist.")
@@ -58,8 +58,8 @@ make_instances <- function(docs, stoplist_file=NULL, ...) {
 #'   
 #' @export
 #' 
-write_instances <- function(instances, filename) {
-  instances$save(new(J("java.io.File"), path.expand(filename)))
+write_instances <- function (instances, filename) {
+    instances$save(new(J("java.io.File"), path.expand(filename)))
 }
 
 #' Read a mallet \code{InstanceList} object from a file
@@ -73,7 +73,7 @@ write_instances <- function(instances, filename) {
 #'   
 #' @export
 #' 
-read_instances <- function(filename) {
+read_instances <- function (filename) {
     J("cc.mallet.types.InstanceList", "load", new(J("java.io.File"),
                                                   path.expand(filename)))
 }
@@ -107,7 +107,7 @@ read_instances <- function(filename) {
 #' 
 #' @export
 #' 
-instances_Matrix <- function(instances, verbose=F) {
+instances_Matrix <- function (instances, verbose=F) {
     library("Matrix")
 
     if(verbose) {
@@ -132,7 +132,7 @@ instances_Matrix <- function(instances, verbose=F) {
     # http://stackoverflow.com/questions/8843700/creating-sparse-matrix-from-a-list-of-sparse-vectors
     log("Tabulating instances into sparseVector list")
 
-    instance_tf <- function(inst) {
+    instance_tf <- function (inst) {
         counts <- tabulate(instance_vector(inst))
         sparseVector(counts, seq_along(counts), length=nwords)
     }
@@ -201,7 +201,7 @@ instances_Matrix <- function(instances, verbose=F) {
 #'   
 #' @export
 #' 
-instances_ids <- function(instances) {
+instances_ids <- function (instances) {
     iter <- instances$iterator()
 
     instance_name <- function() {
@@ -235,7 +235,7 @@ instances_ids <- function(instances) {
 #'   
 #' @export
 #' 
-get_instance <- function(instances, id, id_map=instances_ids(instances)) {
+get_instance <- function (instances, id, id_map=instances_ids(instances)) {
     j <- match(id, id_map) - 1
     .jcall(instances, "Ljava/lang/Object;", "get", as.integer(j))
 }
@@ -262,7 +262,7 @@ get_instance <- function(instances, id, id_map=instances_ids(instances)) {
 #' 
 #' @export
 #' 
-instance_vector <- function(instance) {
+instance_vector <- function (instance) {
     fs <- .jcall(instance, "Ljava/lang/Object;", "getData")
     .jcall(fs, "[I", "getFeatures") + 1
 }
@@ -286,9 +286,9 @@ instance_vector <- function(instance) {
 #'   
 #' @export
 #' 
-instance_text <- function(instance,
-                          vocab=instances_vocabulary(instance),
-                          collapse=" ") {
+instance_text <- function (instance,
+                           vocab=instances_vocabulary(instance),
+                           collapse=" ") {
     paste(vocab[instance_vector(instance)], collapse=collapse)
 }
 
@@ -311,7 +311,7 @@ instance_text <- function(instance,
 #'   
 #' @export
 #' 
-instances_vocabulary <- function(instances, newlines_significant=F) {
+instances_vocabulary <- function (instances, newlines_significant=F) {
 
     if (newlines_significant) {
         # .jevalArray is slow on even a moderate vocabulary.
