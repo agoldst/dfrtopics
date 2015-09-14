@@ -1,5 +1,6 @@
 context("DfR document loading")
 
+library(dplyr)
 data_dir <- file.path(path.package("dfrtopics"),
                       "test-data", "pmla-modphil1905-1915")
 
