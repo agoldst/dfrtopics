@@ -53,8 +53,8 @@ model_dfr_documents <- function(
 }
 
 #' A convenience function for saving all the model outputs at once.
-#' 
-#' Save a series of files with the results of an LDA run.
+#'
+#' Save a series of files with the results of an LDA run. By default this will produce a number of files, including several large ones.
 #' 
 #' The following files are written to \code{output_dir}: \describe{
 #' 
@@ -71,6 +71,8 @@ model_dfr_documents <- function(
 #' \item{\code{doc_topics.csv}}{document-topic matrix CSV}
 #' 
 #' \item{\code{mallet_state.gz}}{MALLET sampling state (a big file)}
+#'
+#' \item{\code{state.csv}}{simplified version of the sampling state}
 #' 
 #' \item{\code{diagnostics.xml}}{MALLET model diagnostics}
 #' 
@@ -94,13 +96,20 @@ model_dfr_documents <- function(
 #'   
 #' @param save_scaled if TRUE write a file of 2D coordinates for
 #'   the topics
+#'
+#' @param save_state if TRUE, save the MALLET sampling state in MALLET's format
+#'
+#' @param simplify_state if TRUE, save the sampling state in a simplified CSV
+#' format (requires python)
 #'   
 #' @export
 #' 
 write_dfr_lda <- function(m, output_dir=".",
                           n_top_words=50,
                           save_instances=F,
-                          save_scaled=F) {
+                          save_scaled=F,
+                          save_state=T,
+                          simplify_state=T) {
     if(!file.exists(output_dir)) {
         message("Creating output directory ",output_dir)
         dir.create(output_dir)
@@ -131,9 +140,25 @@ write_dfr_lda <- function(m, output_dir=".",
                 quote=F, sep=",", row.names=F, col.names=F)
     message("Wrote ", dt_f)
 
-    state_f <- file.path(output_dir, "mallet_state.gz")
-    write_mallet_state(m, state_f)
-    message("Wrote ", state_f)
+    if (save_state) {
+        state_f <- file.path(output_dir, "mallet_state.gz")
+        write_mallet_state(m, state_f)
+        message("Wrote ", state_f)
+    }
+
+    if (simplify_state) {
+        if (!save_state) {
+            state_f <- tempfile()
+            write_mallet_state(m, state_f)
+        }
+        ss_f <- file.path(output_dir, "state.csv")
+        simplify_state(state_f, ss_f)
+        message("Wrote ", ss_f)
+
+        if (!save_state) {
+            unlink(state_f)
+        }
+    }
 
     diag_f <- file.path(output_dir, "diagnostics.xml") 
     write_diagnostics(m, diag_f, n_top_words=n_top_words)
@@ -834,7 +859,8 @@ load_dfr_lda <- function(
         top_words_file=NULL,
         topic_words_file=NULL,
         metadata_file=NULL,
-        params_file=NULL) {
+        params_file=NULL,
+        state_file=NULL) {
 
     if (!is.null(top_words_file)) {
         top_w <- tbl_df(read.csv(top_words_file, as.is=T))
@@ -903,15 +929,18 @@ load_dfr_lda <- function(
 #'   
 #' @export
 load_dfr_lda_directory <- function (f, load_topic_words=F,
+                                    load_sampling_state=F,
                                     metadata_file=NULL) {
     tw <- if (load_topic_words) file.path(f, "topic_words.csv") else NULL
+    ss <- if (load_sampling_state) file.path(f, "state.csv") else NULL
     load_dfr_lda(doc_topics_file=file.path(f, "doc_topics.csv"),
                  doc_ids_file=file.path(f, "doc_ids.txt"),
                  vocab_file=file.path(f, "vocabulary.txt"),
                  top_words_file=file.path(f, "top_words.csv"),
+                 params_file=file.path(f, "params.txt"),
                  topic_words_file=tw,
-                 metadata_file=metadata_file,
-                 params_file=file.path(f, "params.txt"))
+                 state_file=ss,
+                 metadata_file=metadata_file)
 }
                  
 #' Load a model with files from dfrtopics 0.1 (unimplemented)
