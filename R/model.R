@@ -29,7 +29,7 @@
 #'   
 #' @seealso \code{\link{read_dfr_metadata}}, \code{\link{read_wordcounts}}, 
 #' \code{\link{make_instances}}, \code{\link{train_model}}, 
-#' \code{\link{output_model}}
+#' \code{\link{write_dfr_lda}}
 #' @examples
 #' # Make a 50-topic model of documents in the wordcounts folder
 #' \dontrun{model_dfr_documents("citations.CSV", "wordcounts", 50)}
@@ -196,7 +196,7 @@ write_dfr_lda <- function(m, output_dir=".",
 #' @return a \code{dfr_lda} object
 #' 
 #' @seealso \code{\link{make_instances}}, \code{\link{make_instances}}, 
-#'   \code{\link{model_documents}}, \code{\link{output_model}}
+#'   \code{\link{model_documents}}, \code{\link{write_dfr_lda}}
 #'
 #' @export
 #'   
