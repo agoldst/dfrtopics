@@ -240,3 +240,43 @@ tdm_topic <- function (m, topic) {
                          dims=c(length(vocabulary(m)),
                                 n_docs(m)))
 }
+
+#' The topic-document matrix for a specific word
+#'
+#' Extracts a matrix of counts of a word's weight in each topic within each
+#' document from the model's final Gibbs sampling state. (The matrix is quite
+#' sparse.)
+#'
+#' This is useful for studying a word's distribution over topics conditional on
+#' some metadata covariate. It is important to realize that the model does not
+#' distribute the word among topics uniformly across the corpus.
+#'
+#' @return a \code{\link[Matrix]{sparseMatrix}} of \emph{within-document} word
+#'   weights for \code{term} (columns are in \code{doc_ids(m)} order)
+#'
+#' @param m a \code{dfr_lda} object with the sampling state loaded
+#'   \code{\link{read_sampling_state}}. Operated on using
+#'   \code{\link[bigmemory]{mwhich}}.
+#'
+#' @seealso \code{\link{tdm_topic}}, \code{\link{read_sampling_state}},
+#'   \code{\link{dfr_lda}}, \code{\link{load_sampling_state}},
+#'   \code{\link{top_n_row}}, \code{\link{sum_col_groups}}
+#'
+#' @export
+#'
+#'
+#' @export
+topic_docs_term <- function (m, term) {
+    ss <- sampling_state(m)
+    if (is.null(ss)) {
+        stop("The sampling state must be loaded. Use load_sampling_state().")
+    }
+
+    indices <- bigmemory::mwhich(ss, "type", term_ids(m, term), "eq")
+
+    Matrix::sparseMatrix(i=ss[indices, "topic"],
+                         j=ss[indices, "doc"],
+                         x=ss[indices, "count"],
+                         dims=c(n_topics(m),
+                                n_docs(m)))
+}
