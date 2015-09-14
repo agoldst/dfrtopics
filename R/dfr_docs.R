@@ -31,15 +31,15 @@
 #' @export
 #' 
 read_wordcounts <- function (files, filename_id=dfr_filename_id) {
-    result <- data_frame(filename=files) %>%
-        group_by(filename) %>%
-        do({
-            read.csv(.$filename,
-                     strip.white=T, header=T, as.is=T,
-                     colClasses=c("character", "integer"))
-        }) %>%
-        ungroup() %>%
-        mutate(filename=filename_id(filename))
+    result <- data.frame(filename=files, stringsAsFactors=F)
+    result <- dplyr::group_by_(result, "filename")
+    result <- dplyr::do_(result,
+        ~ read.csv(.$filename,
+                   strip.white=TRUE, header=TRUE, as.is=TRUE,
+                   colClasses=c("character", "integer"))
+    )
+    mut <- setNames(list(~ filename_id(filename)), "filename")
+    result <- dplyr::mutate_(dplyr::ungroup(result), .dots=mut)
 
     colnames(result) <- c("id", "feature", "weight")
     result
@@ -61,9 +61,10 @@ read_wordcounts <- function (files, filename_id=dfr_filename_id) {
 #'   
 #' @export
 #' 
-dfr_doc_lengths <- . %>%
-    group_by(id) %>%
-    summarize(length=sum(weight))
+dfr_doc_lengths <- function (counts) {
+    result <- dplyr::group_by_(counts, ~ id)
+    dplyr::summarize_(result, .dots=setNames(list(~ sum(weight)), "length"))
+}
 
 #' Calculate total corpus-wide feature counts
 #' 
@@ -80,9 +81,10 @@ dfr_doc_lengths <- . %>%
 #'   
 #' @export
 #' 
-dfr_feature_totals <- . %>%
-    group_by(feature) %>%
-    summarize(weight=sum(weight))
+dfr_feature_totals <- function (counts) {
+    result <- dplyr::group_by_(counts, ~ feature)
+    dplyr::summarize_(result, .dots=setNames(list(~ sum(weight)), "weight"))
+}
 
 #' Remove stopwords from a wordcounts data frame
 #' 
@@ -94,8 +96,8 @@ dfr_feature_totals <- . %>%
 #' @export
 #' 
 dfr_remove_stopwords <- function (counts, stoplist) {
-    counts %>%
-        filter(!(feature %in% stoplist))
+    flt <- lazyeval::interp(~ !(feature %in% x), x=stoplist)
+    dplyr::filter_(counts, flt)
 }
 
 #' Remove infrequent terms
@@ -116,16 +118,17 @@ dfr_remove_stopwords <- function (counts, stoplist) {
 #' @export
 #' 
 dfr_remove_rare <- function (counts, n) {
-    feature_totals <- counts %>%
-        group_by(feature) %>%
-        summarize(weight=sum(weight)) %>%
-        # min_rank used here, giving a more aggressive filter than dense_rank
-        filter(min_rank(desc(weight)) <= n)
+    feature_totals <- dfr_feature_totals(counts)
+    # min_rank used here, giving a more aggressive filter than dense_rank
+    keep <- feature_totals$feature[
+        min_rank(desc(feature_totals$weight)) <= n
+    ]
 
     # You'd think you could semi_join here, but that will scramble the order of
     # rows, so we'll use the ugly way:
-    counts %>%
-        filter(feature %in% feature_totals$feature)
+
+    flt <- lazyeval::interp(~ feature %in% x, x=keep)
+    dplyr::filter_(counts, flt)
 }
     
 #' Convert long-format feature-counts into documents
@@ -165,11 +168,14 @@ dfr_remove_rare <- function (counts, n) {
 #' @export
 #' 
 dfr_docs_frame <- function (counts, shuffle=F, sep=" ") {
-    counts <- counts %>% group_by(id)
+    counts <- dplyr::group_by_(counts, ~ id)
     if (shuffle) {
-        counts <- counts %>% sample_frac()
+        counts <- dplyr::sample_frac(counts)
     }
-            
-    counts %>% 
-        summarize(text=str_c(rep(feature, times=weight), collapse=sep))
+
+    smz <- setNames(list(
+        ~ stringr::str_c(rep(feature, times=weight), collapse=sep)
+        ),
+        "text")
+    dplyr::summarize_(counts, .dots=smz)
 }
