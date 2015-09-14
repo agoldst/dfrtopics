@@ -1,20 +1,21 @@
 Package: dfrtopics
 Title: Tools for exploring topic models of JSTOR Data for Research outputs
 Description: Tools for exploring topic models of JSTOR Data for Research outputs
-Version: 0.1
+Version: 0.2
 Author: Andrew Goldstone <andrew.goldstone@gmail.com>
 Maintainer: Andrew Goldstone <andrew.goldstone@gmail.com>
-Depends:
+Imports:
     mallet,
+    Matrix,
     stringr,
     dplyr
 Suggests:
-    Matrix,
     ggplot2,
     testthat,
-    knitr,
     bigmemory,
-    XML
+    XML,
+    jsonlite
 SystemRequirements: python
 License: MIT
 LazyData: true
+VignetteBuilder: knitr
