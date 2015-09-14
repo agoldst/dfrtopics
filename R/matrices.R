@@ -83,28 +83,6 @@ topic_series <- function (m, breaks="years") {
     gather_matrix(m_s, col_names=c("topic", "pubdate", "weight"))
 }
 
-
-
-#' Calculate tf*idf scores
-#'
-#' Calculates tf*idf scores from a term-document \code{\link[Matrix]{sparseMatrix}}.  Probably not optimal for speed.
-#'
-#' @param term numeric index into rows of \code{tdm} (can be a vector)
-#' @param doc numeric index into columns of \code{tdm} (can be a vector)
-#' @param tdm term-document \code{\link[Matrix]{sparseMatrix}}
-#'
-#' @seealso
-#' \code{\link{instances_Matrix}}
-#'
-#' @export
-#'
-tf_idf <- function (tdm) {
-    idf <- log(ncol(tdm) / rowSums(tdm != 0))
-    Diagonal(n=nrow(tdm), x=idf) %*% tdm
-}
-
-
-
 #' Normalize columns to sum to one
 #' 
 #' A convenience function for a frequent operation of normalizing the columns of
