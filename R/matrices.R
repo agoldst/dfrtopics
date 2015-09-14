@@ -123,7 +123,9 @@ normalize_cols <- function (m, norm="L1", stopzero=FALSE) {
         stop("The matrix has columns of all zeroes, which cannot be normalized.")
     }
 
-    m %*% dg(1 / norms)
+    result <- m %*% dg(1 / norms)
+    dimnames(result) <- dimnames(m)
+    result
 }
 
 
