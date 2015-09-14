@@ -80,7 +80,9 @@ term_series_matrix <- function (tdm, dates, breaks="years") {
 topic_series <- function (m, breaks="years") {
     tdm <- t(dt_smooth(m)(doc_topics(m)))
     m_s <- term_series_matrix(tdm, metadata(m)$pubdate, breaks)
-    gather_matrix(m_s, col_names=c("topic", "pubdate", "weight"))
+    result <- gather_matrix(m_s, col_names=c("topic", "pubdate", "weight"))
+    result$pubdate <- as.Date(result$pubdate)
+    result
 }
 
 #' Normalize columns to sum to one
@@ -101,18 +103,10 @@ topic_series <- function (m, breaks="years") {
 #' @export
 #' 
 normalize_cols <- function (m, norm="L1", stopzero=FALSE) {
-    if (is(m, "Matrix")) {
-        dg <- function (x) Matrix::Diagonal(x=x)
-        cs <- function (x) Matrix::colSums
-    } else {
-        dg <- diag
-        cs <- colSums
-    }
-
     if (norm == "L1") { 
-        norms <- cs(abs(m))
+        norms <- Matrix::colSums(abs(m))
     } else if (norm == "L2") {
-        norms <- sqrt(cs(m * m))
+        norms <- sqrt(Matrix::colSums(m * m))
     } else {
         stop("norm must be L1 or L2")
     }
@@ -123,11 +117,24 @@ normalize_cols <- function (m, norm="L1", stopzero=FALSE) {
         stop("The matrix has columns of all zeroes, which cannot be normalized.")
     }
 
-    result <- m %*% dg(1 / norms)
+    rescale_cols(m, 1 / norms)
+}
+
+#' Rescale the columns of a matrix
+#'
+#' Just a mnemonic for matrix multiplication.
+#'
+#' @param m matrix or Matrix
+#' @param x vector; \code{m[ , j]} is multiplied by \code{x[j]}.
+#'
+#' @return a matrix of the same dimensions as \code{m}
+#'
+#' @export
+rescale_cols <- function (m, x) {
+    result <- m %*% Matrix::Diagonal(x=x)
     dimnames(result) <- dimnames(m)
     result
 }
-
 
 
 #' Scoring methods for words in topics
@@ -499,7 +506,7 @@ gather_matrix <- function (m, row_values=rownames(m),
         result <- data.frame(
             rkey=rep(row_values, each=ncol(m)),
             ckey=rep(col_values, times=nrow(m)),
-            value=as.numeric(t(m)),
+            value=as.numeric(Matrix::t(m)),
             stringsAsFactors=FALSE
         )
     } else {
