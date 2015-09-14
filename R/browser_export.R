@@ -1,11 +1,12 @@
 write_zip <- function (writer, file_base, file_ext=".json", no_zip=F) {
     if(no_zip) {
-        f_out <- str_c(file_base, file_ext)
+        f_out <- stringr::str_c(file_base, file_ext)
         writer(f_out)
     } else {
-        f_temp <- file.path(tempdir(), str_c(basename(file_base), file_ext))
+        f_temp <- file.path(tempdir(),
+                            stringr::str_c(basename(file_base), file_ext))
         writer(f_temp)
-        f_out <- str_c(file_base, file_ext, ".zip")
+        f_out <- stringr::str_c(file_base, file_ext, ".zip")
         if(file.exists(f_out)) {
             message("Removing existing ", f_out)
             unlink(f_out)
@@ -53,12 +54,11 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=F) {
 #' @seealso \code{\link{model_documents}} \code{\link{topic_scaled_2d}}
 #' 
 #' @export
-export_browser_data <- function (m, out_dir="data", zipped=T,
+export_browser_data <- function (m, out_dir="data", zipped=TRUE,
                                  n_top_words=50) {
-    if (!require("jsonlite")) {
+    if (!requireNamespace("jsonlite", quietly=TRUE)) {
         stop("jsonlite package required for browser export. Install from CRAN.")
     }
-    library("Matrix")
 
     if(!file.exists(out_dir)) {
         dir.create(out_dir)
@@ -73,24 +73,29 @@ export_browser_data <- function (m, out_dir="data", zipped=T,
         )
 
         tw_file <- file.path(out_dir, "tw.json")
-        writeLines(toJSON(tw), tw_file)
+        writeLines(jsonlite::toJSON(tw), tw_file)
         message("Wrote ", tw_file)
     } else {
         warning("Unable to write ", tw_file)
     }
 
 
-    dtm <- Matrix(doc_topics(m), sparse=T)
+    dtm <- Matrix::Matrix(doc_topics(m), sparse=T)
         # could compress much more aggressively considering that weights are 
         # integers, so could be stored as binary data rather than ASCII
 
-    dtm_json <- toJSON(list(i=dtm@i, p=dtm@p, x=dtm@x))
+    dtm_json <- jsonlite::toJSON(list(i=dtm@i, p=dtm@p, x=dtm@x))
     write_zip(function (f) { writeLines(dtm_json, f) },
               file.path(out_dir, "dt"), ".json", no_zip=!zipped)
 
-    md_frame <- metadata(m) %>%
-        select(-publisher, -reviewed.work, -doi) %>%
-        mutate(author=str_c(author, collapse="\t"))
+    md_frame <- metadata(m)
+    drops <- match(c("publisher", "reviewed.work", "doi"),
+                   names(md_frame))
+    md_frame <- md_frame[ , -drops]
+    md_frame$author <- vapply(md_frame$author,
+                              stringr::str_c,
+                              character(1),
+                              collapse="\t")
 
     write_zip(function (f) {
         write.table(md_frame,f,
