@@ -36,44 +36,43 @@
 #'   
 NULL
 
-.onAttach <- function(libname,pkgname) {
-    jheap <- grep("-Xmx\\w+",options("java.parameters"),value=T)
-    heap_ok <- T
+.onAttach <- function (libname, pkgname) {
+    jheap <- grep("-Xmx\\w+", options("java.parameters"), value=TRUE)
+    heap_ok <- TRUE
 
-    if(length(jheap) == 0) {
+    if (length(jheap) == 0) {
         # shouldn't get here since rJava loading should set java.parameters
         # with a default value of "-Xmx512m"
-        packageStartupMessage(
+        message(
             "You are using rJava's default Java heap setting (512MB).")
-        heap_ok <- F
+        heap_ok <- FALSE
     } else {
-        size_str <- substring(jheap,first=5)
-        size_num <- gsub("\\D","",size_str)
-        size_unit <- switch(gsub("\\d","",size_str),
-                            k=2^10,K=2^10,
-                            m=2^20,M=2^20,
-                            g=2^30,G=2^30,
-                            t=2^40,T=2^40)
+        size_str <- substring(jheap, first=5)
+        size_num <- gsub("\\D", "", size_str)
+        size_unit <- switch(gsub("\\d", "", size_str), 
+                            k=2^10, K=2^10, 
+                            m=2^20, M=2^20, 
+                            g=2^30, G=2^30, 
+                            t=2^40, T=2^40)
         jheap_bytes <- as.numeric(size_num) * size_unit
 
         if(is.na(jheap_bytes) | jheap_bytes < 2^31) {
-            packageStartupMessage("Your current Java heap setting is ",
-                                  size_str,".")
-            heap_ok <- F
+            message("Your current Java heap setting is ", size_str, ".")
+            heap_ok <- FALSE
         }
     }
 
-    if(!heap_ok) {
-        packageStartupMessage(
+    if (!heap_ok) {
+        message(
 'I recommend giving Java at least 2GB of heap space. To do this, put the
 following command in your scripts *before* loading this package:
 
     options(java.parameters="-Xmx2g")
 
 If you change this option in this session, you must then detach and
-reload this package, mallet, and rJava. You can also simply restart
-R and then set the option. I apologize for this design flaw in R and
-rJava.'
+reload this package, mallet, and rJava. You can also simply restart R,
+set the option, and then load this package. I apologize for this design
+flaw in R and rJava.' 
         )
     }
 }
