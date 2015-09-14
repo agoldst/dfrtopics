@@ -43,13 +43,12 @@ model_dfr_documents <- function(
         stoplist_file=file.path(path.package("dfrtopics"),
                                 "stoplist", "stoplist.txt"),
         ...)  {
-    result <- read_wordcounts(list.files(wordcounts_dirs, full.names=T)) %>%
-        dfr_docs_frame() %>%
-        make_instances(stoplist_file) %>%
-        train_model(n_topics,
-                    metadata=read_dfr_metadata(citations_files),
-                    ...)
-    result
+    result <- read_wordcounts(list.files(wordcounts_dirs, full.names=T))
+    result <- dfr_docs_frame(result)
+    result <- make_instances(result, stoplist_file)
+    train_model(result, n_topics,
+                metadata=read_dfr_metadata(citations_files),
+                ...)
 }
 
 #' A convenience function for saving all the model outputs at once.
@@ -243,9 +242,10 @@ train_model <- function(instances, n_topics,
     # for integers. So we have to do some coercions to avoid rJava
     # complaints.
 
-    trainer <- MalletLDA(as.numeric(n_topics),
-                         as.numeric(alpha_sum),
-                         as.numeric(beta))
+    trainer <- MalletLDA(
+        as.numeric(n_topics),
+        as.numeric(alpha_sum),
+        as.numeric(beta))
     trainer$model$setNumThreads(as.integer(threads))
     if (!is.null(seed)) {
         trainer$model$setRandomSeed(as.integer(seed))
@@ -438,7 +438,7 @@ instances.dfr_lda <- function (x) {
 #' The expectation throughout \code{dfrtopics} is that we keep unnormalized and
 #' unsmoothed weights as the "raw" form of the model; this is not strictly
 #' correct, it is easier to reason about and to do post-hoc calculations with.
-#' It is up to t user to apply normalization and smoothing where appropriate.
+#' It is up to the user to apply normalization and smoothing where appropriate.
 #' 
 #' @param x a \code{dfr_lda} object
 #' @return a numeric matrix
@@ -540,9 +540,9 @@ vocabulary.dfr_lda <- function (x) {
 #' @return numeric vector of indices into the vocabulary
 #'
 #' @export
+#'
 feature_ids <- function (m, features) match(features, vocabulary(m))
 
-#' @export
 #' The topic-words matrix
 #' 
 #' Extracts the matrix from a \code{dfr_lda} model with topics in rows and word
@@ -792,7 +792,7 @@ dfr_lda <- function (doc_topics=NULL,
 #' @export
 #' @rdname dfr_lda
 print.dfr_lda <- function (x) {
-    s <- str_c(
+    s <- stringr::str_c(
 "A topic model created by MALLET
 
 Number of topics: ", n_topics(x), "
@@ -822,7 +822,7 @@ summary.dfr_lda <- function (x) {
 print.dfr_lda_summary <- function (x) {
     yesno <- function (m) ifelse(x[[m]], "yes", " no")
 
-    s <- str_c(
+    s <- stringr::str_c(
 "A topic model created by MALLET
 
 Number of topics: ", x$n_topics, "
@@ -880,7 +880,6 @@ load_dfr_lda <- function(
     }
 
     if (!is.null(topic_words_file)) {
-        library("Matrix")
         tw <- as(read_matrix_csv(topic_words_file), "sparseMatrix")
     } else {
         tw <- NULL
