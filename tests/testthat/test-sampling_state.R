@@ -7,47 +7,48 @@ test_that("Sampling state manipulation works as expected", {
     data_dir <- file.path(path.package("dfrtopics"),
                           "test-data", "pmla-modphil1905-1915")
 
-    expect_that(file.exists(data_dir), is_true())
-    expect_that(file.exists(file.path(data_dir, "citations.tsv")),
-                is_true())
-
     fs <- list.files(file.path(data_dir, "wordcounts"),
                      full.names=T)[61:120]
 
+    stoplist_file <- file.path(path.package("dfrtopics"), "stoplist",
+                              "stoplist.txt")
     # run a scrap model: we're just doing manipulation here, not worrying
     # about quality
 
-    n <- 8
-    m <- list()
-    m$metadata <- read_metadata(file.path(data_dir, "citations.tsv"))
-    insts <-make_instances(read_dfr_wordcounts(files=fs),
-                           stoplist_file=file.path(path.package("dfrtopics"),
-                                                   "stoplist", "stoplist.txt"))
-    m$trainer <- train_model(insts,
-                             n_topics=n,
-                             n_iters=200,
-                             seed=42,
-                             threads=1, 
-                             alpha_sum=5, beta=0.01, n_hyper_iters=20,
-                             n_burn_in=20,
-                             n_max_iters=10)
-    m$wkf <- weighted_keys_frame(m$trainer)
-    m$doc_topics <- doc_topics_frame(m$trainer)
+    n_topics <- 8
+    insts <- read_wordcounts(fs) %>%
+        dfr_docs_frame() %>%
+        make_instances(stoplist_file)
+
+    m <- train_model(
+        insts,
+        n_topics=n_topics,
+        n_iters=200,
+        threads=1, 
+        alpha_sum=5,
+        beta=0.01,
+        n_hyper_iters=20,
+        n_burn_in=20,
+        seed=42,
+        n_max_iters=10,
+        metadata=read_dfr_metadata(file.path(data_dir, "citations.tsv"))
+    )
+
 
     out_dir <- tempdir()
     if(!file.exists(out_dir)) {
         dir.create(out_dir)
     }
 
-    state_file <- file.path(out_dir,"state.gz")
+    state_file <- file.path(out_dir, "state.gz")
 
     if(file.exists(state_file)) {
         unlink(state_file)
     }
 
-    write_mallet_state(m$trainer, state_file)
+    write_mallet_state(m, state_file)
 
-    expect_that(file.exists(state_file), is_true(),
+    expect_true(file.exists(state_file),
                 info="write_mallet_state() saves a file")
 
     ss_file <- file.path(out_dir, "state_simple.csv")
@@ -58,95 +59,56 @@ test_that("Sampling state manipulation works as expected", {
 
     simplify_state(state_file, ss_file)
 
-    expect_that(file.exists(ss_file), is_true(),
+    expect_true(file.exists(ss_file),
                 info="simplify_state() saves a file")
 
-    ss_frame <- read.csv(ss_file)
+    ss_frame <- read.csv(ss_file, as.is=T)
 
-    expect_that(sum(ss_frame$count),
-                equals(sum(doc_topics_matrix(m$doc_topics))),
-                info="total token counts same in doc topics and ss")
+    expect_equal(sum(ss_frame$count),
+                 sum(doc_topics(m)),
+                 info="total token counts same in doc topics and ss")
 
+    doc_tops <- doc_topics(m)
     # zero-based ss indices, 1-based doc_topics indices
-    expect_that(sum(ss_frame$count[ss_frame$topic == 1]),
-                equals(sum(m$doc_topics[ , 2])),
-                info="topic 1 sum in ss_frame = topic 2 sum in doc tops")
+    expect_equal(sum(ss_frame$count[ss_frame$topic == 1]),
+                 sum(doc_tops[ , 2]),
+                 info="topic 1 sum in ss_frame = topic 2 sum in doc tops")
 
-    if(require(bigmemory)) {
-        ss <- read_simplified_state(ss_file)
-        expect_that(dim(ss), equals(dim(ss_frame)),
-                    info="big.matrix ss same dims as ss_frame")
-
-
-        expect_that(sum(ss_frame$count[ss_frame$topic == 1]),
-                    equals(sum(ss[mwhich(ss, "topic", 2, "eq"), "count"])),
-                    info="topic 1 sum in ss_frame = topic 2 sum in ss")
+    if (require("bigmemory")) {
+        m <- load_sampling_state(m, ss_file)
+        ss <- sampling_state(m)
+        expect_equal(dim(ss), dim(ss_frame),
+                     info="big.matrix ss same dims as ss_frame")
 
 
-        id_map <- m$doc_topics$id
-        vocab <- m$trainer$getVocabulary()
+        expect_equal(sum(ss_frame$count[ss_frame$topic == 1]),
+                     sum(ss[mwhich(ss, "topic", 2, "eq"), "count"]),
+                     info="topic 1 sum in ss_frame = topic 2 sum in ss")
 
-        tytm <- vector("list", n)
-        for(i in 1:n) {
-            tytm[[i]] <- term_year_topic_matrix(i, ss, id_map, vocab,
-                                                m$metadata)
+        tdms <- vector("list", n_topics)
+        for (topic in seq(n_topics)) {
+            mat <- tdm_topic(m, topic)
+            expect_equal(dim(mat),
+                         c(length(vocabulary(m)), n_docs(m)),
+                         info=paste("Dimensions of tdm for topic", topic))
+
+            expect_equal(Matrix::colSums(mat), doc_tops[ , topic],
+                         info=paste(
+"col sums for topic", topic, "match column of doc-topic matrix"
+                         )
+            )
+            tdms[[topic]] <- mat
         }
 
-        yseq <- tytm[[1]]$yseq
-        expect_that(all(sapply(tytm, `[[`, "yseq") == yseq),
-                    is_true(),
-                    info="all tytm have same year sequences")
 
-        years <- pubdate_Date(m$metadata$pubdate[m$metadata$id %in%
-                              filename_id(fs)])
-        years <- sort(unique(strftime(years, "%Y-01-01")))
-        expect_that(yseq, equals(years),
-                    info="tytm yseq matches metadata year sequence")
+        tdm <- Reduce(`+`, tdms)
 
-        expect_that(sum(m$doc_topics[ , 2]),
-                    equals(sum(tytm[[2]]$tym)),
-                    info="sum across all of topic 2 matches tytm[[2]] sum")
-
-        expect_that(sum(ss_frame$count[ss_frame$type == 18]),
-                    equals(sum(sapply(tytm,function(x) { sum(x$tym[19, ]) }))),
-                    info="sum for term 0 matches in ss_frame and tytm's")
-
-        tdtm <- vector("list", n)
-        for(i in 1:n) {
-            tdtm[[i]] <- term_document_topic_matrix(i, ss, id_map, vocab)
-        }
-
-        expect_that(sum(m$doc_topics[ , 2]), 
-                    equals(sum(tdtm[[2]])),
-                    info="sum across all of topic 2 matches tdtm[[2]] sum")
-
-        dtm <- doc_topics_matrix(m$doc_topics)
-
-        # kind of screwy: column sum of tdtm[[i]] gives a vector of document
-        # weights for topic i; this is a plain vector, which sapply
-        # understands as column when it glues together its results into a matrix
-
-        expect_that(all(dtm==sapply(tdtm, Matrix::colSums)),
-                    is_true(),
-                    info="column sums of tdtm's = rows of doc topic matrix")
-
-        yearly_top_words1 <- topic_yearly_top_words(tytm[[1]]$tym,
-                                                    tytm[[1]]$yseq,
-                                                    vocab, n_words=5)
-        expect_that(length(yearly_top_words1), equals(length(yseq)),
-                    info="top words series has an entry for each year")
-
-        new_series <- topic_term_time_series("new", tytm[[1]]$tym, vocab)
-        new_index <- match("new", vocab)
-        expect_that("new", equals(vocab[new_index]))
-        expect_that(sum(new_series),
-                    equals(sum(ss_frame$count[ss_frame$type == new_index - 1
-                               & ss_frame$topic == 0])),
-                    info="sum over time series for 'new' = sum in ss_frame")
+        # check that topic tdm matrices total to the full term-doc matrix
+        expect_equal(tdm, instances_Matrix(instances(m)))
     }
 
-    for (f in c(state_file,ss_file)) {
-        if(file.exists(f)) {
+    for (f in c(state_file, ss_file)) {
+        if (file.exists(f)) {
             unlink(f)
         }
     }
