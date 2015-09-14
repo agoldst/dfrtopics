@@ -1,5 +1,7 @@
 context("MALLET instance lists")
 
+library(dplyr) # for testing
+
 fake_docs <- data_frame(
     id=c("10.2307/123456", "10.2307/654321"),
     text=c("the the the the a a a shall i compare thee to a summers day",
@@ -37,7 +39,7 @@ test_that("Instance TDM generation works as expected", {
     expect_equal(dim(m), c(15, 2))
     term <- match("music", instances_vocabulary(il))
     expect_equal(m[term, 2], 2)
-    expect_equal(colSums(m), instances_lengths(il))
+    expect_equal(Matrix::colSums(m), instances_lengths(il))
 })
 
 
