@@ -89,7 +89,7 @@ read_dfr_citations <- function (filename, strip.white=T, ...) {
     }
 
     result$pubdate <- pubdate_Date(result$pubdate)
-    result$author <- str_split(result$author, author_sep)
+    result$author <- stringr::str_split(result$author, author_sep)
     result$type <- factor(result$type)
     result
 }
@@ -222,14 +222,14 @@ cite_articles <- function (metadata)  {
             if (a == "") {
                 "[Anonymous]"
             } else {
-                str_c(a, collapse=" and ")
+                stringr::str_c(a, collapse=" and ")
             }
         },
         character(1))
 
     dates <- strftime(metadata$pubdate, "%B %Y")
     pp <- gsub("^p?p\\. ", "", metadata$pagerange)
-    result <- str_c(
+    result <- stringr::str_c(
         authors, ', "', metadata$title, '," *',
         metadata$journaltitle, '* ', metadata$volume, ", no. ",
         metadata$issue, " (", dates, "): ", pp, ".",
