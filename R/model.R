@@ -46,8 +46,9 @@ model_dfr_documents <- function(
     result <- read_wordcounts(list.files(wordcounts_dirs, full.names=T)) %>%
         dfr_docs_frame() %>%
         make_instances(stoplist_file) %>%
-        train_model(n_topics, ...)
-    metadata(result) <- read_dfr_metadata(citations_files)
+        train_model(n_topics,
+                    metadata=read_dfr_metadata(citations_files),
+                    ...)
     result
 }
 
@@ -255,20 +256,17 @@ train_model <- function(instances, n_topics,
             initial_beta=beta,
             final_ll=trainer$model$modelLogLikelihood()
         ),
-        doc_topics=mallet.doc.topics(trainer, smoothed=F, normalized=F)
+        doc_topics=mallet.doc.topics(trainer, smoothed=F, normalized=F),
+        metadata=match_metadata(metadata, trainer$getDocumentNames())
     )
 
     # assign metadata; issue warning if it doesn't match
-    if (!is.null(metadata)) {
-        if (all(trainer$getDocumentNames() %in% metadata$id)) {
-            metadata(result) <- metadata
-        } else {
-            warning(
+    if (!is.null(metadata) && is.null(result$metadata)) {
+        warning(
 "Supplied metadata does not match instance document ID's.
 Model metadata will be NULL.
 To set metadata later, use metadata(m) <- ..."
-            )
-        }
+        )
     }
 
     result
@@ -653,13 +651,19 @@ metadata.dfr_lda <- function (x) x$metadata
 
 #' @export
 `metadata<-.dfr_lda` <- function (x, value) {
-    ids <- doc_ids(x)
-    i <- match(ids, value$id)
-    if (any(is.na(i))) {
-        stop("Supplied data frame does not have rows matching all document IDs.")
-    }
-    x$metadata <- value[i, ]
+    x$metadata <- match_metadata(value, doc_ids(x))
     x
+}
+
+# utility function for ensuring metadata rows match and are in same order
+# as doc-topic matrix
+match_metadata <- function (meta, ids) {
+    i <- match(ids, meta$id)
+    if (any(is.na(i))) {
+        NULL
+    } else {
+        meta[i, ]
+    }
 }
 
 #' Retrieve estimated model hyperparameters
@@ -859,18 +863,25 @@ load_dfr_lda <- function(
         params <- NULL
         hyper <- NULL
     }
-        
+
+    if (!is.null(state_file)) {
+        ss <- read_sampling_state(state_file)
+    } else {
+        ss <- NULL
+    }
+
+    ids <- readLines(doc_ids_file)
 
     result <- dfr_lda(
         doc_topics=read_matrix_csv(doc_topics_file),
-        doc_ids=readLines(doc_ids_file),
+        doc_ids=ids,
         vocab=readLines(vocab_file),
         top_words=top_w,
         topic_words=tw,
         params=params,
-        hyper=hyper)
-
-    metadata(result) <- metadata
+        hyper=hyper,
+        state=ss,
+        metadata=match_metadata(metadata, ids))
 
     result
 }
