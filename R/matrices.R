@@ -327,7 +327,7 @@ dt_smooth <- function (x) {
     a <- hyperparameters(x)$alpha
 
     function (m) {
-        m <- m + matrix(rep(a, each=nrow(m)), nrow=nrow(m))
+        m + matrix(rep(a, each=nrow(m)), nrow=nrow(m))
     }
 }
 
