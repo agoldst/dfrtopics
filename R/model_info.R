@@ -12,14 +12,14 @@
 #'   
 #' @export
 topic_labels <- function (m, n=8) {
-    top_words(m, n) %>%
-        group_by(topic) %>%
-        slice(1:n) %>%
-        summarize(label=str_c(word, collapse=" ")) %>%
-        ungroup() %>%
-        transmute(label=str_c(topic, label, sep=" ")) %>%
-        unlist() %>%
-        unname()
+    result <- group_by_(top_words(m, n), ~ topic)
+    slc <- lazyeval::interp(~ seq(x), x=n)
+    result <- slice_(result, .dots=slc)
+    smz <- setNames(list(
+        ~ stringr::str_c(word, collapse=" ")),
+        "label")
+    result <- summarize_(result, .dots=smz)
+    stringr::str_c(result$topic, result$label, sep=" ")
 }
 
 #' Top-ranked documents in topics
@@ -69,9 +69,10 @@ top_docs <- function (m, n, weighting=dt_smooth_normalize(m)) {
     dtm <- weighting(doc_topics(m))
 
     ij <- top_n_col(dtm, n) 
-    data_frame(topic=ij[ , 2],
+    data.frame(topic=ij[ , 2],
                doc=ij[ , 1],
-               weight=dtm[ij])
+               weight=dtm[ij],
+               stringsAsFactors=F)
 }
 
 #' Top-ranked topics for documents
@@ -104,9 +105,10 @@ docs_top_topics <- function (m, n, weighting=dt_smooth_normalize(m)) {
     dtm <- weighting(doc_topics(m))
 
     ij <- top_n_row(dtm, n)
-    data_frame(doc=ij[ , 1],
+    data.frame(doc=ij[ , 1],
                topic=ij[ , 2],
-               weight=dtm[ij])
+               weight=dtm[ij],
+               stringsAsFactors=F)
 }
 
 #' Top-ranked topics for documents
@@ -136,7 +138,8 @@ words_top_topics <- function (m, n, weighting=tw_smooth_normalize(m)) {
     tw <- weighting(topic_words(m))
 
     ij <- top_n_col(tw, n)
-    data_frame(word=vocabulary(m)[ij[ , 2]],
+    data.frame(word=vocabulary(m)[ij[ , 2]],
                topic=ij[ , 1],
-               weight=tw[ij])
+               weight=tw[ij],
+               stringsAsFactors=F)
 }

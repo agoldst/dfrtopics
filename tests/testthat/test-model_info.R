@@ -1,3 +1,5 @@
+context("Model inspection")
+
 test_that("Topic info functions work as expected", {
 
     # construct a dummy trial model. We're not going for quality here,
