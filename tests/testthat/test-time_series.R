@@ -8,7 +8,7 @@ test_that("term_series_matrix works as advertised", {
     dates <- as.Date(c(rep("1925-01-01", 2), "1927-01-01",
                        rep("1928-01-01", 2)))
 
-    expect_equal(term_series_matrix(tdm, dates),
+    expect_equal(as.matrix(term_series_matrix(tdm, dates)),
         matrix(c(0.5, 0, 0.25, 0.7,
                  0.5, 0, 0.75, 0.3),
             nrow=2, byrow=T, dimnames=list(NULL,
