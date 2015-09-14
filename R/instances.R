@@ -37,8 +37,7 @@ make_instances <- function (docs, stoplist_file=NULL, ...) {
         writeLines("", stoplist_file)
     }
     insts <- mallet.import(docs$id, docs$text,
-                           stoplist.file=stoplist_file,
-                           ...)
+        stoplist.file=stoplist_file, ...)
     if (no_stop) {
         unlink(stoplist_file)
     }
@@ -74,8 +73,9 @@ write_instances <- function (instances, filename) {
 #' @export
 #' 
 read_instances <- function (filename) {
-    J("cc.mallet.types.InstanceList", "load", new(J("java.io.File"),
-                                                  path.expand(filename)))
+    J("cc.mallet.types.InstanceList", "load",
+             new(J("java.io.File"), path.expand(filename))
+    )
 }
 
 #' Extract term-document matrix from instances
@@ -108,8 +108,6 @@ read_instances <- function (filename) {
 #' @export
 #' 
 instances_Matrix <- function (instances, verbose=F) {
-    library("Matrix")
-
     if(verbose) {
         log <- message
     }
@@ -134,7 +132,7 @@ instances_Matrix <- function (instances, verbose=F) {
 
     instance_tf <- function (inst) {
         counts <- tabulate(instance_vector(inst))
-        sparseVector(counts, seq_along(counts), length=nwords)
+        Matrix::sparseVector(counts, seq_along(counts), length=nwords)
     }
 
     vs <- lapply(instances, instance_tf) 
@@ -178,7 +176,7 @@ instances_Matrix <- function (instances, verbose=F) {
 
     log("Constructing sparseMatrix")
 
-    result <- sparseMatrix(i=rs, j=cs, x=xs)
+    result <- Matrix::sparseMatrix(i=rs, j=cs, x=xs)
 
     # non-sparse version:
     #       instance_tf <- function(inst) {
@@ -289,7 +287,7 @@ instance_vector <- function (instance) {
 instance_text <- function (instance,
                            vocab=instances_vocabulary(instance),
                            collapse=" ") {
-    paste(vocab[instance_vector(instance)], collapse=collapse)
+    stringr::str_c(vocab[instance_vector(instance)], collapse=collapse)
 }
 
 
@@ -321,8 +319,8 @@ instances_vocabulary <- function (instances, newlines_significant=F) {
         # This silly-looking method is faster, though it assumes
         # that none of the vocabulary items contain '\n'
         vocab <- unlist(
-            str_split(
-                str_trim(instances$getAlphabet()$toString()),
+            stringr::str_split(
+                stringr::str_trim(instances$getAlphabet()$toString()),
                 "\n"
             )
         )
@@ -375,8 +373,8 @@ compatible_instances <- function (docs, instances) {
     new_insts <- .jnew("cc/mallet/types/InstanceList",
                        .jcast(mallet_pipe, "cc/mallet/pipe/Pipe"))
 
-    J("cc/mallet/topics/RTopicModel")$addInstances(new_insts, docs$id,
-                                                   docs$text)
+    J("cc/mallet/topics/RTopicModel")$addInstances(
+        new_insts, docs$id, docs$text)
 
     new_insts
 }
