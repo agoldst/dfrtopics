@@ -4,8 +4,9 @@ Description: Tools for exploring topic models of JSTOR Data for Research outputs
 Version: 0.2
 Author: Andrew Goldstone <andrew.goldstone@gmail.com>
 Maintainer: Andrew Goldstone <andrew.goldstone@gmail.com>
+Depends:
+    mallet
 Imports:
-    mallet,
     Matrix,
     stringr,
     dplyr
