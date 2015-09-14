@@ -36,6 +36,21 @@
 #'   
 NULL
 
+
+#' Pipe operator
+#'
+#' See \code{\link[magrittr]{\%>\%}} for more details.
+#'
+#' @name %>%
+#' @rdname pipe
+#' @keywords internal
+#' @export
+#' @importFrom magrittr %>%
+#' @usage lhs \%>\% rhs
+NULL
+
+
+# Package loading: check the Java heap allocation
 .onAttach <- function (libname, pkgname) {
     jheap <- grep("-Xmx\\w+", options("java.parameters"), value=TRUE)
     heap_ok <- TRUE
