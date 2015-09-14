@@ -15,7 +15,9 @@ Suggests:
     testthat,
     bigmemory,
     XML,
-    jsonlite
+    jsonlite,
+    lubridate,
+    tidyr
 SystemRequirements: python
 License: MIT
 LazyData: true
