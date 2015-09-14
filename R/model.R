@@ -452,13 +452,11 @@ doc_topics <- function (x) UseMethod("doc_topics")
 
 #' @export
 doc_topics.dfr_lda <- function (x) {
-    if (!is.null(x$doc_topics))  {
-        x$doc_topics
-    } else if (!is.null(x$model)) {
-        mallet.doc.topics(x$model, smoothed=F, normalized=F)
-    } else {
-        NULL
+    dtm <- x$doc_topics
+    if (is.null(dtm) && !is.null(x$model)) {
+        dtm <- mallet.doc.topics(x$model, smoothed=F, normalized=F)
     }
+    dtm
 }
 
 #' @export
@@ -533,6 +531,18 @@ vocabulary.dfr_lda <- function (x) {
     x
 }
 
+#' Get numeric feature indices
+#'
+#' This shortcut function returns the numeric indices of specific words in the model's vocabulary (corresponding to column indices in the topic-word matrix).
+#'
+#' @param m a \code{dfr_lda} object
+#' @param features character vector of words to find indices of
+#' @return numeric vector of indices into the vocabulary
+#'
+#' @export
+feature_ids <- function (m, features) match(features, vocabulary(m))
+
+#' @export
 #' The topic-words matrix
 #' 
 #' Extracts the matrix from a \code{dfr_lda} model with topics in rows and word
@@ -738,7 +748,8 @@ hyperparameters.dfr_lda <- function (x) {
 #' method indicates which elements of the model have been loaded into R's
 #' memory.
 #' 
-#' Any of the parameters to the constructor can be omitted.
+#' Any of the parameters to the constructor can be omitted. No validation is
+#' performed.
 #' 
 #' @param doc_topics document-topic matrix
 #' @param doc_ids vector of document ids corresponding to rows of
