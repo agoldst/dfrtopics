@@ -1,251 +1,76 @@
 
-#' Aggregate word counts by years
+#' Aggregate (word/topic) counts by time period
 #' 
-#' Aggregates word counts in a term-document matrix by document years.
+#' This convenience function transforms a topic-document or term-document matrix into a topic (term) time-period matrix. This is meant for the common application in which document date metadata will be used to generate time series. Values are normalized so that they total to 1 in each time period. Any matrix can be transformed in this way, however, as long as its columns can be matched against date data.
 #' 
-#' @param metadata the metadata frame
-#' @param tdm term-document sparseMatrix (from result of
-#'   \code{\link{instances_term_document_matrix}})
-#' @param instances supply a reference to an \code{InstanceList} and the routine
-#'   will retrieve the id list and vocabulary automatically. Ignored if
-#'   \code{id_map} and \code{vocabulary} are specified.
-#' @param id_map character vector mapping \code{tdm} columns to documents
-#' @param vocabulary character vector mapping \code{tdm} rows to terms
+#' N.B. that though topics are the most obvious row variable and documents are the most obvious column variable, it may also make sense to preaggregate multiple terms or topics into some larger construct. Similarly, if the documents can be grouped into aggregates with their own periodicity (e.g. periodical issues), there is no reason not to set \code{tdm} to a matrix with columns already summed together. You can of course also do this summing post-hoc, but then it's important to be careful about normalization. Naturally nothing stops you from supplying a slice of the topic-document matrix to study series of proportions within some subset of topics/documents, rather than the whole. Again interpreting normalized proportions will require some care.
+#'
+#'
+#' @param tdm a matrix (or Matrix) with some feature (e.g. topics or terms) in rows and datable  in columns
+#' @param dates a Date vector, one for each column of \code{tdm}
+#' @param breaks passed on to \code{link[base]}{cut.Date} (q.v.): what interval should the time series use?
+#'
+#' @return A matrix where each row is a time series and each column sums to 1. If you wish to generate a time series without normalization or with rolling means or other smoothing, use the \code{\link{sum_col_groups}} function in conjunction with \code{\link[base]{cut.Date}}.
 #'   
-#' @return A two-element list: \describe{ \item{\code{tym}}{the term-year-matrix
-#'   (as \code{\link[Matrix]{sparseMatrix}})} \item{\code{yseq}}{a map from
-#'   column indices to dates. Should be sequential but may not be evenly spaced
-#'   if any year is missing from the data.} }
-#'   
-#' @seealso \code{\link{instances_term_document_matrix}} 
-#' \code{\link{instances_ids}} \code{\link{instances_vocabulary}} 
-#' \code{\link{term_year_topic_matrix}}
+#' @seealso \code{\link{topic_series}} for the common case in which you ultimately want a "long" data frame with topic proportions, \code{\link{sum_col_groups}} and \code{\link{normalize_cols}}, which this wraps together, \code{\link{gather_matrix}} for converting the result to a data frame, and \code{\link{doc_topics}} (but you need its \emph{transpose}), \code{\link{tdm_topic}}, and \code{\link{instances_Matrix}} for possible matrices to supply here
 #' 
+#' @examples
+#' \dontrun{
+#' # time series within topic 10 of "solid", "flesh", "melt"
+#' # after loading sampling state on model m
+#' sm10 <- tdm_topic(m, 10) %>%
+#'    term_series_matrix(metadata(m)$pubdate) %>%
+#' gather_matrix(sm10[word_ids(c("solid", "flesh", "melt")), ],
+#'               col_names=c("term", "year", "weight"))
+#' }
 #' @export
 #' 
-term_year_matrix <- function(metadata,
-                             tdm,
-                             instances=NULL,
-                             id_map=instances_ids(instances),
-                             vocabulary=instances_vocabulary(instances)) {
-    metadata <- metadata[metadata$id %in% id_map,]
-    dates <- pubdate_Date(metadata$pubdate)
-    names(dates) <- metadata$id
-    dates <- dates[id_map]
-
-    years <- cut(dates,breaks="years",ordered=T)
-    years <- droplevels(years)
-
-    # years as indicator matrix
-    Y <- sparse.model.matrix(~ years - 1)
-
-    result <- tdm %*% Y
-
-    list(tym=result,yseq=levels(years))
+term_series_matrix <- function (tdm, dates, breaks="years") {
+    m_g <- sum_col_groups(tdm, cut(dates, breaks=breaks, ordered=T))
+    normalize_cols(m_g)
 }
 
-#' Convert a term-year matrix to a dataframe for plotting
-#' 
-#' This function makes a dataframe, suitable for plotting, of entries from a
-#' term-year matrix (conditional on topic or not).
-#' 
-#' @param words which terms to pick out
-#'   
-#' @param term_year matrix with terms in rows and time-slices in columns
-#'   
-#' @param year_seq character vector mapping columns of \code{term_year} to
-#'   dates, as strings in ISO format (the \code{yseq} component of results from
-#'   \code{\link{term_year_matrix}} or \code{\link{term_year_topic_matrix}}
-#' @param vocab character vector mapping rows of \code{term_year} to terms
-#'   
-#' @param raw_counts if FALSE (the default), divide counts through by column
-#'   totals or \code{denominator}
-#'   
-#' @param total if TRUE, tally up the total incidences of all words in
-#'   \code{words}
-#'   
-#' @param denominator \code{raw_counts} is FALSE, counts are normalized by this.
-#'   If this is NULL, column totals are used. Use this parameter if you are
-#'   passing in a \code{\link{term_year_topic_matrix}} but you still want the 
-#'   yearly proportion out of all words in the corpus, in which case set
-#'   \code{denominator=term_year_matrix()$tym}. The columns of 
-#'   \code{denominator} are assumed to correspond to the same years as those of 
-#'   \code{term_year}, so be careful of dropped years.
-#'   
-#' @return a dataframe with three columns, \code{word,year,weight}. If
-#'   \code{total} is TRUE, this will have only one row.
-#'   
-#' @seealso \code{\link{term_year_topic_matrix}}, \code{\link{term_year_matrix}}
-#' 
+#' Topic time series
+#'
+#' Generate a data frame with topics over time (based on document metadata).
+#' Since it is frequently useful to look at time series of topics, this function
+#' provides a short-cut for generating a data frame in a format suitable for plotting from the information contained in a model.
+#'
+#' Topic weights are smoothed with the estimated hyperparameter \eqn{\beta} before summing and normalizing.
+#'
+#' See the package vignette for an example of this function in use.
+#'
+#' @param m \code{dfr_lda} object
+#' @param breaks passed on to \code{link[base]}{cut.Date} (q.v.): what interval should the time series use?
+#'
+#' @return a data frame with three columns, \code{topic, pubdate, weight}. The weights are normalized to sum to 1 in each time period.
+#'
 #' @export
-#' 
-term_year_series_frame <- function(words,term_year,year_seq,vocab,
-                                   raw_counts=F,
-                                   total=F,
-                                   denominator=NULL) {
-    w <- match(words,vocab)
-    if(any(is.na(w))) {
-        message("Dropping words missing from vocabulary: ",
-                 paste(words[is.na(w)],collapse=" "))
-        words <- words[!is.na(w)]
-        w <- w[!is.na(w)]
-     }
-
-    # TODO use yearly_series_frame to factor this out
-    wts <- term_year[w,,drop=F]
-    if(!raw_counts) {
-        if(is.null(denominator)) {
-            denominator <- colSums(term_year)
-        }
-        wts <- wts %*% diag(1 / denominator) 
-    }
-
-    if (total) {
-        wts <- matrix(colSums(wts),nrow=1)
-        if(length(words) > 5) {
-            words <- paste(words[1:5],collapse=" ")
-            words <- paste('Total of "',words,'," etc.',sep="")
-        } else {
-            words <- paste(words,collapse=" ")
-            words <- paste("Total of ",words,sep="")
-        }
-    }
-
-    # TODO use yearly_series_frame to factor this out too
-    rownames(wts) <- words
-    colnames(wts) <- year_seq
-    series <- melt(as.matrix(wts))
-    names(series) <- c("word","year","weight")
-    series$year <- as.Date(series$year)
-
-    series
+#'
+topic_series <- function (m, breaks="years") {
+    tdm <- t(dt_smooth(m)(doc_topics(m)))
+    m_s <- term_series_matrix(tdm, metadata(m)$pubdate, breaks)
+    gather_matrix(m_s, col_names=c("topic", "pubdate", "weight"))
 }
 
-#' Derive a term-year counts conditioned on a journal
-#' 
-#' Convenience wrapper for \code{\link{term_year_matrix}}, summing counts only
-#' for documents in a given journal
-#' 
-#' @param journal the journal, matched against \code{metadata$journaltitle} (so
-#'   be careful about trailing tabs in JSTOR metadata fields)
-#' @param metadata the metadata frame
-#' @param the term-document matrix from
-#'   \code{\link{instances_term_document_matrix}}
-#' @param id_map character vector mapping \code{tdm} columns to documents
-#' @param vocabulary character vector mapping \code{tdm} rows to terms
-#' @return a two-element \code{list(tym=...,yseq...)} as in
-#'   \code{\link{term_year_matrix}}
-#'   
-#' @seealso \code{\link{instances_term_document_matrix}} 
-#' \code{\link{instances_ids}} \code{\link{instances_vocabulary}} 
-#' \code{\link{term_year_matrix}}
-#' 
-#' @export
-#' 
-term_year_matrix_journal <- function(journal,
-                                     metadata,
-                                     tdm,
-                                     id_map,
-                                     vocabulary) {
 
-    metadata <- metadata[metadata$id %in% id_map,]
-    journals <- metadata$journaltitle
-    names(journals) <- metadata$id
-    journals <- journals[id_map]
-    journals <- factor(journals,ordered=T)
-
-    jm <- Diagonal(n=ncol(tdm),x=(journals==journal))
-
-    term_year_matrix(metadata,
-                     tdm=tdm %*% jm,
-                     id_map=id_map,
-                     vocabulary=vocabulary,
-                     big=T)
-}
-
-#' Sum a term-document matrix over journals and years
-#' 
-#' Calculates the total wordcounts per journal per year from a term-document
-#' matrix. Can be usefully applied not just to the result of 
-#' \code{\link{instances_term_document_matrix}} but also to a 
-#' \code{\link{term_document_topic_matrix}}.
-#' 
-#' @param tdm matrix or \code{\link[Matrix]{sparseMatrix}} with terms in rows
-#'   and documents in columns
-#' @param metadata metadata frame
-#' @param id_map character vector mapping \code{tdm} columns to
-#'   \code{metadata$id} values
-#' @return an ordinary matrix with journals in rows and years in columns; the 
-#'   \code{\link[base]{rownames}} of the result give the \code{journaltitle}
-#'   values and the \code{\link[base]{colnames}} give the dates as strings
-#'   
-#' @seealso
-#' 
-#' \code{\link{instances_term_document_matrix}}, 
-#' \code{\link{term_document_topic_matrix}}, \code{\link{term_year_matrix}}, 
-#' \code{\link{term_year_topic_matrix}}
-#' 
-#' @export
-#' 
-journal_year_matrix <- function(tdm,metadata,id_map) {
-    metadata <- metadata[metadata$id %in% id_map,]
-
-    dates <- pubdate_Date(metadata$pubdate)
-    names(dates) <- metadata$id
-    dates <- dates[id_map]
-
-    years <- cut(dates,breaks="years",ordered=T)
-    years <- droplevels(years)
-
-    journals <- metadata$journaltitle
-    names(journals) <- metadata$id
-    journals <- journals[id_map]
-    journals <- factor(journals,ordered=T)
-
-    Y <- Matrix(0,nrow=length(years),ncol=nlevels(years)) 
-    Y[cbind(seq_along(years),years)] <- 1
-
-    result <- matrix(nrow=nlevels(journals),ncol=nlevels(years))
-
-    # The fully algebraic way would be to construct some block matrices
-    # to do these sums, but since the number of journals is small, it's
-    # not worth it
-
-    Csum <- Matrix(rep(1,nrow(tdm)),nrow=1)
-
-    for(i in seq_along(levels(journals))) {
-        jrnl <- levels(journals)[i]
-
-        jm <- Diagonal(n=ncol(tdm),x=(journals==jrnl))
-        m <- tdm %*% jm
-        tym <- m %*% Y
-
-        result[i,] <- drop(Csum %*% tym)
-    }
-
-    rownames(result) <- levels(journals)
-    colnames(result) <- levels(years)
-    result
-}
 
 #' Calculate tf*idf scores
 #'
-#' Calculates tf*idf scores from a term-document \code{\link[Matrix]{sparseMatrix}}.
-#'
-#' May not be optimal for speed for calculating scores for the whole tdm.
+#' Calculates tf*idf scores from a term-document \code{\link[Matrix]{sparseMatrix}}.  Probably not optimal for speed.
 #'
 #' @param term numeric index into rows of \code{tdm} (can be a vector)
 #' @param doc numeric index into columns of \code{tdm} (can be a vector)
 #' @param tdm term-document \code{\link[Matrix]{sparseMatrix}}
 #'
 #' @seealso
-#' \code{\link{instances_term_document_matrix}}
+#' \code{\link{instances_Matrix}}
 #'
 #' @export
 #'
-tf_idf <- function(term,doc,tdm) {
-    idf <- log(ncol(tdm) / rowSums(tdm[term, , drop=F] != 0))
-    Diagonal(n=length(term), x=idf) %*% tdm[term,doc]
+tf_idf <- function (tdm) {
+    idf <- log(ncol(tdm) / rowSums(tdm != 0))
+    Diagonal(n=nrow(tdm), x=idf) %*% tdm
 }
 
 
@@ -256,16 +81,17 @@ tf_idf <- function(term,doc,tdm) {
 #' a matrix. The typical application in document modeling is to to ensure that
 #' the columns sum to one (L1 normalization). Sometimes it is convenient instead
 #' to set the columns to have a unit Euclidean norm (L2 normalization).
-#' 
+#'
 #' @param m a matrix or Matrix
 #' @param norm Either \code{"L1"}, the default (the sum of the absolute value of
 #'   terms), or \code{"L2"}, the Euclidean norm
+#' @param stopzero If FALSE (the default), columns with norm zero are left as-is. If this is TRUE, an error will be thrown instead.
 #'   
-#' @return the column-normalized matrix
+#' @return the column-normalized matrix (except for any zero columns)
 #'   
 #' @export
 #' 
-normalize_cols <- function (m, norm="L1") {
+normalize_cols <- function (m, norm="L1", stopzero=F) {
     if (is(m, "Matrix")) {
         dg <- function (x) Diagonal(x=x)
     } else {
@@ -273,12 +99,20 @@ normalize_cols <- function (m, norm="L1") {
     }
 
     if (norm == "L1") { 
-        m %*% dg(1 / colSums(abs(m)))
+        norms <- colSums(abs(m))
     } else if (norm == "L2") {
-        m %*% dg(1 / colSums(sqrt(m * m)))
+        norms <- colSums(sqrt(m * m))
     } else {
         stop("norm must be L1 or L2")
     }
+
+    if (!stopzero) {
+        norms[norms == 0] <- Inf
+    } else if (any(norms == 0)) {
+        stop("The matrix has columns of all zeroes, which cannot be normalized.")
+    }
+
+    m %*% dg(1 / norms)
 }
 
 
@@ -333,6 +167,16 @@ tw_smooth_normalize <- function (x) {
 
     function (tw) {
         Diagonal(x=1 / (Matrix::rowSums(tw) + b * ncol(tw))) %*% (tw + b)
+    }
+}
+
+#' @export
+#' @rdname tw_smooth_normalize
+tw_smooth <- function (x) {
+    b <- hyperparameters(x)$beta
+
+    function (tw) {
+        tw + b
     }
 }
 
@@ -450,10 +294,21 @@ write_Matrix_csv <- write_matrix_csv
 dt_smooth_normalize <- function (x) {
     a <- hyperparameters(x)$alpha
 
+    sm <- dt_smooth(x)
     function (m) {
-        m <- m + matrix(rep(a, each=nrow(m)), nrow=nrow(m))
+        m <- sm(m)
 
         diag(1 / rowSums(m)) %*% m
+    }
+}
+
+#' @export
+#' @rdname dt_smooth_normalize
+dt_smooth <- function (x) {
+    a <- hyperparameters(x)$alpha
+
+    function (m) {
+        m <- m + matrix(rep(a, each=nrow(m)), nrow=nrow(m))
     }
 }
 
@@ -505,3 +360,105 @@ top_n_col <- function (m, n) {
 
     matrix(c(as.numeric(o[1:n, ]), j), ncol=2)
 }
+
+#' Sum ragged groups of matrix rows or columns
+#'
+#' Given a matrix and a factor, yields a matrix where all rows (\code{sum_row_groups}) or columns (\code{sum_col_groups}) corresponding to the same factor level have been summed. This is just a convenience wrapper for matrix multiplication. However, this is a frequent operation with models of this kind (e.g. analyzing topic distributions over metadata categories), and with the large matrices one often deals with in these cases, converting to a data frame and using ordinary \code{tapply} or \pkg{dplyr} grouping can be laborious.
+#'
+#' Note that ordinary \code{rowSums} corresponds to \code{sum_col_groups} with a one-level factor, and conversely.
+#'
+#' @param m matrix (or Matrix)
+#' @param f factor or something coercible to one. Must have as many elements as \code{m} has rows (for \code{sum_row_groups}) or columns (for \code{sum_col_groups}).
+#' @param row_names used to name the rows of the result of \code{sum_row_groups}. By default, the levels of \code{f} are used. Set to NULL to blank these out
+#' @param col_names Similarly, for \code{sum_col_groups}
+#' @return a matrix (or Matrix) with the same number of columns (rows) as \code{m}, but rows (columns) corresponding to the same level of \code{f} summed. These rows (columns) are in the same order as \code{levels(f)}.
+#'
+#' @seealso \code{\link[stats]{model.matrix}} and \code{\link[Matrix]{sparse.model.matrix}}, which this function uses to transform the factor \code{f} into an indicator matrix to multiply by
+#'
+#' @export
+sum_row_groups <- function (m, f, row_names=levels(f)) {
+    result <- indicator_matrix(f, is(m, "Matrix"), transpose=T) %*% m
+    rownames(result) <- row_names
+    result
+}
+
+#' @export
+#' @rdname sum_row_groups
+#'
+sum_col_groups <- function (m, f, col_names=levels(f)) {
+    result <- m %*% indicator_matrix(f, is(m, "Matrix"))
+    colnames(result) <- col_names
+}
+
+# utility function for converting a factor to an indicator matrix
+#
+# Has levels in columns factor values in rows, or the transpose if transpose is 
+# TRUE
+
+indicator_matrix <- function (f, sparse, transpose=FALSE) {
+    f <- as.factor(f)
+    if (sparse) {
+        result <- sparse.model.matrix(~ f - 1,
+            contrasts.arg=list(f="contr.treatment"),
+            row.names=F,
+            transpose=transpose) # for efficiency (ha)
+    } else {
+        result <- model.matrix(~ f - 1,
+            contrasts.arg=list(f="contr.treatment"))
+        if (transpose) {
+            result <- t(result)
+        }
+    }
+    result
+}
+
+
+#' Transform a matrix into a long ("tidy") data frame
+#'
+#' Converts a matrix into a data frame with one row for each matrix entry and three columns. This is the same idea as the \code{\link[tidyr]{gather}} function from the \pkg{tidyr} package, but for the matrix special case. The result is in row-major order by default. An ordinary matrix \eqn{m} is unrolled into triplets \eqn{i, j, m_{ij}}. If row or column names are present they are swapped in for the numeric indices, or you can supply these directly.
+#'
+#' @param m matrix (or Matrix: but sparse matrices will be filled in)
+#' @param row_values values corresponding to row indices. By default the row names of \code{m} are used, or, if these are missing, the row indices themselves.
+#' @param col_values similarly, for columns. 
+#' @param col_names names for the columns of the resulting data frame
+#' @param row_major unroll \code{m} row by row or column by column? By row is the default, though by column may be faster.
+#'
+#' @return a data frame with three columns and one row for every entry of \code{m}. 
+#'
+#' @examples
+#' m <- matrix(1:4, ncol=2, byrow=TRUE)
+#' gather_matrix(m)
+#'
+#' @export
+#'
+gather_matrix <- function (m, row_values=rownames(m),
+                           col_values=colnames(m),
+                           col_names=c("row_key", "col_key", "value"),
+                           row_major=T) {
+    if (is.null(row_values)) row_values <- seq(nrow(m))
+    if (is.null(col_values)) col_values <- seq(ncol(m))
+
+    stopifnot(length(row_values) == nrow(m))
+    stopifnot(length(col_values) == ncol(m))
+    stopifnot(length(col_names) == 3)
+
+    if (row_major) {
+        result <- data.frame(
+            rkey=rep(row_values, each=ncol(m)),
+            ckey=rep(col_values, times=nrow(m)),
+            value=as.numeric(t(m)),
+            stringsAsFactors=F
+        )
+    } else {
+        result <- data.frame(
+            rkey=rep(row_values, times=ncol(m)),
+            ckey=rep(col_values, each=nrow(m)),
+            value=as.numeric(m),
+            stringsAsFactors=F
+        )
+    }
+
+    names(result) <- col_names
+    result
+}
+
