@@ -112,7 +112,7 @@ normalize_cols <- function (m, norm="L1", stopzero=FALSE) {
     if (norm == "L1") { 
         norms <- cs(abs(m))
     } else if (norm == "L2") {
-        norms <- cs(sqrt(m * m))
+        norms <- sqrt(cs(m * m))
     } else {
         stop("norm must be L1 or L2")
     }
@@ -410,7 +410,11 @@ top_n_col <- function (m, n) {
 #' @export
 sum_row_groups <- function (m, f, row_names=levels(f)) {
     result <- indicator_matrix(f, is(m, "Matrix"), transpose=TRUE) %*% m
-    rownames(result) <- row_names
+    if (is.null(row_names) && is.null(colnames(m))) {
+        result <- unname(result)
+    } else {
+        rownames(result) <- row_names
+    }
     result
 }
 
@@ -419,7 +423,12 @@ sum_row_groups <- function (m, f, row_names=levels(f)) {
 #'
 sum_col_groups <- function (m, f, col_names=levels(f)) {
     result <- m %*% indicator_matrix(f, is(m, "Matrix"))
-    colnames(result) <- col_names
+    if (is.null(col_names) && is.null(rownames(m))) {
+        result <- unname(result)
+    } else {
+        colnames(result) <- col_names
+    }
+    result
 }
 
 # utility function for converting a factor to an indicator matrix

@@ -49,6 +49,32 @@ test_that("gather_matrix works", {
                  ))
 })
 
+test_that("normalize_cols works", {
+    expect_equal( 
+        normalize_cols(
+            matrix(c(1, 0,
+                     3, 2), ncol=2, byrow=T)
+        ),
+        matrix(c(0.25, 0,
+                 0.75, 1), ncol=2, byrow=T))
+
+    expect_equal( 
+        normalize_cols(
+            matrix(c(3, 0.3,
+                     4, 0.4), ncol=2, byrow=T), norm="L2"
+        ),
+        matrix(c(0.6, 0.6,
+                 0.8, 0.8), ncol=2, byrow=T))
+
+    m <- matrix(c(1, 0, 0,
+                  3, 2, 0), ncol=3, byrow=T)
+    expect_equal(normalize_cols(m),
+        matrix(c(0.25, 0, 0,
+                 0.75, 1, 0), ncol=3, byrow=T))
+    expect_error(normalize_cols(m, stopzero=T),
+        "The matrix has columns of all zeroes, which cannot be normalized.")
+})
+
 test_that("row/col group sums work", {
     m <- matrix(c(1, 2,
                   3, 4,
@@ -71,49 +97,31 @@ test_that("row/col group sums work", {
         matrix(c(10, 12,
                  6,  8), ncol=2, byrow=T)
     )
+
+    rownames(m) <- c("smeagol", "deagol", "gollum", "precious")
+    colnames(m) <- c("c", "d")
+    expect_equal(
+        sum_row_groups(m, f),
+        matrix(c(6,  8,
+                 10, 12), ncol=2, byrow=T,
+               dimnames=list(c("a", "b"), c("c", "d")))
+    )
     m2 <- matrix(c(1, 2, 3, 4,
                    5, 6, 7, 8), ncol=4, byrow=T)
     expect_equal(
-        sum_col_groups(m2, f, row_names=NULL),
+        sum_col_groups(m2, f, col_names=NULL),
         matrix(c(4,  6,
                  12, 14), ncol=2, byrow=T)
     )
     expect_equal(
-        sum_col_groups(m2, f2, row_names=NULL),
+        sum_col_groups(m2, f2, col_names=NULL),
         matrix(c(6,  4,
                  14, 12), ncol=2, byrow=T)
     )
     expect_equal(
-        sum_row_groups(m, f),
-        matrix(c(6,  8,
-                 10, 12), ncol=2, byrow=T, dimnames=list(c("a", "b")))
+        sum_col_groups(m2, f),
+        matrix(c(4,  6,
+                 12, 14), ncol=2, byrow=T, dimnames=list(NULL, c("a", "b")))
     )
 })
 
-test_that("normalize_cols works", {
-    expect_equal( 
-        normalize_cols(
-            matrix(c(1, 0,
-                     3, 2), ncol=2, byrow=T)
-        ),
-        matrix(c(0.25, 0,
-                 0.75, 1), ncol=2, byrow=T))
-
-    expect_equal( 
-        normalize_cols(
-            matrix(c(3, 0.3,
-                     4, 0.4), ncol=2, byrow=T)
-        ),
-        matrix(c(0.6, 0.6,
-                 0.8, 0.8), ncol=2, byrow=T))
-
-    m <- matrix(c(1, 0, 0,
-                  3, 2, 0), ncol=3, byrow=T)
-    expect_equal(normalize_cols(m),
-        matrix(c(0.25, 0, 0,
-                 0.75, 1, 0), ncol=3, byrow=T))
-    expect_error(normalize_cols(m, stopzero=T),
-        matrix(c(0.25, 0, 0,
-                 0.75, 1, 0), ncol=3, byrow=T),
-        "The matrix has columns of all zeroes, which cannot be normalized.")
-})
