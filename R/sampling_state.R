@@ -178,7 +178,7 @@ load_sampling_state <- function (m,
             mallet_state_file <- tempfile()
             tmp_ms <- T
             message("Writing MALLET state to temporary file")
-            write_mallet_state(m, ms_file)
+            write_mallet_state(m, mallet_state_file)
         }
         message("Writing simplified sampling state to temporary file")
         simplify_state(mallet_state_file, simplified_state_file)
