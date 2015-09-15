@@ -75,7 +75,7 @@ test_that("Instances are made from DfR data successfully", {
 
     # cross-check vocabulary
     stopwords <- readLines(stop_f)
-    vocab2 <- setdiff(unique(counts$feature), stopwords)
+    vocab2 <- setdiff(unique(counts$term), stopwords)
 
     expect_that(sort(vocab), equals(sort(vocab2)))
 
