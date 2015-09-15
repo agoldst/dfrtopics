@@ -2,13 +2,12 @@
 .RData
 
 .Rproj.user
-
 *.zip
 *.mallet
 data.csv
 doc_topics.tsv
 keys.tsv
 wordcounts
-
 citations.CSV
 citations.tsv
+inst/doc
