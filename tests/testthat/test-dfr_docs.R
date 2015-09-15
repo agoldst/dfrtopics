@@ -16,31 +16,63 @@ stoplist_file <- file.path(path.package("dfrtopics"), "stoplist",
 fake_counts <- data_frame(
     id=c(rep("10.2307/123456", 3),
          rep("10.2307/654321", 3)),
-    feature=c("the", "woolf", "hull",
+    term=c("the", "woolf", "hull",
               "the", "of", "hull"),
-    weight=c(3:1, 5, 5, 1))
+    weight=as.integer(c(3:1, 5, 5, 1)))
 
 dummy <- tempfile()
 
-test_that("Loading wordcounts files works as expected", {
+test_that("Loading dummy wordcounts files works as expected", {
+    dummy_dir <- file.path(tempdir(), "wordcounts")
+    if (!dir.exists(dummy_dir)) dir.create(dummy_dir)
+
+    writeLines(
+"WORDCOUNTS,WEIGHT
+the,3
+woolf,2
+hull,1",
+        file.path(dummy_dir, "wordcounts_10.2307_123456.CSV")
+    )
+    writeLines(
+"WORDCOUNTS,WEIGHT
+the,5
+of,5
+hull,1",
+        file.path(dummy_dir, "wordcounts_10.2307_654321.CSV")
+    )
+    dummy_ws <- list.files(dummy_dir, full.names=T)
+    counts <- read_wordcounts(dummy_ws)
+    expect_equal(counts, fake_counts)
+
+    # now add in a header-only file
+    writeLines("WORDCOUNTS,WEIGHT",
+               file.path(dummy_dir, "wordcounts_10.2307_666.CSV"))
+
+    dummy_ws <- list.files(dummy_dir, full.names=T)
+    # and check both file-reading methods
+    expect_equal(dfrtopics:::read_wordcounts_base(dummy_ws, dfr_filename_id),
+                 fake_counts)
+    expect_equal(dfrtopics:::read_wordcounts_readr(dummy_ws, dfr_filename_id),
+                 fake_counts)
+
+    unlink(file.path(dummy_dir, list.files(dummy_dir)))
+    unlink(dummy_dir)
+})
+
+
+test_that("Loading real wordcounts files works as expected", {
     counts <- read_wordcounts(fs)
 
     n_feats <- sum(sapply(fs, function (f) length(readLines(f)) - 1))
-    expect_equal(colnames(counts), c("id", "feature", "weight"))
+    expect_equal(colnames(counts), c("id", "term", "weight"))
     expect_equal(nrow(counts), n_feats)
     expect_equal(n_distinct(counts$id), length(fs))
                  
-    expect_equal(counts$feature[1], "the")
-
-    # now add in a header-only file
-    writeLines("WORDCOUNTS,WEIGHT", dummy)
-    counts <- read_wordcounts(c(fs, dummy))
-    expect_equal(nrow(counts), n_feats)
-    expect_equal(n_distinct(counts$id), length(fs))
+    expect_equal(counts$term[1], "the")
 })
 
 test_that("Document-frame generation works as expected", {
-    docs <- dfr_docs_frame(fake_counts)
+    docs <- wordcounts_texts(fake_counts)
     expect_equal(docs, data_frame(
         id=c("10.2307/123456", "10.2307/654321"),
         text=c("the the the woolf woolf hull",
@@ -48,34 +80,34 @@ test_that("Document-frame generation works as expected", {
 })
 
 test_that("Doc lengths are correctly calculated", {
-    lengths <- dfr_doc_lengths(fake_counts)
+    lengths <- wordcounts_doc_lengths(fake_counts)
     expect_equal(lengths$length, c(6, 11))
 })
 
-test_that("Feature totals are correctly calculated", {
-    lengths <- dfr_feature_totals(fake_counts)
+test_that("term totals are correctly calculated", {
+    lengths <- wordcounts_term_totals(fake_counts)
     lengths %>%
-        arrange(feature) %>%
+        arrange(term) %>%
         expect_equal(data_frame(
-            feature=c("hull", "of", "the", "woolf"),
-            weight=c(2, 5, 8, 2)
+            term=c("hull", "of", "the", "woolf"),
+            weight=as.integer(c(2, 5, 8, 2))
         ))
 })
 
 test_that("Stopword removal works correctly", {
-    stopped <- dfr_remove_stopwords(fake_counts, c("the", "of"))
+    stopped <- wordcounts_remove_stopwords(fake_counts, c("the", "of"))
     expect_equal(stopped, data_frame(
         id=c(rep("10.2307/123456", 2), "10.2307/654321"),
-        feature=c("woolf", "hull", "hull"),
-        weight=c(2, 1, 1)))
+        term=c("woolf", "hull", "hull"),
+        weight=c(2L, 1L, 1L)))
 })
 
 test_that("Frequency filtering works correctly", {
-    shorter <- dfr_remove_rare(fake_counts, 2)
+    shorter <- wordcounts_remove_rare(fake_counts, 2)
     expect_equal(shorter, data_frame(
         id=c("10.2307/123456", rep("10.2307/654321", 2)),
-        feature=c("the", "the", "of"),
-        weight=c(3, 5, 5)))
+        term=c("the", "the", "of"),
+        weight=c(3L, 5L, 5L)))
 })
 
 test_that("Loading a big folder of files completes", {

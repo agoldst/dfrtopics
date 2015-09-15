@@ -3,46 +3,74 @@
 #' Convert DfR wordcount files to a long-format data frame
 #' 
 #' Reads in a bunch of \code{wordcounts*.CSV} files and stacks them up in a 
-#' single long-format dataframe. Invoked by
-#' \code{\link{read_wordcounts_wordcounts}}, but use it on your own if you wish
-#' to operate on the aggregate word-count frame before collapsing it back into
-#' documents.
+#' single long-format dataframe. These counts can be optionally manipulated,
+#' then passed on to \code{\link{wordcounts_texts}} then
+#' \code{\link{make_instances}}.
 #' 
 #' Empty documents are skipped; DfR supplies wordcounts files for documents that
 #' have no wordcount data. These will be in DfR's metadata but not in the output
 #' dataframe here.
 #' 
 #' This is slow. An outboard script in python or Perl is faster, but this keeps 
-#' us in R and does everything in memory. Memory usage: for N typical journal 
-#' articles, the resulting dataframe seems to need about 20N K of memory. So R 
-#' on a laptop will hit its limits somewhere around 100K articles of typical 
-#' length.
+#' us in R and does everything in memory.
+#' 
+#' Memory usage: for N typical journal articles, the resulting dataframe seems
+#' to need about 20N K of memory. So R on a laptop will hit its limits somewhere
+#' around 100K articles of typical length.
 #' 
 #' @param files individual filenames to read.
-#' @param filename_id function that converts a file name into a document ID. By
+#' @param filename_id function that converts a file name into a document ID. By 
 #'   default, \code{\link{dfr_filename_doi}} is used.
 #' @return A data frame with three columns: \code{id}, the document ID; 
-#'   \code{feature}, a feature counted by JSTOR (i.e. a word type, called 
-#'   \code{WORDCOUNTS} in DfR source data files); \code{weight}, the count.
-#' @seealso \code{\link{read_wordcounts_wordcounts}}, 
-#'   \code{\link{instances_term_document_matrix}} for feature counts
-#'   \emph{after} stopword removal (etc.).
+#'   \code{term}, a term or word type (called \code{WORDCOUNTS} in DfR source
+#'   data files); \code{weight}, the count.
+#' @seealso \code{\link{wordcounts_texts}}, \code{\link{instances_Matrix}} for
+#'   term counts \emph{after} stopword removal (etc.).
 #'   
 #' @export
 #' 
 read_wordcounts <- function (files, filename_id=dfr_filename_id) {
+    if (requireNamespace("readr", quietly=T)) {
+        read_wordcounts_readr(files, filename_id)
+    } else {
+        read_wordcounts_base(files, filename_id)
+    }
+}
+
+read_wordcounts_base <- function (files, filename_id) {
     result <- data.frame(filename=files, stringsAsFactors=F)
-    result <- dplyr::group_by_(result, "filename")
+    result <- group_by_(result, ~ filename)
     result <- dplyr::do_(result,
         ~ read.csv(.$filename,
-                   strip.white=TRUE, header=TRUE, as.is=TRUE,
-                   colClasses=c("character", "integer"))
+            strip.white=TRUE, header=TRUE, as.is=TRUE,
+            colClasses=c("character", "integer"),
+            col.names=c("term", "weight"))
     )
-    mut <- setNames(list(~ filename_id(filename)), "filename")
-    result <- dplyr::mutate_(dplyr::ungroup(result), .dots=mut)
+    mut <- list(id=~ filename_id(filename),
+                ~ term,
+                ~ weight)
+    dplyr::transmute_(dplyr::ungroup(result), .dots=mut)
+}
 
-    colnames(result) <- c("id", "feature", "weight")
-    result
+read_wordcounts_readr <- function (files, filename_id) {
+    result <- vector("list", length(files))
+    for (i in seq_along(files)) {
+        frm <- readr::read_csv(files[i],
+            col_names=TRUE, col_types="ci", progress=FALSE)
+        # degenerate case of header only gives a row of NAs
+        # as of readr 0.1.1
+        if (is.na(frm[1, 1])) {
+            result[[i]] <- NULL
+        } else {
+            result[[i]] <- data.frame(
+                id=filename_id(files[i]),
+                term=frm[[1]],
+                weight=frm[[2]],
+                stringsAsFactors=F
+            )
+        }
+    }
+    result <- dplyr::bind_rows(result)
 }
 
 #' Calculate document lengths
@@ -61,12 +89,12 @@ read_wordcounts <- function (files, filename_id=dfr_filename_id) {
 #'   
 #' @export
 #' 
-dfr_doc_lengths <- function (counts) {
+wordcounts_doc_lengths <- function (counts) {
     result <- dplyr::group_by_(counts, ~ id)
     dplyr::summarize_(result, .dots=setNames(list(~ sum(weight)), "length"))
 }
 
-#' Calculate total corpus-wide feature counts
+#' Calculate total corpus-wide term counts
 #' 
 #' Given a wordcounts long-format dataframe returned by
 #' \code{\link{read_wordcounts}}, calculate total corpus-wide counts for each
@@ -74,15 +102,15 @@ dfr_doc_lengths <- function (counts) {
 #' \code{\link[dplyr]{summarize}}.
 #' 
 #' @param counts The dataframe from \code{\link{read_wordcounts}}
-#' @return a data frame with \code{feature} and \code{weight} columns
+#' @return a data frame with \code{term} and \code{weight} columns
 #' @seealso \code{\link{read_wordcounts}},
-#'   \code{\link{instances_term_document_matrix}} for feature counts
+#'   \code{\link{instances_term_document_matrix}} for term counts
 #'   \emph{after} stopword removal (etc.).
 #'   
 #' @export
 #' 
-dfr_feature_totals <- function (counts) {
-    result <- dplyr::group_by_(counts, ~ feature)
+wordcounts_term_totals <- function (counts) {
+    result <- dplyr::group_by_(counts, ~ term)
     dplyr::summarize_(result, .dots=setNames(list(~ sum(weight)), "weight"))
 }
 
@@ -95,52 +123,52 @@ dfr_feature_totals <- function (counts) {
 #' @return A new data frame with stopwords removed
 #' @export
 #' 
-dfr_remove_stopwords <- function (counts, stoplist) {
-    flt <- lazyeval::interp(~ !(feature %in% x), x=stoplist)
+wordcounts_remove_stopwords <- function (counts, stoplist) {
+    flt <- lazyeval::interp(~ !(term %in% x), x=stoplist)
     dplyr::filter_(counts, flt)
 }
 
 #' Remove infrequent terms
 #' 
-#' Filter out the features in a wordcounts dataframe whose overall frequency is 
+#' Filter out the terms in a wordcounts dataframe whose overall frequency is 
 #' below a threshold.
 #' 
-#' It's often useful to prune documents of one-off features (many of which are 
+#' It's often useful to prune documents of one-off terms (many of which are 
 #' OCR errors) before building MALLET instances. This is a convenience function 
 #' for doing so.
 #' 
 #' @param counts The dataframe from \code{\link{read_wordcounts}}
 #' @param n The maximum rank to keep: all terms with frequency rank below 
 #'   \code{n} will be discarded
-#' @return A filtered feature-counts dataframe. Because of ties, do not expect 
-#'   it to have exactly \code{n} distinct features.
+#' @return A filtered term-counts dataframe. Because of ties, do not expect 
+#'   it to have exactly \code{n} distinct terms.
 #'   
 #' @export
 #' 
-dfr_remove_rare <- function (counts, n) {
-    feature_totals <- dfr_feature_totals(counts)
+wordcounts_remove_rare <- function (counts, n) {
+    term_totals <- wordcounts_term_totals(counts)
     # min_rank used here, giving a more aggressive filter than dense_rank
-    keep <- feature_totals$feature[
-        min_rank(desc(feature_totals$weight)) <= n
+    keep <- term_totals$term[
+        dplyr::min_rank(desc(term_totals$weight)) <= n
     ]
 
     # You'd think you could semi_join here, but that will scramble the order of
     # rows, so we'll use the ugly way:
 
-    flt <- lazyeval::interp(~ feature %in% x, x=keep)
+    flt <- lazyeval::interp(~ term %in% x, x=keep)
     dplyr::filter_(counts, flt)
 }
     
-#' Convert long-format feature-counts into documents
+#' Convert long-format term-counts into documents
 #' 
-#' This naively "inflates" feature counts into a bag of words, for sending to 
+#' This naively "inflates" term counts into a bag of words, for sending to 
 #' MALLET.
 #' 
 #' You can directly pass the result from \code{link{read_wordcounts}} to this
 #' function, but normally you'll want to filter or otherwise manipulate the
-#' features first.
+#' terms first.
 #' 
-#' It is not straightforward to supply feature vectors directly to MALLET; 
+#' It is not straightforward to supply term vectors directly to MALLET; 
 #' MALLET really wants to featurize each text itself. So our task is to take the
 #' wordcounts supplied from DfR and reassemble the texts. If DfR tells us word w
 #' occurs N times, we simply paste N copies of w together, separated by spaces 
@@ -167,14 +195,14 @@ dfr_remove_rare <- function (counts, n) {
 #'   
 #' @export
 #' 
-dfr_docs_frame <- function (counts, shuffle=F, sep=" ") {
+wordcounts_texts <- function (counts, shuffle=FALSE, sep=" ") {
     counts <- dplyr::group_by_(counts, ~ id)
     if (shuffle) {
         counts <- dplyr::sample_frac(counts)
     }
 
     smz <- setNames(list(
-        ~ stringr::str_c(rep(feature, times=weight), collapse=sep)
+        ~ stringr::str_c(rep(term, times=weight), collapse=sep)
         ),
         "text")
     dplyr::summarize_(counts, .dots=smz)
