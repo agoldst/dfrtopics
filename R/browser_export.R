@@ -37,8 +37,8 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=F) {
 #' \code{\link{zip}} command. If that fails, set \code{zipped=F} (and, if you
 #' wish, zip the files using another program).
 #' 
-#' @param m \code{dfr_lda} object from \code{\link{train_model}} or 
-#'   \code{\link{load_dfr_lda}}
+#' @param m \code{mallet_model} object from \code{\link{train_model}} or 
+#'   \code{\link{load_mallet_model}}
 #' @param out_dir directory for output data files
 #' @param zipped should the larger data files be zipped?
 #' @param n_top_words how many top words per topic to save?

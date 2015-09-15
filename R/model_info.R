@@ -5,7 +5,7 @@
 #' These "labels" simply name each topic by its 1-indexed number and the top
 #' \code{n} words by weight.
 #' 
-#' @param m \code{dfr_lda} object
+#' @param m \code{mallet_model} object
 #' @param n number of words to use in label
 #'   
 #' @return a character vector, one label for each topic
@@ -42,7 +42,7 @@ topic_labels <- function (m, n=8) {
 #' 
 #' TODO: alternative scoring methods.
 #' 
-#' @param m \code{dfr_lda} object
+#' @param m \code{mallet_model} object
 #' @param n number of top documents to extract
 #' @param weighting a function to transform the document-topic matrix. By
 #'   default \code{\link{dt_smooth_normalize}(m)}, a normalized weighting
@@ -86,7 +86,7 @@ top_docs <- function (m, n, weighting=dt_smooth_normalize(m)) {
 #' widespread across the whole corpus. TODO: actually implement the alternative
 #' weighting.
 #' 
-#' @param m \code{dfr_lda} object
+#' @param m \code{mallet_model} object
 #' @param n number of top topics to extract
 #' @param weighting a function to transform the document-topic matrix. By
 #'   default, the topic proportions are used (same rank as raw weights)
@@ -120,7 +120,7 @@ docs_top_topics <- function (m, n, weighting=dt_smooth_normalize(m)) {
 #' to choose the topic which captures the largest proportion of a word's usage,
 #' and that is the default. TODO: actually implement the alternative weighting.
 #' 
-#' @param m \code{dfr_lda} object
+#' @param m \code{mallet_model} object
 #' @param n number of top topics to extract
 #' @param weighting a function to transform the topic-word matrix. By default,
 #'   the topic proportions are used (same rank as raw weights)

@@ -60,7 +60,7 @@ row_dists <- function(M, g=JS_divergence) {
 #'
 #' Two methods for extracting a matrix of topic-topic distances.
 #'
-#' @param m \code{dfr_lda} model object
+#' @param m \code{mallet_model} model object
 #'
 #' @return For \code{doc_topic_cor}, a matrix of correlations between the series of log-document proportions; for \code{topic_divergences}, a matrix of J-S divergences between topic distributions over words.
 #'
@@ -86,7 +86,7 @@ doc_topic_cor <- function (m) {
 #'
 #' The coordinates are derived by finding the Jensen-Shannon divergences between topics considered as distributions over words and then scaling this matrix to two dimensions.
 #'
-#' @param m \code{dfr_lda} model object
+#' @param m \code{mallet_model} model object
 #'
 #' @return a matrix with 2 columns and as many rows as \code{m}.
 #'

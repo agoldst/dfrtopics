@@ -4,7 +4,7 @@
 #' 
 #' Write MALLET's model diagnostics to an XML file.
 #' 
-#' @param trainer the \code{RTopicModel} object.
+#' @param m a \code{mallet_model} object
 #' @param output_file the name of a file to save XML to.
 #' @param n_top_words the number of top words per topic to calculate topic-word 
 #'   diagnostics for.
@@ -14,7 +14,7 @@
 #' @export
 #' 
 write_diagnostics <- function(m, output_file="diagnostics.xml",
-                              n_top_words=50L) {
+                              n_top_words=50) {
     ptm <- ParallelTopicModel(m)
     if (is.null(ptm)) {
         stop("MALLET model object is not available.")

@@ -10,7 +10,7 @@
 #' finer-grained control over the mallet inputs and modeling parameters. The
 #' steps for that process are described in the package vignette. Once the model
 #' has been trained, the results can be saved to disk with
-#' \code{\link{write_dfr_lda}}
+#' \code{\link{write_mallet_model}}
 #'
 #' If java gives out-of-memory errors, try increasing the Java heap size to a
 #' large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")}
@@ -25,13 +25,13 @@
 #' @param n_topics number of topics to model
 #' @param ... passed on to \code{\link{train_model}}
 #'
-#' @return a \code{\link{dfr_lda}} object holding the results
+#' @return a \code{\link{mallet_model}} object holding the results
 #'
 #' @seealso This function simply calls in sequence
 #'   \code{\link{read_dfr_metadata}}, \code{\link{read_wordcounts}},
 #'   \code{\link{wordcounts_texts}}, \code{\link{make_instances}}, and
 #'   \code{\link{train_model}}. To write results to disk, use
-#'   \code{\link{write_dfr_lda}}
+#'   \code{\link{write_mallet_model}}
 #'
 #' @examples
 #' # Make a 50-topic model of documents in the wordcounts folder
@@ -89,7 +89,7 @@ model_dfr_documents <- function(
 #'
 #' }
 #'
-#' @param m \code{dfr_lda} object
+#' @param m \code{mallet_model} object
 #'
 #' @param output_dir where to save all the output files.
 #'
@@ -106,7 +106,7 @@ model_dfr_documents <- function(
 #'
 #' @export
 #'
-write_dfr_lda <- function(m, output_dir=".",
+write_mallet_model <- function(m, output_dir=".",
                           n_top_words=50,
                           save_instances=F,
                           save_scaled=F,
@@ -221,10 +221,10 @@ write_dfr_lda <- function(m, output_dir=".",
 #' @param metadata not used in the modeling process, but the model object
 #'   returned by the function will store a reference to it if supplied
 #'
-#' @return a \code{dfr_lda} object
+#' @return a \code{mallet_model} object
 #'
 #' @seealso \code{\link{make_instances}}, \code{\link{make_instances}},
-#'   \code{\link{model_documents}}, \code{\link{write_dfr_lda}}
+#'   \code{\link{model_documents}}, \code{\link{write_mallet_model}}
 #'
 #' @export
 #'
@@ -269,7 +269,7 @@ train_model <- function(instances, n_topics,
     trainer$train(as.numeric(n_iters))
     trainer$maximize(as.numeric(n_max_iters))
 
-    result <- dfr_lda(
+    result <- mallet_model(
         model=trainer,
         params=list(
             n_iters=n_iters,
@@ -308,7 +308,7 @@ To set metadata later, use metadata(m) <- ..."
 n_topics <- function (x) UseMethod("n_topics")
 
 #' @export
-n_topics.dfr_lda <- function (x) {
+n_topics.mallet_model <- function (x) {
     if (!is.null(x$model)) {
         x$model$model$numTopics
     } else if (!is.null(x$doc_topics)) {
@@ -328,7 +328,7 @@ n_topics.dfr_lda <- function (x) {
 n_docs <- function (x) UseMethod("n_docs")
 
 #' @export
-n_docs.dfr_lda <- function (x) {
+n_docs.mallet_model <- function (x) {
     if (!is.null(x$doc_topics)) {
         nrow(x$doc_topics)
     } else if (!is.null(x$doc_ids)) {
@@ -349,7 +349,7 @@ n_docs.dfr_lda <- function (x) {
 modeling_parameters  <- function (x) UseMethod("modeling_parameters")
 
 #' @export
-modeling_parameters.dfr_lda  <- function (x) x$params
+modeling_parameters.mallet_model  <- function (x) x$params
 
 
 #' Access MALLET's glue model object
@@ -368,7 +368,7 @@ modeling_parameters.dfr_lda  <- function (x) x$params
 #' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java,
 #' apply \code{\link[base]{as.integer}} to parameters.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @return a reference to the RTopicModel object
 #' @seealso \code{\link{ParallelTopicModel}}
 #' @export
@@ -376,7 +376,7 @@ modeling_parameters.dfr_lda  <- function (x) x$params
 RTopicModel <- function (x) UseMethod("RTopicModel")
 
 #' @export
-RTopicModel.dfr_lda <- function (x) x$model
+RTopicModel.mallet_model <- function (x) x$model
 
 #' Access MALLET's model object
 #'
@@ -392,7 +392,7 @@ RTopicModel.dfr_lda <- function (x) x$model
 #' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java,
 #' apply \code{\link[base]{as.integer}} to parameters.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @return a reference to the ParallelTopicModel object
 #' @seealso \code{\link{RTopicModel}}
 #' @export
@@ -400,14 +400,14 @@ RTopicModel.dfr_lda <- function (x) x$model
 ParallelTopicModel <- function (x) UseMethod("ParallelTopicModel")
 
 #' @export
-ParallelTopicModel.dfr_lda <- function (x) x$model$model
+ParallelTopicModel.mallet_model <- function (x) x$model$model
 
 #' Access the InstanceList stored by a model
 #'
 #' MALLET models store a reference to their source documents. This is an
 #' accessor function for that reference.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @return a reference to the InstanceList object, or NULL if not available
 #'
 #' @export
@@ -418,7 +418,7 @@ instances <- function (x) UseMethod("instances")
 `instances<-` <- function (x, value) UseMethod("instances<-")
 
 #' @export
-instances.dfr_lda <- function (x) {
+instances.mallet_model <- function (x) {
     obj <- RTopicModel(x)
     if (is.null(obj)) {
         warning("The model object is not available")
@@ -429,14 +429,14 @@ instances.dfr_lda <- function (x) {
 }
 
 #' @export
-`instances<-.dfr_lda` <- function (x, value) {
+`instances<-.mallet_model` <- function (x, value) {
     x$instances <- value
     x
 }
 
 #' The document-topic matrix
 #'
-#' Extracts the matrix from a \code{dfr_lda} model with documents in rows and
+#' Extracts the matrix from a \code{mallet_model} model with documents in rows and
 #' topic weights in columns. The document order is the same as the ordering of
 #' the documents supplied to MALLET.
 #'
@@ -445,7 +445,7 @@ instances.dfr_lda <- function (x) {
 #' correct, it is easier to reason about and to do post-hoc calculations with.
 #' It is up to the user to apply normalization and smoothing where appropriate.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @return a numeric matrix
 #'
 #' @export
@@ -456,7 +456,7 @@ doc_topics <- function (x) UseMethod("doc_topics")
 `doc_topics<-` <- function (x, value) UseMethod("doc_topics<-")
 
 #' @export
-doc_topics.dfr_lda <- function (x) {
+doc_topics.mallet_model <- function (x) {
     dtm <- x$doc_topics
     if (is.null(dtm) && !is.null(x$model)) {
         dtm <- mallet.doc.topics(x$model, smoothed=F, normalized=F)
@@ -465,7 +465,7 @@ doc_topics.dfr_lda <- function (x) {
 }
 
 #' @export
-`doc_topics<-.dfr_lda` <- function (x, value) {
+`doc_topics<-.mallet_model` <- function (x, value) {
     x$doc_topics <- value
     x
 }
@@ -476,7 +476,7 @@ doc_topics.dfr_lda <- function (x) {
 #' you access them, you can use these functions. R's functional design makes
 #' memoizing a little cumbersome (or requires another package).
 #'
-#' @param m \code{dfr_lda} object
+#' @param m \code{mallet_model} object
 #' @return a copy of \code{m} with the data element in question loaded. In
 #'   principle the (list) copy is "shallow" and should not be expensive in time
 #'   or memory.
@@ -496,9 +496,9 @@ load_doc_topics <- function (m) {
 #' Retrieve document IDs
 #'
 #' Extracts a character vector of IDs of the modeled documents from a
-#' \code{dfr_lda} model.
+#' \code{mallet_model} model.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @return a character vector
 #'
 #' @export
@@ -509,7 +509,7 @@ doc_ids <- function (x) UseMethod("doc_ids")
 `doc_ids<-` <- function (x, value) UseMethod("doc_ids<-")
 
 #' @export
-doc_ids.dfr_lda <- function (x) {
+doc_ids.mallet_model <- function (x) {
     if (!is.null(x$doc_ids)) {
         x$doc_ids
     } else if (!is.null(x$model)) {
@@ -521,17 +521,17 @@ doc_ids.dfr_lda <- function (x) {
 }
 
 #' @export
-`doc_ids<-.dfr_lda` <- function (x, value) {
+`doc_ids<-.mallet_model` <- function (x, value) {
     x$doc_ids <- value
     x
 }
 
 #' Retrieve model corpus vocabulary
 #'
-#' Extracts a character vector of the word types included in a \code{dfr_lda}
+#' Extracts a character vector of the word types included in a \code{mallet_model}
 #' model.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @return a character vector
 #'
 #' @export
@@ -542,7 +542,7 @@ vocabulary <- function (x) UseMethod("vocabulary")
 `vocabulary<-` <- function (x, value) UseMethod("vocabulary<-")
 
 #' @export
-vocabulary.dfr_lda <- function (x) {
+vocabulary.mallet_model <- function (x) {
     if (!is.null(x$vocab)) {
         x$vocab
     } else if (!is.null(x$model)) {
@@ -554,7 +554,7 @@ vocabulary.dfr_lda <- function (x) {
 }
 
 #' @export
-`vocabulary<-.dfr_lda` <- function (x, value) {
+`vocabulary<-.mallet_model` <- function (x, value) {
     x$vocab <- value
     x
 }
@@ -565,7 +565,7 @@ vocabulary.dfr_lda <- function (x) {
 #' model's vocabulary (corresponding to column indices in the topic-word
 #' matrix).
 #'
-#' @param m a \code{dfr_lda} object
+#' @param m a \code{mallet_model} object
 #' @param terms character vector of words to find indices of
 #' @return numeric vector of indices into the vocabulary
 #'
@@ -575,7 +575,7 @@ term_ids <- function (m, terms) match(terms, vocabulary(m))
 
 #' The topic-words matrix
 #'
-#' Extracts the matrix from a \code{dfr_lda} model with topics in rows and word
+#' Extracts the matrix from a \code{mallet_model} model with topics in rows and word
 #' weights in columns. The word order is the same as that of the vocabulary for
 #' the MALLET InstanceList.
 #'
@@ -584,7 +584,7 @@ term_ids <- function (m, terms) match(terms, vocabulary(m))
 #' about and to do post-hoc calculations with, even if not rigorously correct.
 #' It is up to the user to apply normalization and smoothing where appropriate.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @return a numeric matrix
 #'
 #' @export
@@ -595,7 +595,7 @@ topic_words <- function (x, ...) UseMethod("topic_words")
 `topic_words<-` <- function (x, value) UseMethod("topic_words<-")
 
 #' @export
-topic_words.dfr_lda <- function (x) {
+topic_words.mallet_model <- function (x) {
     m <- x$topic_words
     if (is.null(m) && !is.null(x$model)) {
         m <- as(mallet.topic.words(x$model, smoothed=F, normalized=F),
@@ -606,7 +606,7 @@ topic_words.dfr_lda <- function (x) {
 }
 
 #' @export
-`topic_words<-.dfr_lda` <- function (x, value) {
+`topic_words<-.mallet_model` <- function (x, value) {
     x$topic_words <- value
     x
 }
@@ -632,7 +632,7 @@ load_topic_words <- function (m) {
 #' model outputs, one will often prefer to load just this data frame and the
 #' doc-topics matrix into memory, rather than the full topic-word matrix.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @param n number of top words per topic to return (omit for all available)
 #' @param weighting a function to transform the full topic-word matrix before
 #'   calculating top-ranked words. If NULL, taken to be identity. Other
@@ -650,7 +650,7 @@ top_words <- function (x, ...) UseMethod("top_words")
 `top_words<-` <- function (x, value) UseMethod("top_words<-")
 
 #' @export
-top_words.dfr_lda <- function (x, n=NULL, weighting=NULL) {
+top_words.mallet_model <- function (x, n=NULL, weighting=NULL) {
     result <- NULL
     K <- n_topics(x)
     if (!is.null(x$top_words) && is.null(weighting)) {
@@ -693,7 +693,7 @@ either missing or too short.  To load the latter, use
 }
 
 #' @export
-`top_words<-.dfr_lda` <- function (x, value) {
+`top_words<-.mallet_model` <- function (x, value) {
     x$top_words <- value
     x
 }
@@ -707,12 +707,12 @@ load_top_words <- function (m, n=NULL, weighting=NULL) {
 
 #' Retrieve metadata
 #'
-#' Get or set the metadata for an \code{dfr_lda} model.
+#' Get or set the metadata for an \code{mallet_model} model.
 #'
 #' The setter method drops any metadata rows that do not match the document IDs
 #' for the model.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @param value a metadata data frame
 #' @return a character vector
 #'
@@ -724,10 +724,10 @@ metadata <- function (x) UseMethod("metadata")
 `metadata<-` <- function (x, value) UseMethod("metadata<-")
 
 #' @export
-metadata.dfr_lda <- function (x) x$metadata
+metadata.mallet_model <- function (x) x$metadata
 
 #' @export
-`metadata<-.dfr_lda` <- function (x, value) {
+`metadata<-.mallet_model` <- function (x, value) {
     x$metadata <- match_metadata(value, doc_ids(x))
     x
 }
@@ -749,7 +749,7 @@ match_metadata <- function (meta, ids) {
 #' \eqn{\beta}. These are used in smoothing the document-topic and topic-word
 #' matrices respectively.
 #'
-#' @param x a \code{dfr_lda} object
+#' @param x a \code{mallet_model} object
 #' @return a list with two elements, \code{alpha} (a vector, with one value per
 #'   topic), and \code{beta} (a single number)
 #'
@@ -761,7 +761,7 @@ hyperparameters <- function (x) UseMethod("hyperparameters")
 `hyperparameters<-` <- function (x, value) UseMethod("hyperparameters<-")
 
 #' @export
-hyperparameters.dfr_lda <- function (x) {
+hyperparameters.mallet_model <- function (x) {
     if (!is.null(x$hyper)) {
         x$hyper
     } else if (!is.null(x$model)) {
@@ -775,7 +775,7 @@ hyperparameters.dfr_lda <- function (x) {
 }
 
 #' @export
-`hyperparameters<-.dfr_lda` <- function (x, value) {
+`hyperparameters<-.mallet_model` <- function (x, value) {
     x$hyper <- value
     x
 }
@@ -783,10 +783,10 @@ hyperparameters.dfr_lda <- function (x) {
 #' The model object
 #'
 #' A topic model is a complicated beastie, and exploring it requires keeping
-#' track of a number of different kinds of data. The \code{dfr_lda} object
+#' track of a number of different kinds of data. The \code{mallet_model} object
 #' strives to encapsulate some of this for you. Package users shouldn't need to
 #' invoke the constructor explicitly; to obtain model objects, use either
-#' \code{\link{train_model}} or \code{\link{load_dfr_lda}}. The \code{summary}
+#' \code{\link{train_model}} or \code{\link{load_mallet_model}}. The \code{summary}
 #' method indicates which elements of the model have been loaded into R's
 #' memory.
 #'
@@ -808,7 +808,7 @@ hyperparameters.dfr_lda <- function (x) {
 #' @param state final Gibbs sampling state
 #'
 #' @export
-dfr_lda <- function (doc_topics=NULL,
+mallet_model <- function (doc_topics=NULL,
                      doc_ids=NULL,
                      vocab=NULL,
                      top_words=NULL,
@@ -828,12 +828,12 @@ dfr_lda <- function (doc_topics=NULL,
                    model=model,
                    params=params,
                    state=state),
-              class="dfr_lda")
+              class="mallet_model")
 }
 
 #' @export
-#' @rdname dfr_lda
-print.dfr_lda <- function (x) {
+#' @rdname mallet_model
+print.mallet_model <- function (x) {
     s <- stringr::str_c(
 "A topic model created by MALLET
 
@@ -846,8 +846,8 @@ Number of word types: ", length(vocabulary(x)))
 }
 
 #' @export
-#' @rdname dfr_lda
-summary.dfr_lda <- function (x) {
+#' @rdname mallet_model
+summary.mallet_model <- function (x) {
     members <- c("model", "instances", "doc_topics", "top_words", "topic_words",
                  "vocab", "doc_ids", "hyper")
     lst <- lapply(members, function (m) !is.null(x[[m]]))
@@ -856,12 +856,12 @@ summary.dfr_lda <- function (x) {
     lst$n_docs <- n_docs(x)
     lst$n_words <- length(vocabulary(x))
 
-    structure(lst, class="dfr_lda_summary")
+    structure(lst, class="mallet_model_summary")
 }
 
 #' @export
-#' @rdname dfr_lda
-print.dfr_lda_summary <- function (x) {
+#' @rdname mallet_model
+print.mallet_model_summary <- function (x) {
     yesno <- function (m) ifelse(x[[m]], "yes", " no")
 
     s <- stringr::str_c(
@@ -890,7 +890,7 @@ hyperparameters:        ", yesno("hyper")
 #' Read in model outputs from files
 #'
 #' Load a model object from a set of files (like those produced from
-#' \code{\link{write_dfr_lda}}). Leave a filename out to skip loading that piece
+#' \code{\link{write_mallet_model}}). Leave a filename out to skip loading that piece
 #' of the puzzle.
 #'
 #' @param doc_topics_file document-topic matrix file (CSV)
@@ -902,10 +902,10 @@ hyperparameters:        ", yesno("hyper")
 #' @param params_file modeling parameters file (read with
 #'   \code{\link[base]{dget}})
 #'
-#' @return a \code{dfr_lda} object
+#' @return a \code{mallet_model} object
 #'
 #' @export
-load_dfr_lda <- function(
+load_mallet_model <- function(
         doc_topics_file,
         doc_ids_file,
         vocab_file,
@@ -950,7 +950,7 @@ load_dfr_lda <- function(
 
     ids <- readLines(doc_ids_file)
 
-    result <- dfr_lda(
+    result <- mallet_model(
         doc_topics=read_matrix_csv(doc_topics_file),
         doc_ids=ids,
         vocab=readLines(vocab_file),
@@ -966,7 +966,7 @@ load_dfr_lda <- function(
 
 #' Load a model with conventional filenames from a directory
 #'
-#' If you accept the defaults from \code{\link{write_dfr_lda}}, you can read t
+#' If you accept the defaults from \code{\link{write_mallet_model}}, you can read t
 #' results back in simply by passing the directory name here.
 #'
 #' The expected filenames are \code{doc_topics.csv}, \code{doc_ids.txt},
@@ -977,15 +977,15 @@ load_dfr_lda <- function(
 #' @param load_topic_words logical: load the full topic-word matrix?
 #' @param metadata_file document metadata file(s) (optional)
 #'
-#' @return \code{dfr_lda} object
+#' @return \code{mallet_model} object
 #'
 #' @export
-load_dfr_lda_directory <- function (f, load_topic_words=F,
+load_mallet_model_directory <- function (f, load_topic_words=F,
                                     load_sampling_state=F,
                                     metadata_file=NULL) {
     tw <- if (load_topic_words) file.path(f, "topic_words.csv") else NULL
     ss <- if (load_sampling_state) file.path(f, "state.csv") else NULL
-    load_dfr_lda(doc_topics_file=file.path(f, "doc_topics.csv"),
+    load_mallet_model(doc_topics_file=file.path(f, "doc_topics.csv"),
                  doc_ids_file=file.path(f, "doc_ids.txt"),
                  vocab_file=file.path(f, "vocabulary.txt"),
                  top_words_file=file.path(f, "top_words.csv"),
@@ -1005,7 +1005,7 @@ load_dfr_lda_directory <- function (f, load_topic_words=F,
 #' @param load_topic_words
 #'
 #' @export
-load_dfr_lda_legacy <- function (f, load_topic_words=F,
+load_mallet_model_legacy <- function (f, load_topic_words=F,
                                  metadata_file=NULL) {
     stop("Unimplemented.")
     # TODO implement this

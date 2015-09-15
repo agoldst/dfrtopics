@@ -68,7 +68,7 @@ term_series_matrix <- function (tdm, dates, breaks="years") {
 #' 
 #' See the package vignette for an example of this function in use.
 #' 
-#' @param m \code{dfr_lda} object
+#' @param m \code{mallet_model} object
 #' @param breaks passed on to \code{link[base]}{cut.Date} (q.v.): what interval
 #'   should the time series use?
 #'   
@@ -164,7 +164,7 @@ rescale_cols <- function (m, x) {
 #' 0.6 and which determines the amount by which words common in the whole corpus
 #' are penalized.
 #' 
-#' @param x a \code{\link{dfr_lda}} object
+#' @param x a \code{\link{mallet_model}} object
 #' @param l For \code{sievert_shirley}, the weighting parameter \eqn{\lambda}, 
 #'   by default 0.6.
 #' @return a function of one variable, to be applied to the topic-word sparse 
@@ -309,7 +309,7 @@ write_Matrix_csv <- write_matrix_csv
 #' applied to \code{doc_topics(x)}. The idea is to minimize the possibility of
 #' confusion over whether you are operating on smoothed weights or not.
 #' 
-#' @param x \code{dfr_lda} object
+#' @param x \code{mallet_model} object
 #' @return a function which operates on document-topic matrix
 #'   
 #' @seealso \code{\link{doc_topics}}, \code{\link[mallet]{mallet.doc.topics}}
