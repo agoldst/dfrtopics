@@ -400,7 +400,13 @@ RTopicModel.mallet_model <- function (x) x$model
 ParallelTopicModel <- function (x) UseMethod("ParallelTopicModel")
 
 #' @export
-ParallelTopicModel.mallet_model <- function (x) x$model$model
+ParallelTopicModel.mallet_model <- function (x) {
+    if (is.null(x$model)) {
+        NULL
+    } else {
+        x$model$model
+    }
+}
 
 #' Access the InstanceList stored by a model
 #'
@@ -421,7 +427,6 @@ instances <- function (x) UseMethod("instances")
 instances.mallet_model <- function (x) {
     obj <- RTopicModel(x)
     if (is.null(obj)) {
-        warning("The model object is not available")
         NULL
     } else {
         obj$instances
