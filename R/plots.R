@@ -173,7 +173,7 @@ plot_series <- function (series, group="topic", date="pubdate", weight="weight",
 
     result +
         ggplot2::scale_y_continuous(labels=scales::percent_format()) +
-        labs(x="date", y="proportion of total weight",
+        ggplot2::labs(x="date", y="proportion of total weight",
              title=paste0(group, "s over time"))
 }
 
@@ -218,7 +218,7 @@ plot_topic_scaled <- function (coords, labels=1:nrow(coords)) {
               axis.line=ggplot2::element_blank(),
               axis.text=ggplot2::element_blank(),
               axis.ticks=ggplot2::element_blank()) +
-        ggtitle("Relative positions of topics")
+        ggplot2::ggtitle("Relative positions of topics")
 }
 
 #' Plot word frequencies within topics over time
@@ -249,10 +249,11 @@ plot_word_topic_series <- function (m, word, breaks="years") {
     series <- rescale_cols(series, 1 / total_series)
     series_frame <- gather_matrix(series, col_names=c("topic", "year", "weight"))
     series_frame$topic <- topic_labels(m, 3)[series_frame$topic]
-    ggplot(series_frame,
-            aes_string(x="year", y="weight", group="topic", color="topic")) +
-        geom_area() +
-        labs(x="year",
+    ggplot2::ggplot(series_frame,
+            ggplot2::aes_string(
+                x="year", y="weight", group="topic", color="topic")) +
+        ggplot2::geom_area() +
+        ggplot2::labs(x="year",
              y=stringr::str_c('fraction of "', word, '"'),
              title=stringr::str_c('allocation of "', word, '" among topics'))
 }
