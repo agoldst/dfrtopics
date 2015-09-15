@@ -7,7 +7,7 @@
 #' Saves the MALLET sampling state using MALLET's own state-output routine,
 #' which produces a ginormous gzipped textfile.
 #'
-#' @param m the \code{dfr_lda} model object
+#' @param m the \code{mallet_model} model object
 #' @param outfile the output file name
 #'
 #' @seealso \code{\link{read_sampling_state}}
@@ -127,7 +127,7 @@ read_sampling_state <- function(filename,
 sampling_state <- function (x) UseMethod("sampling_state")
 
 #' @export
-sampling_state.dfr_lda <- function (x) {
+sampling_state.mallet_model <- function (x) {
     if (is.null(x$ss) && !is.null(x$model)) {
         message(
 'The sampling state is unavailable directly. To retrieve the state, use:
@@ -142,7 +142,7 @@ m <- load_state(m)'
 `sampling_state<-` <- function (x, value) UseMethod("sampling_state<-")
 
 #' @export
-`sampling_state<-.dfr_lda` <- function (x, value) {
+`sampling_state<-.mallet_model` <- function (x, value) {
     x$ss <- value
     x
 }
@@ -153,7 +153,7 @@ m <- load_state(m)'
 #' object. If no file names are supplied, the state information will be written
 #' to (possibly very large) temporary files before being read back into memory.
 #'
-#' @param m \code{dfr_lda} object
+#' @param m \code{mallet_model} object
 #' @param simplified_state_file Name of simplified state file (from
 #'   \code{\link{simplify_state}}. If NULL, a temporary file will be created
 #' @param mallet_state_file Name of file with mallet's own gzipped
@@ -216,11 +216,11 @@ load_sampling_state <- function (m,
 #'   weights (unsmoothed and unnormalized) with terms in rows and documents in
 #'   columns (same ordering as \code{vocabulary(m)} and \code{doc_ids(m)})
 #'
-#' @param m a \code{dfr_lda} object with the sampling state loaded
+#' @param m a \code{mallet_model} object with the sampling state loaded
 #'   \code{\link{read_sampling_state}}. Operated on using
 #'   \code{\link[bigmemory]{mwhich}}.
 #'
-#' @seealso \code{\link{read_sampling_state}}, \code{\link{dfr_lda}},
+#' @seealso \code{\link{read_sampling_state}}, \code{\link{mallet_model}},
 #'   \code{\link{load_sampling_state}}, \code{\link{top_n_row}},
 #'   \code{\link{sum_col_groups}}, \code{\link{term_year_matrix}}
 #'
@@ -254,12 +254,12 @@ tdm_topic <- function (m, topic) {
 #' @return a \code{\link[Matrix]{sparseMatrix}} of \emph{within-document} word
 #'   weights for \code{term} (columns are in \code{doc_ids(m)} order)
 #'
-#' @param m a \code{dfr_lda} object with the sampling state loaded
+#' @param m a \code{mallet_model} object with the sampling state loaded
 #'   \code{\link{read_sampling_state}}. Operated on using
 #'   \code{\link[bigmemory]{mwhich}}.
 #'
 #' @seealso \code{\link{tdm_topic}}, \code{\link{read_sampling_state}},
-#'   \code{\link{dfr_lda}}, \code{\link{load_sampling_state}},
+#'   \code{\link{mallet_model}}, \code{\link{load_sampling_state}},
 #'   \code{\link{top_n_row}}, \code{\link{sum_col_groups}}
 #'
 #' @export
