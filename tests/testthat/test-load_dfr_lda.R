@@ -52,7 +52,7 @@ test_that("saving a model generates appropriate files", {
 
     clear_files(out_files)
 
-    write_dfr_lda(m, out_dir, save_instances=T, save_scaled=T)
+    write_mallet_model(m, out_dir, save_instances=T, save_scaled=T)
 
     for (f in out_files) {
         expect_true(file.exists(f),
@@ -63,9 +63,9 @@ test_that("saving a model generates appropriate files", {
 })
 
 test_that("loading saved model files reproduces the model", {
-    write_dfr_lda(m, out_dir)
+    write_mallet_model(m, out_dir)
 
-    m2 <- load_dfr_lda(
+    m2 <- load_mallet_model(
         doc_topics_file=out_files[1],
         doc_ids_file=out_files[2],
         vocab_file=out_files[3],
@@ -89,9 +89,9 @@ test_that("loading saved model files reproduces the model", {
 })
 
 test_that("loading from a directory reproduces the model", {
-    write_dfr_lda(m, out_dir)
+    write_mallet_model(m, out_dir)
 
-    m2 <- load_dfr_lda_directory(out_dir,
+    m2 <- load_mallet_model_directory(out_dir,
         metadata_file=file.path(data_dir, "citations.tsv"))
 
     expect_equal(doc_topics(m), doc_topics(m2))
