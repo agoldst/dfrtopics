@@ -1,9 +1,10 @@
 context("writing/loading model output files")
 
-out_dir <- tempdir()
+out_dir <- file.path(tempdir(), "test-loading")
 if (!file.exists(out_dir)) {
-    dir.create(out_dir)
+    dir.create(out_dir, recursive=TRUE)
 }
+
 out_files <- file.path(out_dir,c(
     "doc_topics.csv",
     "doc_ids.txt",
@@ -12,6 +13,7 @@ out_files <- file.path(out_dir,c(
     "topic_words.csv",
     "params.txt",
     "mallet_state.gz",
+    "state.csv",
     "diagnostics.xml",
     "instances.mallet",
     "topic_scaled.csv"))
