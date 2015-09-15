@@ -2,8 +2,8 @@
 
 #' Create MALLET instances from a document frame
 #' 
-#' Given a frame like that returned by \code{\link{dfr_docs_frame}}, create a
-#' MALLET \code{InstanceList} object. A simple wrapper for
+#' Given a frame like that returned by \code{\link{wordcounts_texts}},
+#' create a MALLET \code{InstanceList} object. A simple wrapper for
 #' \code{link[mallet]{mallet.import}}.
 #' 
 #' The \code{InstanceList} object is the form in which MALLET understands a 
