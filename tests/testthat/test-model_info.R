@@ -14,7 +14,8 @@ test_that("Topic info functions work as expected", {
                               "stoplist.txt")
 
     insts <- read_wordcounts(fs) %>%
-        dfr_docs_frame() %>%
+        wordcounts_remove_rare(10000) %>%
+        wordcounts_texts() %>%
         make_instances(stoplist_file)
 
     n_topics <- 8
@@ -37,11 +38,11 @@ test_that("Topic info functions work as expected", {
     # comes as a named vector, so strip names
     keys <- top_words(m, 10)
     expect_equal(keys$word[11:13],
-                c("poetry", "latin", "literature"))
+                c("english", "story", "first"))
 
     tlabs <- topic_labels(m, n=3)
     expect_equal(tlabs[5],
-                "5 revenge nr italian")
+                "5 author text jusserand")
 
     # check top docs
 
@@ -49,21 +50,24 @@ test_that("Topic info functions work as expected", {
 
     # topic 5
     expect_equal(doc_ids(m)[tdocs$doc[13:15]],
-                c("10.2307/432389", "10.2307/3693732", "10.2307/432452"))
+                 c("10.2307/432464", "10.2307/432470", "10.2307/3693731"))
 
     # check identity weighting
     expect_equal(tdocs$weight[13:15],
-                c(2654, 1581, 1565))
+                c(8560, 8150, 3267))
 
     # check top topics
 
     ttopics <- docs_top_topics(m, n=2, weighting=identity)
     d <- match("10.2307/432389", doc_ids(m))
     tt_check <- ttopics[ttopics$doc == d, ]
-    expect_equal(tt_check$topic, c(5, 8))
-    expect_equal(tt_check$weight, c(2654, 1102))
+    expect_equal(tt_check$topic, c(1, 5))
+    expect_equal(tt_check$weight, c(1583, 625))
 
-    wtopics <- words_top_topics(m, n=3)
+    wtopics <- words_top_topics(m, n=3, identity)
     expect_equal(wtopics$topic[wtopics$word == "latin"],
-                 c(3, 2, 6))
+                 c(4, 3, 1))
+    wtopics <- words_top_topics(m, n=3) # normalizing
+    expect_equal(wtopics$topic[wtopics$word == "latin"],
+                 c(3, 4, 1))
 })
