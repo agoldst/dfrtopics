@@ -7,12 +7,12 @@
 #' The model have its \code{\link{ParallelTopicModel}} object available (see
 #' \code{\link{train_model}}.
 #'
-#' @param model \code{\link{mallet_model}} object
+#' @param m \code{\link{mallet_model}} object
 #' @return a reference to the Java topic inferencer object
 #'
 #' @export
-inferencer <- function (model) {
-    ParallelTopicModel(model)$getInferencer()
+inferencer <- function (m) {
+    ParallelTopicModel(m)$getInferencer()
 }
 
 #' Save an inferencer object to a file
@@ -37,13 +37,13 @@ write_inferencer <- function (inf, out_file) {
 #'
 #' Loads a topic-inferencer saved to disk back into memory
 #'
-#' @param in_file file to read from
+#' @param filename file to read from
 #' @return reference to Java topic inferencer object
 #'
 #' @export
-read_inferencer <- function (in_file) {
+read_inferencer <- function (filename) {
     J("cc.mallet.topics.TopicInferencer")$read(
-        new(J("java.io.File"), path.expand(in_file))
+        new(J("java.io.File"), path.expand(filename))
     )
 }
 
@@ -53,7 +53,7 @@ read_inferencer <- function (in_file) {
 #' documents. This is like the Gibbs sampling process for making a topic model,
 #' but the topic-word proportions are not updated.
 #'
-#' @param model either a topic inferencer object from
+#' @param m either a topic inferencer object from
 #'   \code{\link{read_inferencer}} or \code{\link{inferencer}} or a
 #'   \code{mallet_model} object
 #' @param instances an InstanceList object. It must be compatible i.e., (its
@@ -86,12 +86,12 @@ read_inferencer <- function (in_file) {
 #' }
 #'
 #' @export
-infer_topics <- function (model, instances, ...) {
+infer_topics <- function (m, instances, ...) {
     UseMethod("infer_topics")
 }
 
 #' @export
-infer_topics.default <- function (model, instances,
+infer_topics.default <- function (m, instances,
         n_iterations=100,
         sampling_interval=10, # aka "thinning"
         burn_in=10,
@@ -101,13 +101,13 @@ infer_topics.default <- function (model, instances,
     sampling_interval <- as.integer(sampling_interval)
     burn_in <- as.integer(burn_in)
     if (!is.null(seed)) {
-        model$setRandomSeed(as.integer(seed))
+        m$setRandomSeed(as.integer(seed))
     }
 
     doc_topics <- vector("list", instances$size())
     for (j in 1:instances$size()) {
         inst <- .jcall(iter, "Ljava/lang/Object;", "next")
-        doc_topics[[j]] <- model$getSampledDistribution(inst,
+        doc_topics[[j]] <- m$getSampledDistribution(inst,
             n_iterations, sampling_interval, burn_in)
     }
 
@@ -121,15 +121,15 @@ infer_topics.default <- function (model, instances,
                     sampling_interval=sampling_interval,
                     burn_in=burn_in,
                     seed=seed),
-        inf=model,
+        inf=m,
         instances=instances
     )
 }
 
 #' @export
-infer_topics.mallet_model <- function (model, instances, ...) {
+infer_topics.mallet_model <- function (m, instances, ...) {
     # can't get NextMethod to work, so what the hey
-    infer_topics.default(model=inferencer(model), instances, ...)
+    infer_topics.default(m=inferencer(m), instances, ...)
 }
 
 #' An inferred topic model of new documents

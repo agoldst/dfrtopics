@@ -124,27 +124,27 @@ read_sampling_state <- function(filename,
 }
 
 #' @export
-sampling_state <- function (x) UseMethod("sampling_state")
+sampling_state <- function (m) UseMethod("sampling_state")
 
 #' @export
-sampling_state.mallet_model <- function (x) {
-    if (is.null(x$ss) && !is.null(x$model)) {
+sampling_state.mallet_model <- function (m) {
+    if (is.null(m$ss) && !is.null(m$model)) {
         message(
 'The sampling state is unavailable directly. To retrieve the state, use:
 
 m <- load_state(m)'
         )
     }
-    x$ss
+    m$ss
 }
 
 #' @export
-`sampling_state<-` <- function (x, value) UseMethod("sampling_state<-")
+`sampling_state<-` <- function (m, value) UseMethod("sampling_state<-")
 
 #' @export
-`sampling_state<-.mallet_model` <- function (x, value) {
-    x$ss <- value
-    x
+`sampling_state<-.mallet_model` <- function (m, value) {
+    m$ss <- value
+    m
 }
 
 #' Load Gibbs sampling state into model object

@@ -92,7 +92,7 @@ topic_series <- function (m, breaks="years") {
 #' the columns sum to one (L1 normalization). Sometimes it is convenient instead
 #' to set the columns to have a unit Euclidean norm (L2 normalization).
 #' 
-#' @param m a matrix or Matrix
+#' @param x a matrix or Matrix
 #' @param norm Either \code{"L1"}, the default (the sum of the absolute value of
 #'   terms), or \code{"L2"}, the Euclidean norm
 #' @param stopzero If FALSE (the default), columns with norm zero are left
@@ -102,11 +102,11 @@ topic_series <- function (m, breaks="years") {
 #'   
 #' @export
 #' 
-normalize_cols <- function (m, norm="L1", stopzero=FALSE) {
+normalize_cols <- function (x, norm="L1", stopzero=FALSE) {
     if (norm == "L1") { 
-        norms <- Matrix::colSums(abs(m))
+        norms <- Matrix::colSums(abs(x))
     } else if (norm == "L2") {
-        norms <- sqrt(Matrix::colSums(m * m))
+        norms <- sqrt(Matrix::colSums(x * x))
     } else {
         stop("norm must be L1 or L2")
     }
@@ -117,7 +117,7 @@ normalize_cols <- function (m, norm="L1", stopzero=FALSE) {
         stop("The matrix has columns of all zeroes, which cannot be normalized.")
     }
 
-    rescale_cols(m, 1 / norms)
+    rescale_cols(x, 1 / norms)
 }
 
 #' Rescale the columns of a matrix
@@ -164,7 +164,7 @@ rescale_cols <- function (m, x) {
 #' 0.6 and which determines the amount by which words common in the whole corpus
 #' are penalized.
 #' 
-#' @param x a \code{\link{mallet_model}} object
+#' @param m a \code{\link{mallet_model}} object
 #' @param l For \code{sievert_shirley}, the weighting parameter \eqn{\lambda}, 
 #'   by default 0.6.
 #' @return a function of one variable, to be applied to the topic-word sparse 
@@ -182,13 +182,13 @@ rescale_cols <- function (m, x) {
 #'   
 #'   
 #' @examples
-#' \dontrun{top_words(x, n=10, weighting=tw_blei_lafferty(x))}
-#' \dontrun{tw_smooth_normalize(x)(topic_words(x))}
+#' \dontrun{top_words(m, n=10, weighting=tw_blei_lafferty(x))}
+#' \dontrun{tw_smooth_normalize(m)(topic_words(m))}
 #' 
 #' @export
 #' 
-tw_smooth_normalize <- function (x) {
-    b <- hyperparameters(x)$beta
+tw_smooth_normalize <- function (m) {
+    b <- hyperparameters(m)$beta
 
     function (tw) {
         Matrix::Diagonal(x=1 /
@@ -198,8 +198,8 @@ tw_smooth_normalize <- function (x) {
 
 #' @export
 #' @rdname tw_smooth_normalize
-tw_smooth <- function (x) {
-    b <- hyperparameters(x)$beta
+tw_smooth <- function (m) {
+    b <- hyperparameters(m)$beta
 
     function (tw) {
         tw + b
@@ -208,13 +208,13 @@ tw_smooth <- function (x) {
 
 #' @export
 #' @rdname tw_smooth_normalize
-tw_blei_lafferty <- function (x) {
+tw_blei_lafferty <- function (m) {
     
     # score(t,v) = p(t,v) log (p(t,v) / Prod_k p(k,v) ^ 1 / K)
     #            = p(t,v) ( log p(t,v) - (1 / K) log( Prod_k p(k,v) ) )
     #            = p(t,v) ( log p(t,v) - (1 / K) Sum_k (log p(k,v) ) )
 
-    sn <- tw_smooth_normalize(x)
+    sn <- tw_smooth_normalize(m)
 
     function (tw) {
         tw <- sn(tw)
@@ -232,10 +232,10 @@ tw_blei_lafferty <- function (x) {
 
 #' @export
 #' @rdname tw_smooth_normalize
-tw_sievert_shirley <- function(x, lambda=0.6) {
+tw_sievert_shirley <- function(m, lambda=0.6) {
     # score(t,v) = lambda log p(t,v) + (1 - lambda) log (p(t,v) / p(v))
 
-    b <- hyperparameters(x)$beta
+    b <- hyperparameters(m)$beta
     
     function (tw) {
         V <- ncol(tw)
@@ -309,7 +309,7 @@ write_Matrix_csv <- write_matrix_csv
 #' applied to \code{doc_topics(x)}. The idea is to minimize the possibility of
 #' confusion over whether you are operating on smoothed weights or not.
 #' 
-#' @param x \code{mallet_model} object
+#' @param m \code{mallet_model} object
 #' @return a function which operates on document-topic matrix
 #'   
 #' @seealso \code{\link{doc_topics}}, \code{\link[mallet]{mallet.doc.topics}}
@@ -317,24 +317,24 @@ write_Matrix_csv <- write_matrix_csv
 #' @examples \dontrun{dt_smooth_normalize(x)(doc_topics(x))}
 #' 
 #' @export
-dt_smooth_normalize <- function (x) {
-    a <- hyperparameters(x)$alpha
+dt_smooth_normalize <- function (m) {
+    a <- hyperparameters(m)$alpha
 
-    sm <- dt_smooth(x)
-    function (m) {
-        m <- sm(m)
+    sm <- dt_smooth(m)
+    function (dtm) {
+        dtm <- sm(dtm)
 
-        diag(1 / rowSums(m)) %*% m
+        diag(1 / rowSums(dtm)) %*% dtm
     }
 }
 
 #' @export
 #' @rdname dt_smooth_normalize
-dt_smooth <- function (x) {
-    a <- hyperparameters(x)$alpha
+dt_smooth <- function (m) {
+    a <- hyperparameters(m)$alpha
 
-    function (m) {
-        m + matrix(rep(a, each=nrow(m)), nrow=nrow(m))
+    function (dtm) {
+        dtm + matrix(rep(a, each=nrow(dtm)), nrow=nrow(dtm))
     }
 }
 

@@ -305,16 +305,16 @@ To set metadata later, use metadata(m) <- ..."
 #' Returns the number of topics in a model.
 #'
 #' @export
-n_topics <- function (x) UseMethod("n_topics")
+n_topics <- function (m) UseMethod("n_topics")
 
 #' @export
-n_topics.mallet_model <- function (x) {
-    if (!is.null(x$model)) {
-        x$model$model$numTopics
-    } else if (!is.null(x$doc_topics)) {
-        ncol(x$doc_topics)
-    } else if (!is.null(x$topic_words)) {
-        nrow(x$topic_words)
+n_topics.mallet_model <- function (m) {
+    if (!is.null(m$model)) {
+        m$model$model$numTopics
+    } else if (!is.null(m$doc_topics)) {
+        ncol(m$doc_topics)
+    } else if (!is.null(m$topic_words)) {
+        nrow(m$topic_words)
     } else {
         NULL # return null if we haven't loaded enough information yet
     }
@@ -325,16 +325,16 @@ n_topics.mallet_model <- function (x) {
 #' Returns the number of documents modeled.
 #'
 #' @export
-n_docs <- function (x) UseMethod("n_docs")
+n_docs <- function (m) UseMethod("n_docs")
 
 #' @export
-n_docs.mallet_model <- function (x) {
-    if (!is.null(x$doc_topics)) {
-        nrow(x$doc_topics)
-    } else if (!is.null(x$doc_ids)) {
-        length(x$doc_ids)
-    } else if (!is.null(x$model)) {
-        x$model$instances$size()
+n_docs.mallet_model <- function (m) {
+    if (!is.null(m$doc_topics)) {
+        nrow(m$doc_topics)
+    } else if (!is.null(m$doc_ids)) {
+        length(m$doc_ids)
+    } else if (!is.null(m$model)) {
+        m$model$instances$size()
     } else {
         NULL # return null if we haven't loaded enough information yet
     }
@@ -346,10 +346,10 @@ n_docs.mallet_model <- function (x) {
 #' hyperparameter values, etc.) used to create the model.
 #'
 #' @export
-modeling_parameters  <- function (x) UseMethod("modeling_parameters")
+modeling_parameters  <- function (m) UseMethod("modeling_parameters")
 
 #' @export
-modeling_parameters.mallet_model  <- function (x) x$params
+modeling_parameters.mallet_model  <- function (m) m$params
 
 
 #' Access MALLET's glue model object
@@ -368,15 +368,15 @@ modeling_parameters.mallet_model  <- function (x) x$params
 #' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java,
 #' apply \code{\link[base]{as.integer}} to parameters.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @return a reference to the RTopicModel object
 #' @seealso \code{\link{ParallelTopicModel}}
 #' @export
 #'
-RTopicModel <- function (x) UseMethod("RTopicModel")
+RTopicModel <- function (m) UseMethod("RTopicModel")
 
 #' @export
-RTopicModel.mallet_model <- function (x) x$model
+RTopicModel.mallet_model <- function (m) m$model
 
 #' Access MALLET's model object
 #'
@@ -392,19 +392,19 @@ RTopicModel.mallet_model <- function (x) x$model
 #' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java,
 #' apply \code{\link[base]{as.integer}} to parameters.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @return a reference to the ParallelTopicModel object
 #' @seealso \code{\link{RTopicModel}}
 #' @export
 #'
-ParallelTopicModel <- function (x) UseMethod("ParallelTopicModel")
+ParallelTopicModel <- function (m) UseMethod("ParallelTopicModel")
 
 #' @export
-ParallelTopicModel.mallet_model <- function (x) {
-    if (is.null(x$model)) {
+ParallelTopicModel.mallet_model <- function (m) {
+    if (is.null(m$model)) {
         NULL
     } else {
-        x$model$model
+        m$model$model
     }
 }
 
@@ -413,19 +413,19 @@ ParallelTopicModel.mallet_model <- function (x) {
 #' MALLET models store a reference to their source documents. This is an
 #' accessor function for that reference.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @return a reference to the InstanceList object, or NULL if not available
 #'
 #' @export
 #'
-instances <- function (x) UseMethod("instances")
+instances <- function (m) UseMethod("instances")
 
 #' @export
-`instances<-` <- function (x, value) UseMethod("instances<-")
+`instances<-` <- function (m, value) UseMethod("instances<-")
 
 #' @export
-instances.mallet_model <- function (x) {
-    obj <- RTopicModel(x)
+instances.mallet_model <- function (m) {
+    obj <- RTopicModel(m)
     if (is.null(obj)) {
         NULL
     } else {
@@ -434,9 +434,9 @@ instances.mallet_model <- function (x) {
 }
 
 #' @export
-`instances<-.mallet_model` <- function (x, value) {
-    x$instances <- value
-    x
+`instances<-.mallet_model` <- function (m, value) {
+    m$instances <- value
+    m
 }
 
 #' The document-topic matrix
@@ -450,29 +450,29 @@ instances.mallet_model <- function (x) {
 #' correct, it is easier to reason about and to do post-hoc calculations with.
 #' It is up to the user to apply normalization and smoothing where appropriate.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @return a numeric matrix
 #'
 #' @export
 #'
-doc_topics <- function (x) UseMethod("doc_topics")
+doc_topics <- function (m) UseMethod("doc_topics")
 
 #' @export
-`doc_topics<-` <- function (x, value) UseMethod("doc_topics<-")
+`doc_topics<-` <- function (m, value) UseMethod("doc_topics<-")
 
 #' @export
-doc_topics.mallet_model <- function (x) {
-    dtm <- x$doc_topics
-    if (is.null(dtm) && !is.null(x$model)) {
-        dtm <- mallet.doc.topics(x$model, smoothed=F, normalized=F)
+doc_topics.mallet_model <- function (m) {
+    dtm <- m$doc_topics
+    if (is.null(dtm) && !is.null(m$model)) {
+        dtm <- mallet.doc.topics(m$model, smoothed=F, normalized=F)
     }
     dtm
 }
 
 #' @export
-`doc_topics<-.mallet_model` <- function (x, value) {
-    x$doc_topics <- value
-    x
+`doc_topics<-.mallet_model` <- function (m, value) {
+    m$doc_topics <- value
+    m
 }
 
 #' Load model elements into a model object
@@ -503,32 +503,32 @@ load_doc_topics <- function (m) {
 #' Extracts a character vector of IDs of the modeled documents from a
 #' \code{mallet_model} model.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @return a character vector
 #'
 #' @export
 #'
-doc_ids <- function (x) UseMethod("doc_ids")
+doc_ids <- function (m) UseMethod("doc_ids")
 
 #' @export
-`doc_ids<-` <- function (x, value) UseMethod("doc_ids<-")
+`doc_ids<-` <- function (m, value) UseMethod("doc_ids<-")
 
 #' @export
-doc_ids.mallet_model <- function (x) {
-    if (!is.null(x$doc_ids)) {
-        x$doc_ids
-    } else if (!is.null(x$model)) {
-        x$model$getDocumentNames()
+doc_ids.mallet_model <- function (m) {
+    if (!is.null(m$doc_ids)) {
+        m$doc_ids
+    } else if (!is.null(m$model)) {
+        m$model$getDocumentNames()
     } else {
         stop("Neither the model object nor a pre-loaded list of IDs is available.
-             To load the latter, use doc_ids(x) <- readLines(...)")
+             To load the latter, use doc_ids(m) <- readLines(...)")
     }
 }
 
 #' @export
-`doc_ids<-.mallet_model` <- function (x, value) {
-    x$doc_ids <- value
-    x
+`doc_ids<-.mallet_model` <- function (m, value) {
+    m$doc_ids <- value
+    m
 }
 
 #' Retrieve model corpus vocabulary
@@ -536,32 +536,32 @@ doc_ids.mallet_model <- function (x) {
 #' Extracts a character vector of the word types included in a \code{mallet_model}
 #' model.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @return a character vector
 #'
 #' @export
 #'
-vocabulary <- function (x) UseMethod("vocabulary")
+vocabulary <- function (m) UseMethod("vocabulary")
 
 #' @export
-`vocabulary<-` <- function (x, value) UseMethod("vocabulary<-")
+`vocabulary<-` <- function (m, value) UseMethod("vocabulary<-")
 
 #' @export
-vocabulary.mallet_model <- function (x) {
-    if (!is.null(x$vocab)) {
-        x$vocab
-    } else if (!is.null(x$model)) {
-        x$model$getVocabulary()
+vocabulary.mallet_model <- function (m) {
+    if (!is.null(m$vocab)) {
+        m$vocab
+    } else if (!is.null(m$model)) {
+        m$model$getVocabulary()
     } else {
         stop("Neither the model object nor a pre-loaded vocabulary is available.
-             To load the latter, use vocabulary(x) <- readLines(...)")
+             To load the latter, use vocabulary(m) <- readLines(...)")
     }
 }
 
 #' @export
-`vocabulary<-.mallet_model` <- function (x, value) {
-    x$vocab <- value
-    x
+`vocabulary<-.mallet_model` <- function (m, value) {
+    m$vocab <- value
+    m
 }
 
 #' Get numeric term indices
@@ -589,31 +589,31 @@ term_ids <- function (m, terms) match(terms, vocabulary(m))
 #' about and to do post-hoc calculations with, even if not rigorously correct.
 #' It is up to the user to apply normalization and smoothing where appropriate.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @return a numeric matrix
 #'
 #' @export
 #'
-topic_words <- function (x, ...) UseMethod("topic_words")
+topic_words <- function (m, ...) UseMethod("topic_words")
 
 #' @export
-`topic_words<-` <- function (x, value) UseMethod("topic_words<-")
+`topic_words<-` <- function (m, value) UseMethod("topic_words<-")
 
 #' @export
-topic_words.mallet_model <- function (x) {
-    m <- x$topic_words
-    if (is.null(m) && !is.null(x$model)) {
-        m <- as(mallet.topic.words(x$model, smoothed=F, normalized=F),
-                "sparseMatrix")
+topic_words.mallet_model <- function (m) {
+    tw <- m$topic_words
+    if (is.null(tw) && !is.null(m$model)) {
+        tw <- as(mallet.topic.words(m$model, smoothed=F, normalized=F),
+                 "sparseMatrix")
     }
 
-    m
+    tw
 }
 
 #' @export
-`topic_words<-.mallet_model` <- function (x, value) {
-    x$topic_words <- value
-    x
+`topic_words<-.mallet_model` <- function (m, value) {
+    m$topic_words <- value
+    m
 }
 
 #' @export
@@ -637,7 +637,7 @@ load_topic_words <- function (m) {
 #' model outputs, one will often prefer to load just this data frame and the
 #' doc-topics matrix into memory, rather than the full topic-word matrix.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @param n number of top words per topic to return (omit for all available)
 #' @param weighting a function to transform the full topic-word matrix before
 #'   calculating top-ranked words. If NULL, taken to be identity. Other
@@ -649,29 +649,29 @@ load_topic_words <- function (m) {
 #' @seealso \code{\link{tw_blei_lafferty}}, \code{\link{tw_sievert_shirley}}
 #'
 #' @export
-top_words <- function (x, ...) UseMethod("top_words")
+top_words <- function (m, ...) UseMethod("top_words")
 
 #' @export
-`top_words<-` <- function (x, value) UseMethod("top_words<-")
+`top_words<-` <- function (m, value) UseMethod("top_words<-")
 
 #' @export
-top_words.mallet_model <- function (x, n=NULL, weighting=NULL) {
+top_words.mallet_model <- function (m, n=NULL, weighting=NULL) {
     result <- NULL
-    K <- n_topics(x)
-    if (!is.null(x$top_words) && is.null(weighting)) {
+    K <- n_topics(m)
+    if (!is.null(m$top_words) && is.null(weighting)) {
         if (is.null(n)) {
-            result <- x$top_words
-        } else if (nrow(x$top_words) == n * K) {
-            result <- x$top_words
-        } else if (nrow(x$top_words) >= n * K) {
+            result <- m$top_words
+        } else if (nrow(m$top_words) == n * K) {
+            result <- m$top_words
+        } else if (nrow(m$top_words) >= n * K) {
             i <- rep(seq(n), times=K) +
-                rep(seq(0, nrow(x$top_words) / n * (n - 1), by=n), each=K)
-            result <- x$top_words[i, ]
+                rep(seq(0, nrow(m$top_words) / n * (n - 1), by=n), each=K)
+            result <- m$top_words[i, ]
         }
     }
 
     if (is.null(result)) {
-        tw <- topic_words(x)
+        tw <- topic_words(m)
         if (!is.null(tw)) {
             if (is.null(n)) {
                 stop("For the full topic-words matrix, use topic_words(x)")
@@ -682,14 +682,14 @@ top_words.mallet_model <- function (x, n=NULL, weighting=NULL) {
             ij <- top_n_row(tw, n)
             result <- dplyr::data_frame_(list(
                 topic=~ ij[ , 1],
-                word=~ vocabulary(x)[ij[ , 2]],
+                word=~ vocabulary(m)[ij[ , 2]],
                 weight=~ tw[ij]
             ))
         } else {
             warning(
 "The model object is not available, and the pre-loaded list of top words is
 either missing or too short.  To load the latter, use
-    top_words(x) <- read.csv(...)"
+    top_words(m) <- read.csv(...)"
             )
         }
     }
@@ -698,9 +698,9 @@ either missing or too short.  To load the latter, use
 }
 
 #' @export
-`top_words<-.mallet_model` <- function (x, value) {
-    x$top_words <- value
-    x
+`top_words<-.mallet_model` <- function (m, value) {
+    m$top_words <- value
+    m
 }
 
 #' @export
@@ -717,24 +717,24 @@ load_top_words <- function (m, n=NULL, weighting=NULL) {
 #' The setter method drops any metadata rows that do not match the document IDs
 #' for the model.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @param value a metadata data frame
 #' @return a character vector
 #'
 #' @export
 #'
-metadata <- function (x) UseMethod("metadata")
+metadata <- function (m) UseMethod("metadata")
 
 #' @export
-`metadata<-` <- function (x, value) UseMethod("metadata<-")
+`metadata<-` <- function (m, value) UseMethod("metadata<-")
 
 #' @export
-metadata.mallet_model <- function (x) x$metadata
+metadata.mallet_model <- function (m) m$metadata
 
 #' @export
-`metadata<-.mallet_model` <- function (x, value) {
-    x$metadata <- match_metadata(value, doc_ids(x))
-    x
+`metadata<-.mallet_model` <- function (m, value) {
+    m$metadata <- match_metadata(value, doc_ids(m))
+    m
 }
 
 # utility function for ensuring metadata rows match and are in same order
@@ -754,24 +754,24 @@ match_metadata <- function (meta, ids) {
 #' \eqn{\beta}. These are used in smoothing the document-topic and topic-word
 #' matrices respectively.
 #'
-#' @param x a \code{mallet_model} object
+#' @param m a \code{mallet_model} object
 #' @return a list with two elements, \code{alpha} (a vector, with one value per
 #'   topic), and \code{beta} (a single number)
 #'
 #' @export
 #'
-hyperparameters <- function (x) UseMethod("hyperparameters")
+hyperparameters <- function (m) UseMethod("hyperparameters")
 
 #' @export
-`hyperparameters<-` <- function (x, value) UseMethod("hyperparameters<-")
+`hyperparameters<-` <- function (m, value) UseMethod(},
 
 #' @export
-hyperparameters.mallet_model <- function (x) {
-    if (!is.null(x$hyper)) {
-        x$hyper
-    } else if (!is.null(x$model)) {
-        list(alpha=x$model$getAlpha(),
-             beta=x$model$model$beta)
+hyperparameters.mallet_model <- function (m) {
+    if (!is.null(m$hyper)) {
+        m$hyper
+    } else if (!is.null(m$model)) {
+        list(alpha=m$model$getAlpha(),
+             beta=m$model$model$beta)
     } else {
         stop(
 "Neither the model object nor pre-loaded hyperparameters are available."
@@ -780,20 +780,21 @@ hyperparameters.mallet_model <- function (x) {
 }
 
 #' @export
-`hyperparameters<-.mallet_model` <- function (x, value) {
-    x$hyper <- value
-    x
+`hyperparameters<-.mallet_model` <- function (m, value) {
+    m$hyper <- value
+    m
 }
 
 #' The model object
 #'
-#' A topic model is a complicated beastie, and exploring it requires keeping
-#' track of a number of different kinds of data. The \code{mallet_model} object
-#' strives to encapsulate some of this for you. Package users shouldn't need to
-#' invoke the constructor explicitly; to obtain model objects, use either
-#' \code{\link{train_model}} or \code{\link{load_mallet_model}}. The \code{summary}
-#' method indicates which elements of the model have been loaded into R's
-#' memory.
+#' A topic model is a complicated beastie, and exploring it
+#' requires keeping track of a number of different kinds of data.
+#' The \code{mallet_model} object strives to encapsulate some
+#' of this for you. Package users shouldn't need to invoke the
+#' constructor explicitly; to obtain model objects, use either
+#' \code{\link{train_model}} or \code{\link{load_mallet_model}}. The
+#' \code{summary} method indicates which elements of the model have been
+#' loaded into R's memory.
 #'
 #' Any of the parameters to the constructor can be omitted. No validation is
 #' performed.
