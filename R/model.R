@@ -27,9 +27,12 @@
 #'
 #' @return a \code{\link{dfr_lda}} object holding the results
 #'
-#' @seealso \code{\link{read_dfr_metadata}}, \code{\link{read_wordcounts}},
-#' \code{\link{make_instances}}, \code{\link{train_model}},
-#' \code{\link{write_dfr_lda}}
+#' @seealso This function simply calls in sequence
+#'   \code{\link{read_dfr_metadata}}, \code{\link{read_wordcounts}},
+#'   \code{\link{wordcounts_texts}}, \code{\link{make_instances}}, and
+#'   \code{\link{train_model}}. To write results to disk, use
+#'   \code{\link{write_dfr_lda}}
+#'
 #' @examples
 #' # Make a 50-topic model of documents in the wordcounts folder
 #' \dontrun{model_dfr_documents("citations.CSV", "wordcounts", 50)}
@@ -44,7 +47,7 @@ model_dfr_documents <- function(
                                 "stoplist", "stoplist.txt"),
         ...)  {
     result <- read_wordcounts(list.files(wordcounts_dirs, full.names=T))
-    result <- dfr_docs_frame(result)
+    result <- wordcounts_texts(result)
     result <- make_instances(result, stoplist_file)
     train_model(result, n_topics,
                 metadata=read_dfr_metadata(citations_files),
@@ -593,7 +596,6 @@ topic_words <- function (x, ...) UseMethod("topic_words")
 topic_words.dfr_lda <- function (x) {
     m <- x$topic_words
     if (is.null(m) && !is.null(x$model)) {
-        library("Matrix")
         m <- as(mallet.topic.words(x$model, smoothed=F, normalized=F),
                 "sparseMatrix")
     }
