@@ -12,13 +12,13 @@
 #'   
 #' @export
 topic_labels <- function (m, n=8) {
-    result <- group_by_(top_words(m, n), ~ topic)
+    result <- dplyr::group_by_(top_words(m, n), ~ topic)
     slc <- lazyeval::interp(~ seq(x), x=n)
-    result <- slice_(result, .dots=slc)
+    result <- dplyr::slice_(result, .dots=slc)
     smz <- setNames(list(
         ~ stringr::str_c(word, collapse=" ")),
         "label")
-    result <- summarize_(result, .dots=smz)
+    result <- dplyr::summarize_(result, .dots=smz)
     stringr::str_c(result$topic, result$label, sep=" ")
 }
 
