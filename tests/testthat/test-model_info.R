@@ -33,6 +33,8 @@ test_that("Topic info functions work as expected", {
 
     expect_equal(nrow(metadata(m)), length(fs))
 
+    expect_output(print(m), "MALLET")
+    expect_output(print(summary(m)), "model object.*yes")
 
     # check labeling functions on result
     # comes as a named vector, so strip names
