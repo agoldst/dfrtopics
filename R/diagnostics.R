@@ -67,9 +67,9 @@ read_diagnostics <- function (xml_file) {
         stop("The XML package is required to read MALLET diagnostics.")
     }
 
-    d <- xmlParse(file=xml_file)
+    d <- XML::xmlParse(file=xml_file)
     # xmlSApply returns a string matrix with topics in *columns*
-    topic_attrs <- t(xpathSApply(d, "/model/topic", xmlAttrs))
+    topic_attrs <- t(XML::xpathSApply(d, "/model/topic", XML::xmlAttrs))
     # de-stringify: 
     topics <- apply(topic_attrs, 2, as.numeric)
     # add in a 1-indexed "topic" number
@@ -77,14 +77,14 @@ read_diagnostics <- function (xml_file) {
                          stringsAsFactors=F)
 
     word_info <- function(node) {
-        w <- xmlValue(node)
-        topic <- as.numeric(xmlGetAttr(xmlParent(node), "id")) + 1
-        attrs <- xmlAttrs(node)
+        w <- XML::xmlValue(node)
+        topic <- as.numeric(XML::xmlGetAttr(XML::xmlParent(node), "id")) + 1
+        attrs <- XML::xmlAttrs(node)
         c(topic=topic, word=w, attrs)
     }
 
     # result of this is a string matrix
-    wm <- t(xpathSApply(d, "/model/topic/word", word_info))
+    wm <- t(XML::xpathSApply(d, "/model/topic/word", word_info))
     w_topics <- as.numeric(wm[ , 1]) # column "topic," re-de-stringified
     w_words <- wm[ , 2] # column "word"
 
