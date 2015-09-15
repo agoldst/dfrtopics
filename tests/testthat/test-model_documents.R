@@ -31,6 +31,7 @@ test_that("Modeling on some sample data works", {
                      n_burn_in=20,
                      n_max_iters=10)
 
+    expect_is(m, "mallet_model")
     expect_equal(class(RTopicModel(m)), "jobjRef", check.attributes=F)
     expect_equal(.jstrVal(RTopicModel(m)$getClass()),
                  "class cc.mallet.topics.RTopicModel")
