@@ -65,7 +65,10 @@ topic_labels <- function (m, n=8) {
 #' 
 #' @export
 #' 
-top_docs <- function (m, n, weighting=dt_smooth_normalize(m)) {
+top_docs <- function (m, n, ...) UseMethod("top_docs")
+
+#' @export
+top_docs.mallet_model <- function (m, n, weighting=dt_smooth_normalize(m)) {
     dtm <- weighting(doc_topics(m))
 
     ij <- top_n_col(dtm, n) 
@@ -101,7 +104,11 @@ top_docs <- function (m, n, weighting=dt_smooth_normalize(m)) {
 #' 
 #' @export
 #' 
-docs_top_topics <- function (m, n, weighting=dt_smooth_normalize(m)) {
+docs_top_topics <- function (m, n, ...) UseMethod("docs_top_topics")
+
+#' @export
+docs_top_topics.mallet_model <- function (m, n,
+        weighting=dt_smooth_normalize(m)) {
     dtm <- weighting(doc_topics(m))
 
     ij <- top_n_row(dtm, n)
