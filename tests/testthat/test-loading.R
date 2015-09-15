@@ -75,6 +75,8 @@ test_that("loading saved model files reproduces the model", {
         metadata_file=file.path(data_dir, "citations.tsv")
     )
 
+    expect_is(m2, "mallet_model")
+
     expect_equal(doc_topics(m), doc_topics(m2))
     expect_equal(doc_ids(m), doc_ids(m2))
     expect_equal(vocabulary(m), vocabulary(m2))
@@ -93,6 +95,8 @@ test_that("loading from a directory reproduces the model", {
 
     m2 <- load_mallet_model_directory(out_dir,
         metadata_file=file.path(data_dir, "citations.tsv"))
+
+    expect_is(m2, "mallet_model")
 
     expect_equal(doc_topics(m), doc_topics(m2))
     expect_equal(doc_ids(m), doc_ids(m2))
