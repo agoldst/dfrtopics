@@ -763,7 +763,7 @@ match_metadata <- function (meta, ids) {
 hyperparameters <- function (m) UseMethod("hyperparameters")
 
 #' @export
-`hyperparameters<-` <- function (m, value) UseMethod(},
+`hyperparameters<-` <- function (m, value) UseMethod("hyperparameters<-")
 
 #' @export
 hyperparameters.mallet_model <- function (m) {
