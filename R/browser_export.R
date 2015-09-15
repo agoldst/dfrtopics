@@ -46,12 +46,13 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=F) {
 #' @examples
 #' 
 #' \dontrun{
-#' m <- model_documents("citations.CSV", "wordcounts", "stoplist.txt",
-#'                      n_topics=40)
+#' m <- model_dfr_documents("citations.CSV", "wordcounts",
+#'     "stoplist.txt", n_topics=40)
 #' export_browser_data(m, out_dir="data")
 #' }
 #' 
-#' @seealso \code{\link{model_documents}} \code{\link{topic_scaled_2d}}
+#' @seealso \code{\link{model_dfr_documents}}, \code{\link{train_model}},
+#'   \code{\link{topic_scaled_2d}}
 #' 
 #' @export
 export_browser_data <- function (m, out_dir="data", zipped=TRUE,

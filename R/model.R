@@ -224,7 +224,7 @@ write_mallet_model <- function(m, output_dir=".",
 #' @return a \code{mallet_model} object
 #'
 #' @seealso \code{\link{make_instances}}, \code{\link{make_instances}},
-#'   \code{\link{model_documents}}, \code{\link{write_mallet_model}}
+#'   \code{\link{model_dfr_documents}}, \code{\link{write_mallet_model}}
 #'
 #' @export
 #'
