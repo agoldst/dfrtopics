@@ -61,7 +61,7 @@ test_that("Instances are made from DfR data successfully", {
 
     counts <- read_wordcounts(Sys.glob(file.path(data_dir,
                                                  "wordcounts", "*.CSV")))
-    texts <- dfr_docs_frame(counts)
+    texts <- wordcounts_texts(counts)
 
     stop_f <- file.path(path.package("dfrtopics"), "stoplist", "stoplist.txt")
     instances <- make_instances(texts, stoplist_file=stop_f)

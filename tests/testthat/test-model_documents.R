@@ -17,7 +17,8 @@ n_top_words <- 10 # key words
 
 test_that("Modeling on some sample data works", {
     insts <- read_wordcounts(fs) %>%
-        dfr_docs_frame() %>%
+        wordcounts_remove_rare(10000) %>%
+        wordcounts_texts() %>%
         make_instances(stoplist_file)
 
     m <- train_model(insts,

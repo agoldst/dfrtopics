@@ -13,8 +13,8 @@ stoplist_file <- file.path(path.package("dfrtopics"), "stoplist",
 
 n_topics <- 8
 insts <- read_wordcounts(fs) %>%
-    dfr_remove_rare(10000) %>%
-    dfr_docs_frame() %>%
+    wordcounts_remove_rare(10000) %>%
+    wordcounts_texts() %>%
     make_instances(stoplist_file)
 
 m <- train_model(
