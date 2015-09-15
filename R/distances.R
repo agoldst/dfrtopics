@@ -2,17 +2,16 @@
 
 #' Jensen-Shannon divergence between two vectors
 #'
-#' This function computes the Jensen-Shannon divergence between two vectors, understood as
-#' distributions over the index.
+#' This function computes the Jensen-Shannon divergence between two vectors,
+#' understood as distributions over the index.
 #'
 #' @param P,Q vectors representing the distributions. Must be of same length.
 #'
-#' @return 
-#' \deqn{\sum_j \frac{1}{2}P(j)\textrm{log}\left(\frac{2P(j)}{P(j) + Q(j)}\right)
-#' + \frac{1}{2}Q(j)\textrm{log}\left(\frac{2P(j)}{P(j) + Q(j)}\right)}
+#' @return \deqn{\sum_j \frac{1}{2}P(j)\textrm{log}\left(\frac{2P(j)}{P(j) +
+#' Q(j)}\right) + \frac{1}{2}Q(j)\textrm{log}\left(\frac{2P(j)}{P(j) +
+#' Q(j)}\right)}
 #'
-#' @seealso
-#' \code{\link{topic_divergences}}
+#' @seealso \code{\link{topic_divergences}}
 #'
 #' @export
 #'
@@ -24,30 +23,35 @@ JS_divergence <- function(P, Q) {
 
 #' Measure matrix row distances
 #'
-#' In topic modeling, we generally deal with matrices whose rows represent probability distributions. To find the distance between such distributions, we normally do not use the Euclidean distance or the other options supplied by \code{\link[stats]{dist}}. This is a utility function for taking a matrix with \eqn{K} rows and producing the matrix of distances between those rows, given an arbitrary metric. It is not fast.
+#' In topic modeling, we generally deal with matrices whose rows represent
+#' probability distributions. To find the distance between such distributions,
+#' we normally do not use the Euclidean distance or the other options supplied
+#' by \code{\link[stats]{dist}}. This is a utility function for taking a matrix
+#' with \eqn{K} rows and producing the matrix of distances between those rows,
+#' given an arbitrary metric. It is not fast.
 #'
-#' The \pkg{flexmix} package supplies a K-L divergence function \code{KLdiv}, but I have not found an implementation of the symmetrized Jensen-Shannon divergence, so I have supplied one in \code{\link{JS_divergence}}.
+#' The \pkg{flexmix} package supplies a K-L divergence function \code{KLdiv},
+#' but I have not found an implementation of the symmetrized Jensen-Shannon
+#' divergence, so I have supplied one in \code{\link{JS_divergence}}.
 #'
-#' @param M matrix
+#' @param x matrix
 #' @param g metric (function of two vectors). J-S divergence by default
 #'
 #' @return matrix of distances between rows
 #'
-#' @seealso
-#' \code{\link{JS_divergence}},
-#' \code{\link{doc_topic_cor}},
+#' @seealso \code{\link{JS_divergence}}, \code{\link{doc_topic_cor}},
 #'
 #' @export
 #'
-row_dists <- function(M, g=JS_divergence) {
+row_dists <- function (x, g=JS_divergence) {
     # FIXME failure to vectorize. Ugh. Needs Rcpp
 
-    n <- nrow(M)
+    n <- nrow(x)
     result <- matrix(0, nrow=n, ncol=n)
 
     for (i in seq(n)) {
         for (j in i:n) {
-            result[i, j] <- g(M[i, ], M[j, ])
+            result[i, j] <- g(x[i, ], x[j, ])
         }
     }
 
@@ -62,7 +66,9 @@ row_dists <- function(M, g=JS_divergence) {
 #'
 #' @param m \code{mallet_model} model object
 #'
-#' @return For \code{doc_topic_cor}, a matrix of correlations between the series of log-document proportions; for \code{topic_divergences}, a matrix of J-S divergences between topic distributions over words.
+#' @return For \code{doc_topic_cor}, a matrix of correlations between the series
+#'   of log-document proportions; for \code{topic_divergences}, a matrix of J-S
+#'   divergences between topic distributions over words.
 #'
 #' @seealso \code{\link{row_dists}}, \code{\link{topic_scaled_2d}}
 #'
@@ -81,10 +87,12 @@ doc_topic_cor <- function (m) {
 
 #' Scaled topic coordinates in 2D space
 #'
-#' Use multidimensional scaling to obtain two-dimensional coordinates for
-#' each topic in a model.
+#' Use multidimensional scaling to obtain two-dimensional coordinates for each
+#' topic in a model.
 #'
-#' The coordinates are derived by finding the Jensen-Shannon divergences between topics considered as distributions over words and then scaling this matrix to two dimensions.
+#' The coordinates are derived by finding the Jensen-Shannon divergences between
+#' topics considered as distributions over words and then scaling this matrix to
+#' two dimensions.
 #'
 #' @param m \code{mallet_model} model object
 #'
@@ -92,9 +100,8 @@ doc_topic_cor <- function (m) {
 #'
 #' @seealso \code{\link{row_dists}}, \code{\link{topic_divergences}}
 #'
-#' @references
-#' Mimno, D. 2012. Computational historiography: Data mining in
-#' a century of classics journals. \emph{ACM J. Comput. Cult. Herit.} 5, no. 1
+#' @references Mimno, D. 2012. Computational historiography: Data mining in a
+#' century of classics journals. \emph{ACM J. Comput. Cult. Herit.} 5, no. 1
 #' (April 2012): article 3. \url{http://doi.acm.org/10.1145/2160165.2160168}.
 #'
 #' @export
