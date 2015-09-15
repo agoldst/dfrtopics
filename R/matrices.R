@@ -131,8 +131,15 @@ normalize_cols <- function (x, norm="L1", stopzero=FALSE) {
 #'
 #' @export
 rescale_cols <- function (m, x) {
-    result <- m %*% Matrix::Diagonal(x=x)
-    dimnames(result) <- dimnames(m)
+    if (is(m, "Matrix")) {
+        s <- Matrix::Diagonal(x=x)
+    } else {
+        s <- diag(x)
+    }
+    result <- m %*% s
+    if (!is.null(dimnames(m))) {
+        dimnames(result) <- dimnames(m)
+    }
     result
 }
 
