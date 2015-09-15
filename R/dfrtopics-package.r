@@ -32,6 +32,7 @@
 #' }
 #' 
 #' @name dfrtopics
+#' @import Matrix
 #' @docType package
 #'   
 NULL
