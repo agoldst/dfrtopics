@@ -149,7 +149,7 @@ wordcounts_remove_rare <- function (counts, n) {
     term_totals <- wordcounts_term_totals(counts)
     # min_rank used here, giving a more aggressive filter than dense_rank
     keep <- term_totals$term[
-        dplyr::min_rank(desc(term_totals$weight)) <= n
+        dplyr::min_rank(-term_totals$weight) <= n
     ]
 
     # You'd think you could semi_join here, but that will scramble the order of
