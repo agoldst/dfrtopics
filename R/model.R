@@ -675,7 +675,7 @@ top_words.dfr_lda <- function (x, n=NULL, weighting=NULL) {
                 tw <- weighting(tw)
             }
             ij <- top_n_row(tw, n)
-            result <- data_frame_(list(
+            result <- dplyr::data_frame_(list(
                 topic=~ ij[ , 1],
                 word=~ vocabulary(x)[ij[ , 2]],
                 weight=~ tw[ij]
