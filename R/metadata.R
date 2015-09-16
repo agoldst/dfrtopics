@@ -172,10 +172,11 @@ pubdate_Date <- function (pubdate) {
 #' @export
 #' 
 dfr_id_url <- function(id, jstor_direct=T) {
-    ifelse(jstor_direct,
-        paste("http://www.jstor.org", "/stable/", id, sep=""), 
+    if (jstor_direct) {
+        paste("http://www.jstor.org", "/stable/", id, sep="")
+    } else {
         paste("http://doi.org", "/", id, sep="")
-    )
+    }
 }
 
 #' Generate simple citation strings from metadata
