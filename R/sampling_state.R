@@ -52,9 +52,6 @@ simplify_state <- function (state_file, outfile) {
     if (Sys.which("python") == "") {
         stop("This function requires python to run.")
     }
-    if (file.exists(outfile)) {
-        stop("Output file ", outfile, " already exists.")
-    }
     scpt <- file.path(path.package("dfrtopics"), "python",
                       "simplify_state.py")
     system2("python", args=c(scpt, state_file), stdout=outfile)
