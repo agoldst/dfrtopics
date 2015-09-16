@@ -74,6 +74,9 @@ row_dists <- function (x, g=JS_divergence) {
 #'
 #' @export
 topic_divergences <- function (m) {
+    if (is.null(topic_words(m))) {
+        stop("The topic-word matrix must be loaded first. Use load_topic_words.")
+    }
     tw <- tw_smooth_normalize(m)(topic_words(m))
     row_dists(tw)
 }
