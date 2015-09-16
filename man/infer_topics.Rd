@@ -38,10 +38,11 @@ was trained. Use \code{\link{compatible_instances}} to generate this.}
 \value{
 a model object of class \code{\link{mallet_model_inferred}}, which
   inherits from \code{\link{mallet_model}}. This does not have all the
-  elements of t original topic model, however; the new value of interest is
-  the matrix of estimated document-topic proportions, accessible via
-  \code{\link{doc_topics}}. The inferencer sampling state and raw weights are
-  not accessible.
+  elements of the original topic model, however; the new value of interest is
+  the matrix of estimated document-topic weights, accessible via
+  \code{\link{doc_topics}}. The inferencer sampling state and hyperparameters
+  are not accessible. MALLET supplies estimated topic proportions, which we
+  multiply by the document lengths to obtain the doc-topics matrix.
 }
 \description{
 Given an already-trained topic model, infer topic proportions for new
@@ -54,7 +55,7 @@ but the topic-word proportions are not updated.
 inferred_m <- make_instances(docs) \%>\%
     infer_topics(m, .)
 
-# extract new doc-topic matrix (NB. topic proportions)
+# extract new doc-topic matrix
 doc_topics(inferred_m)
 # or a convenient data frame of high-ranking topics in each doc
 docs_top_topics(inferred_m, n=3)

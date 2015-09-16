@@ -4,21 +4,30 @@
 \alias{export_browser_data}
 \title{Output data files for dfr-browser}
 \usage{
-export_browser_data(m, out_dir = "data", zipped = TRUE, n_top_words = 50)
+export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
+  download_dfb = FALSE, overwrite = FALSE)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or
 \code{\link{load_mallet_model}}}
 
-\item{out_dir}{directory for output data files}
+\item{out_dir}{directory for output. If \code{download_dfb} is TRUE, the
+exported data files will go in a \code{"data"} directory under
+\code{out_dir}.}
 
 \item{zipped}{should the larger data files be zipped?}
 
 \item{n_top_words}{how many top words per topic to save?}
+
+\item{download_dfb}{if TRUE (FALSE is default), all the files needed to run
+the browser and the exported data placed appropriately. From a shell in
+\code{out_dir}, run \code{bin/server} to launch a local web server.}
+
+\item{overwrite}{if TRUE, this will clobber existing files}
 }
 \description{
 Transform and save modeling results in a format suitable for use by
-\url{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser
+\href{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser
 based model browser.
 }
 \details{

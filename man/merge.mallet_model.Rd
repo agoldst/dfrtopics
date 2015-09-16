@@ -4,7 +4,8 @@
 \alias{merge.mallet_model}
 \title{Combine a topic model with inferred document topics}
 \usage{
-\method{merge}{mallet_model}(x, y)
+\method{merge}{mallet_model}(x, y, weighting_dtx = identity,
+  weighting_dty = identity)
 }
 \arguments{
 \item{x,}{y models with the same topic-word matrices and vocabulary}
