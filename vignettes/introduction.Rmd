@@ -18,9 +18,10 @@ This vignette will explain how to use the functions here to:
 3. Save and load the results of a model
 4. Explore modeling results
 
-This package works best in conjunction with [dplyr]() and [ggplot2](), though only the latter is not a formal requirement of this package. I load them, as well as the very useful utility packages [stringr]() and [lubridate](), here:
+This package works best in conjunction with [dplyr](http://cran.r-project.org/web/packages/dplyr/) and [ggplot2](http://cran.r-project.org/web/packages/ggplot2/), though only the latter is not a formal requirement of this package. I load them, as well as the very useful utility packages [stringr](http://cran.r-project.org/web/packages/stringr/) and [lubridate](http://cran.r-project.org/web/packages/lubridate/), here:
 
 ```{r cache=F}
+options(java.parameters="-Xmx2g")   # optional, but more memory for Java helps
 library("dfrtopics")
 library("dplyr")
 library("ggplot2")
@@ -274,7 +275,7 @@ srs <- topic_series(m, breaks="years")
 head(srs)
 ```
 
-This is a "long" data frame suitable for plotting, which we turn to shortly. But it is important to underline that `topic_series` is a special case of the more general operation of combining modeled topic scores for *groups* of documents. That is, one of the main uses of a topic model is to consider estimated topics as dependent variables, and metadata as independent variables.^[A more formal way to do this, however, requires more elaborating modeling. See, in particular, the [stm]() package for the Structured Topic Model.]
+This is a "long" data frame suitable for plotting, which we turn to shortly. But it is important to underline that `topic_series` is a special case of the more general operation of combining modeled topic scores for *groups* of documents. That is, one of the main uses of a topic model is to consider estimated topics as dependent variables, and metadata as independent variables.^[A more formal way to do this, however, requires more elaborating modeling. See, in particular, the [stm](http://cran.r-project.org/web/packages/stm/) package for the Structured Topic Model.]
 
 To make this more general operation a little easier, I have supplied generalized aggregator functions `sum_row_groups` and `sum_col_groups` which take a matrix and a grouping factor. As a simple example, suppose we wanted to tabulate the way topics are split up between the two journals in our corpus:
 
@@ -291,7 +292,7 @@ By the same token, if one wanted to construct super-groupings of topics, one cou
 
 # Visualization
 
-The complexity of a model is often easier to grasp visually than numerically. Instead of providing a comprehensive set of possible visualizations, the package tries to simplify the process of generating the sorts of data frames that can be easily plotted, especially with [ggplot2](). In addition to the grouping operations I have just mentioned, I have also supplied a simple function, `gather_matrix`, for turning a matrix into a "tidy" data frame.
+The complexity of a model is often easier to grasp visually than numerically. Instead of providing a comprehensive set of possible visualizations, the package tries to simplify the process of generating the sorts of data frames that can be easily plotted, especially with [ggplot2](http://cran.r-project.org/web/packages/ggplot2/). In addition to the grouping operations I have just mentioned, I have also supplied a simple function, `gather_matrix`, for turning a matrix into a "tidy" data frame.
 
 Nonetheless, I have supplied a few functions that use ggplot2 to give some overviews of aspects of the model. They operate in pipelines:
 
@@ -326,7 +327,7 @@ The `topic_report` function generates a folder full of these plots for all the t
 topic_report(m, "plots")
 ```
 
-For more detailed browsing, the package can export a model into the format used by my [dfr-browser](). This is a JavaScript-based web-browser application which can be used to explore the model in an interactive way. To download the necessary files and export data:
+For more detailed browsing, the package can export a model into the format used by my [dfr-browser](http://agoldst.github.io/dfr-browser). This is a JavaScript-based web-browser application which can be used to explore the model in an interactive way. To download the necessary files and export data:
 
 ```{r eval=F}
 export_browser_data(m, "browser", download_dfb=T)
@@ -355,7 +356,7 @@ m <- load_sampling_state(m,
     simplified_state_file=file.path("modeling_results", "state.csv"))
 ```
 
-The package uses [bigmemory]() to handle this object, as we discover if we access it:
+The package uses [bigmemory](http://cran.r-project.org/web/packages/bigmemory/) to handle this object, as we discover if we access it:
 
 ```{r}
 sampling_state(m)
