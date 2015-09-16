@@ -14,7 +14,7 @@ instances_Matrix(instances, verbose = F)
 }
 \value{
 a \code{\link[Matrix]{sparseMatrix}} with documents in columns and
-  terms in rows. The ordering of the terms is as in the vocabulary
+  words in rows. The ordering of the words is as in the vocabulary
   (\code{\link{instances_vocabulary}}), and the ordering of documents is as
   in the instance list (\code{\link{instances_ids}}).
 }
@@ -22,7 +22,7 @@ a \code{\link[Matrix]{sparseMatrix}} with documents in columns and
 Given an instance list, returns a term-document matrix (sparse format).
 }
 \details{
-If the matrix is \code{m}, then \code{m[i, j]} gives the weight of term
+If the matrix is \code{m}, then \code{m[i, j]} gives the weight of word
 \code{i} in document \code{j}. If another term-weighting is desired, this
 matrix is convenient to operate on.
 

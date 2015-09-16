@@ -13,7 +13,7 @@ tdm_topic(m, topic)
 }
 \value{
 a \code{\link[Matrix]{sparseMatrix}} of \emph{within-topic} word
-  weights (unsmoothed and unnormalized) with terms in rows and documents in
+  weights (unsmoothed and unnormalized) with words in rows and documents in
   columns (same ordering as \code{vocabulary(m)} and \code{doc_ids(m)})
 }
 \description{
@@ -32,6 +32,6 @@ within-topic term-document matrices.
 \seealso{
 \code{\link{read_sampling_state}}, \code{\link{mallet_model}},
   \code{\link{load_sampling_state}}, \code{\link{top_n_row}},
-  \code{\link{sum_col_groups}}, \code{\link{term_year_matrix}}
+  \code{\link{sum_col_groups}}
 }
 

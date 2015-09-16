@@ -9,7 +9,7 @@
 \usage{
 mallet_model(doc_topics = NULL, doc_ids = NULL, vocab = NULL,
   top_words = NULL, topic_words = NULL, params = NULL, hyper = NULL,
-  metadata = NULL, model = NULL, state = NULL)
+  metadata = NULL, model = NULL, ss = NULL)
 
 print.mallet_model(x)
 
@@ -39,7 +39,8 @@ topic}
 
 \item{model}{reference to an RTopicModel object from MALLET}
 
-\item{state}{final Gibbs sampling state}
+\item{ss}{final Gibbs sampling state represented as "simplified"
+  \code{big.matrix}}
 }
 \description{
 A topic model is a complicated beastie, and exploring it

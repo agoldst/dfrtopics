@@ -14,7 +14,7 @@ default, \code{\link{dfr_filename_doi}} is used.}
 }
 \value{
 A data frame with three columns: \code{id}, the document ID;
-  \code{term}, a term or word type (called \code{WORDCOUNTS} in DfR source
+  \code{word}, a word type or term (called \code{WORDCOUNTS} in DfR source
   data files); \code{weight}, the count.
 }
 \description{
@@ -37,6 +37,6 @@ around 100K articles of typical length.
 }
 \seealso{
 \code{\link{wordcounts_texts}}, \code{\link{instances_Matrix}} for
-  term counts \emph{after} stopword removal (etc.).
+  word counts \emph{after} stopword removal (etc.).
 }
 

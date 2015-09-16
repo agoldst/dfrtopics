@@ -48,6 +48,6 @@ indexes these from one for convenience within R.
 }
 \seealso{
 \code{\link{simplify_state}}, \code{\link{write_mallet_state}},
-\code{\link{term_year_topic_matrix}}, \pkg{bigmemory}
+\code{\link{tdm_topic}}, \pkg{bigmemory}
 }
 

@@ -2,26 +2,26 @@
 % Please edit documentation in R/dfr_docs.R
 \name{wordcounts_remove_rare}
 \alias{wordcounts_remove_rare}
-\title{Remove infrequent terms}
+\title{Remove infrequent words}
 \usage{
 wordcounts_remove_rare(counts, n)
 }
 \arguments{
 \item{counts}{The dataframe from \code{\link{read_wordcounts}}}
 
-\item{n}{The maximum rank to keep: all terms with frequency rank below
+\item{n}{The maximum rank to keep: all words with frequency rank below
 \code{n} will be discarded}
 }
 \value{
-A filtered term-counts dataframe. Because of ties, do not expect
-  it to have exactly \code{n} distinct terms.
+A filtered word-counts dataframe. Because of ties, do not expect
+  it to have exactly \code{n} distinct words.
 }
 \description{
-Filter out the terms in a wordcounts dataframe whose overall frequency is
+Filter out the words in a wordcounts dataframe whose overall frequency is
 below a threshold.
 }
 \details{
-It's often useful to prune documents of one-off terms (many of which are
+It's often useful to prune documents of one-off words (many of which are
 OCR errors) before building MALLET instances. This is a convenience function
 for doing so.
 }

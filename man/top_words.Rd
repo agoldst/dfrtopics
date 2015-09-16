@@ -23,8 +23,8 @@ a data frame with three columns, \code{topic} (indexed from 1),
 \description{
 The most common way to summarize topics is to list their top-weighted words,
 together with their topic weights. Though every topic assigns some
-probability to every term in the whole vocabulary, we often disregard all but
-its most frequent terms.
+probability to every word in the whole vocabulary, we often disregard all but
+its most frequent words.
 }
 \details{
 The data frame returned by this function supplies no new information not

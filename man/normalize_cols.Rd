@@ -10,7 +10,7 @@ normalize_cols(x, norm = "L1", stopzero = FALSE)
 \item{x}{a matrix or Matrix}
 
 \item{norm}{Either \code{"L1"}, the default (the sum of the absolute value of
-terms), or \code{"L2"}, the Euclidean norm}
+weights), or \code{"L2"}, the Euclidean norm}
 
 \item{stopzero}{If FALSE (the default), columns with norm zero are left
   as-is. If this is TRUE, an error will be thrown instead.}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/dfr_docs.R
 \name{wordcounts_texts}
 \alias{wordcounts_texts}
-\title{Convert long-format term-counts into documents}
+\title{Convert long-format word-counts into documents}
 \usage{
 wordcounts_texts(counts, shuffle = FALSE, sep = " ")
 }
@@ -21,15 +21,15 @@ a dataframe with two columns: \code{id}, the document id;
   meaningless order)
 }
 \description{
-This naively "inflates" term counts into a bag of words, for sending to
+This naively "inflates" word counts into a bag of words, for sending to
 MALLET.
 }
 \details{
 You can directly pass the result from \code{link{read_wordcounts}} to this
 function, but normally you'll want to filter or otherwise manipulate the
-terms first.
+words first.
 
-It is not straightforward to supply term vectors directly to MALLET;
+It is not straightforward to supply feature vectors directly to MALLET;
 MALLET really wants to featurize each text itself. So our task is to take the
 wordcounts supplied from DfR and reassemble the texts. If DfR tells us word w
 occurs N times, we simply paste N copies of w together, separated by spaces

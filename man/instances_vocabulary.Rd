@@ -9,11 +9,11 @@ instances_vocabulary(instances, newlines_significant = F)
 \arguments{
 \item{instances}{reference to the \code{InstanceList}}
 
-\item{newlines_significant}{if vocabulary terms include newlines, a slower
+\item{newlines_significant}{if vocabulary words include newlines, a slower
 method of extracting the vocabulary will be used (unusual for DfR)}
 }
 \value{
-character vector mapping one-based word indices to terms as strings
+character vector mapping one-based word indices to words as strings
 }
 \description{
 Retrieves a list of feature types (the "vocabulary") from an InstanceList

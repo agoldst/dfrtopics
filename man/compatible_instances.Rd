@@ -23,7 +23,7 @@ topic-inferencing functionality.
 }
 \details{
 "Compatible" instances have the same vocabulary in the same order as the
-reference InstanceList. In particular, this means terms not in the reference
+reference InstanceList. In particular, this means words not in the reference
 vocabulary must be dropped.
 
 The new InstanceList object can be written to disk with

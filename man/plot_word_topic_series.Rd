@@ -4,12 +4,15 @@
 \alias{plot_word_topic_series}
 \title{Plot word frequencies within topics over time}
 \usage{
-plot_word_topic_series(m, word, breaks = "years")
+plot_word_topic_series(m, word, n = n_topics(m), breaks = "years")
 }
 \arguments{
 \item{m}{\code{dfr_lda} object}
 
-\item{word}{a term found in the model vocabulary}
+\item{word}{a word found in the model vocabulary}
+
+\item{n}{number of topics to include in plot. The cut is made by ranking
+topics according to their overall totals of \code{word}.}
 
 \item{breaks}{time periodicity of the series}
 }
@@ -17,8 +20,10 @@ plot_word_topic_series(m, word, breaks = "years")
 A \link[ggplot2]{ggplot} object.
 }
 \description{
-Displays the allocation among topics of a given word. This is a useful
-diagnostic for models of corpora that are spread over time. The Gibbs
-sampling state must be loaded.
+Displays the allocation among topics of a given word. This is a
+useful diagnostic for models of corpora that are spread over time.
+The Gibbs sampling state must be loaded. Many analogous plots that
+condition word weights on two or more variables are possible; see the
+package vignette for a description of how they can be constructed.
 }
 
