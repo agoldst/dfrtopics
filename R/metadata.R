@@ -230,11 +230,10 @@ cite_articles <- function (metadata)  {
 
     dates <- strftime(metadata$pubdate, "%B %Y")
     pp <- gsub("^p?p\\. ", "", metadata$pagerange)
-    result <- stringr::str_c(
+    result <- paste0(
         authors, ', "', metadata$title, '," *',
         metadata$journaltitle, '* ', metadata$volume, ", no. ",
-        metadata$issue, " (", dates, "): ", pp, ".",
-        sep="")
+        metadata$issue, " (", dates, "): ", pp, ".")
 
     result <- gsub("_", ", ", result)
     result <- gsub("\t", "", result)
