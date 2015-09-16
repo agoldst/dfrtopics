@@ -67,9 +67,10 @@ read_inferencer <- function (filename) {
 #' @return a model object of class \code{\link{mallet_model_inferred}}, which
 #'   inherits from \code{\link{mallet_model}}. This does not have all the
 #'   elements of the original topic model, however; the new value of interest is
-#'   the matrix of estimated document-topic proportions, accessible via
-#'   \code{\link{doc_topics}}. The inferencer sampling state and raw weights are
-#'   not accessible.
+#'   the matrix of estimated document-topic weights, accessible via
+#'   \code{\link{doc_topics}}. The inferencer sampling state and hyperparameters 
+#'   are not accessible. MALLET supplies estimated topic proportions, which we 
+#'   multiply by the document lengths to obtain the doc-topics matrix.
 #'
 #' @examples
 #' \dontrun{
@@ -77,7 +78,7 @@ read_inferencer <- function (filename) {
 #' inferred_m <- make_instances(docs) %>%
 #'     infer_topics(m, .)
 #'
-#' # extract new doc-topic matrix (NB. topic proportions)
+#' # extract new doc-topic matrix
 #' doc_topics(inferred_m)
 #' # or a convenient data frame of high-ranking topics in each doc
 #' docs_top_topics(inferred_m, n=3)
@@ -112,7 +113,9 @@ infer_topics.default <- function (m, instances,
     }
 
 
-    doc_topics <- do.call(rbind, doc_topics)
+    doc_topics <- rescale_rows(do.call(rbind, doc_topics),
+                               instances_lengths(instances))
+
     mallet_model_inferred(
         doc_topics=doc_topics,
         doc_ids=instances_ids(instances),
@@ -208,20 +211,30 @@ top_docs.mallet_model_inferred <- function (m, n) {
 #'   topic model means that the document-topic matrix must be row-normalized.
 #'
 #' @export
-merge.mallet_model <- function (x, y) {
+merge.mallet_model <- function (x, y, weighting_dtx=identity,
+                                weighting_dty=identity) {
     stopifnot(all.equal(vocabulary(x), vocabulary(y)))
     stopifnot(n_topics(x) == n_topics(y))
 
     result <- list()
 
-    dtx <- doc_topics(x)
-    dty <- doc_topics(y)
-    if (inherits(x, "mallet_model_inferred") &&
-            !inherits(y, "mallet_model_inferred")) {
-        dty <- dt_smooth_normalize(y)(dty)
-    } else if (inherits(y, "mallet_model_inferred") &&
-            !inherits(x, "mallet_model_inferred")) {
-        dtx <- dt_smooth_normalize(x)(dtx)
+    dtx <- weighting_dtx(doc_topics(x))
+    dty <- weighting_dty(doc_topics(y))
+
+    dtx_norms <- Matrix::rowSums(dtx)
+    dty_norms <- Matrix::rowSums(dty)
+    dtx_normalized <- isTRUE(all.equal(
+        dtx_norms, rep(1, n_docs(x)), tolerance=1e-5
+    ))
+    dty_normalized <- isTRUE(all.equal(
+        dty_norms, rep(1, n_docs(y)), tolerance=1e-5
+    ))
+
+    if (xor(dtx_normalized, dty_normalized)) {
+        warning(
+"Combining a normalized with an unnormalized doc-topic matrix. Does this
+make sense?"
+        )
     }
 
     result$doc_topics <- rbind(dtx, dty)

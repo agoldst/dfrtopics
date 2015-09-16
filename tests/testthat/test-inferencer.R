@@ -58,7 +58,7 @@ test_that("new topics can be inferred", {
     dtm <- doc_topics(m_heldout)
 
     expect_equal(dim(dtm), c(length(heldout_fs), n_topics(m)))
-    expect_equal(rowSums(dtm), rep(1, length(heldout_fs)))
+    expect_equal(rowSums(dtm), instances_lengths(heldout_il))
 
     dt_top <- docs_top_topics(m_heldout, n=3)
     expect_equal(nrow(dt_top), 3 * length(heldout_fs))
@@ -76,6 +76,12 @@ test_that("merging the results is possible", {
     dtm <- doc_topics(m_joint)
     expect_equal(dim(dtm), c(length(model_fs) + length(heldout_fs),
                              n_topics(m)))
-    expect_equal(rowSums(dtm), rep(1, length(heldout_fs) + length(model_fs)))
     expect_equal(doc_ids(m_joint), dfr_filename_id(c(model_fs, heldout_fs)))
+
+    merge(m, m_heldout,
+          weighting_dtx=dt_smooth_normalize(m),
+          weighting_dty=dt_normalize(m_heldout)) %>%
+        doc_topics() %>%
+        rowSums() %>% 
+        expect_equal(rep(1, length(heldout_fs) + length(model_fs)))
 })
