@@ -230,7 +230,7 @@ plot_topic_scaled <- function (coords, labels=1:nrow(coords)) {
 #' package vignette for a description of how they can be constructed.
 #'
 #' @param m \code{dfr_lda} object
-#' @param word a term found in the model vocabulary
+#' @param word a word found in the model vocabulary
 #' @param n number of topics to include in plot. The cut is made by ranking
 #'   topics according to their overall totals of \code{word}.
 #' @param breaks time periodicity of the series
@@ -249,7 +249,7 @@ plot_word_topic_series <- function (m, word, n=n_topics(m), breaks="years") {
         sum_col_groups(t(doc_topics(m)), periods)
     )
 
-    series <- sum_col_groups(topic_docs_term(m, word), periods)
+    series <- sum_col_groups(topic_docs_word(m, word), periods)
     series <- rescale_cols(series, 1 / total_series)
     series_frame <- gather_matrix(series, col_names=c("topic", "year", "weight"))
 

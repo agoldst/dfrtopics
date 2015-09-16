@@ -82,7 +82,7 @@ read_instances <- function (filename) {
 #' 
 #' Given an instance list, returns a term-document matrix (sparse format).
 #' 
-#' If the matrix is \code{m}, then \code{m[i, j]} gives the weight of term
+#' If the matrix is \code{m}, then \code{m[i, j]} gives the weight of word
 #' \code{i} in document \code{j}. If another term-weighting is desired, this
 #' matrix is convenient to operate on.
 #' 
@@ -92,7 +92,7 @@ read_instances <- function (filename) {
 #' \code{verbose=T} for some reports on progress. TODO: make smarter.
 #' 
 #' @return a \code{\link[Matrix]{sparseMatrix}} with documents in columns and
-#'   terms in rows. The ordering of the terms is as in the vocabulary
+#'   words in rows. The ordering of the words is as in the vocabulary
 #'   (\code{\link{instances_vocabulary}}), and the ordering of documents is as
 #'   in the instance list (\code{\link{instances_ids}}).
 #'   
@@ -303,9 +303,9 @@ instance_text <- function (instance,
 #' 
 #' 
 #' @param instances reference to the \code{InstanceList}
-#' @param newlines_significant if vocabulary terms include newlines, a slower
+#' @param newlines_significant if vocabulary words include newlines, a slower
 #'   method of extracting the vocabulary will be used (unusual for DfR)
-#' @return character vector mapping one-based word indices to terms as strings
+#' @return character vector mapping one-based word indices to words as strings
 #'   
 #' @export
 #' 
@@ -354,7 +354,7 @@ instances_lengths <- function (instances) {
 #' topic-inferencing functionality.
 #' 
 #' "Compatible" instances have the same vocabulary in the same order as the
-#' reference InstanceList. In particular, this means terms not in the reference
+#' reference InstanceList. In particular, this means words not in the reference
 #' vocabulary must be dropped.
 #' 
 #' The new InstanceList object can be written to disk with

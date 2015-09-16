@@ -564,19 +564,19 @@ vocabulary.mallet_model <- function (m) {
     m
 }
 
-#' Get numeric term indices
+#' Get numeric word indices
 #'
 #' This shortcut function returns the numeric indices of specific words in the
 #' model's vocabulary (corresponding to column indices in the topic-word
 #' matrix).
 #'
 #' @param m a \code{mallet_model} object
-#' @param terms character vector of words to find indices of
+#' @param words character vector of words to find indices of
 #' @return numeric vector of indices into the vocabulary
 #'
 #' @export
 #'
-term_ids <- function (m, terms) match(terms, vocabulary(m))
+word_ids <- function (m, words) match(words, vocabulary(m))
 
 #' The topic-words matrix
 #'
@@ -627,8 +627,8 @@ load_topic_words <- function (m) {
 #'
 #' The most common way to summarize topics is to list their top-weighted words,
 #' together with their topic weights. Though every topic assigns some
-#' probability to every term in the whole vocabulary, we often disregard all but
-#' its most frequent terms.
+#' probability to every word in the whole vocabulary, we often disregard all but
+#' its most frequent words.
 #'
 #' The data frame returned by this function supplies no new information not
 #' already present in the topic-word matrix; it is in effect an aggressively

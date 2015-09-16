@@ -22,10 +22,10 @@
 #' @param filename_id function that converts a file name into a document ID. By 
 #'   default, \code{\link{dfr_filename_doi}} is used.
 #' @return A data frame with three columns: \code{id}, the document ID; 
-#'   \code{term}, a term or word type (called \code{WORDCOUNTS} in DfR source
+#'   \code{word}, a word type or term (called \code{WORDCOUNTS} in DfR source
 #'   data files); \code{weight}, the count.
 #' @seealso \code{\link{wordcounts_texts}}, \code{\link{instances_Matrix}} for
-#'   term counts \emph{after} stopword removal (etc.).
+#'   word counts \emph{after} stopword removal (etc.).
 #'   
 #' @export
 #' 
@@ -44,10 +44,10 @@ read_wordcounts_base <- function (files, filename_id) {
         ~ read.csv(.$filename,
             strip.white=TRUE, header=TRUE, as.is=TRUE,
             colClasses=c("character", "integer"),
-            col.names=c("term", "weight"))
+            col.names=c("word", "weight"))
     )
     mut <- list(id=~ filename_id(filename),
-                ~ term,
+                ~ word,
                 ~ weight)
     dplyr::transmute_(dplyr::ungroup(result), .dots=mut)
 }
@@ -64,7 +64,7 @@ read_wordcounts_readr <- function (files, filename_id) {
         } else {
             result[[i]] <- data.frame(
                 id=filename_id(files[i]),
-                term=frm[[1]],
+                word=frm[[1]],
                 weight=frm[[2]],
                 stringsAsFactors=F
             )
@@ -94,7 +94,7 @@ wordcounts_doc_lengths <- function (counts) {
     dplyr::summarize_(result, .dots=setNames(list(~ sum(weight)), "length"))
 }
 
-#' Calculate total corpus-wide term counts
+#' Calculate total corpus-wide word counts
 #' 
 #' Given a wordcounts long-format dataframe returned by
 #' \code{\link{read_wordcounts}}, calculate total corpus-wide counts for each
@@ -102,15 +102,15 @@ wordcounts_doc_lengths <- function (counts) {
 #' \code{\link[dplyr]{summarize}}.
 #' 
 #' @param counts The dataframe from \code{\link{read_wordcounts}}
-#' @return a data frame with \code{term} and \code{weight} columns
+#' @return a data frame with \code{word} and \code{weight} columns
 #' @seealso \code{\link{read_wordcounts}},
-#'   \code{\link{instances_term_document_matrix}} for term counts
+#'   \code{\link{instances_Matrix}} for word counts
 #'   \emph{after} stopword removal (etc.).
 #'   
 #' @export
 #' 
-wordcounts_term_totals <- function (counts) {
-    result <- dplyr::group_by_(counts, ~ term)
+wordcounts_word_totals <- function (counts) {
+    result <- dplyr::group_by_(counts, ~ word)
     dplyr::summarize_(result, .dots=setNames(list(~ sum(weight)), "weight"))
 }
 
@@ -124,51 +124,51 @@ wordcounts_term_totals <- function (counts) {
 #' @export
 #' 
 wordcounts_remove_stopwords <- function (counts, stoplist) {
-    flt <- lazyeval::interp(~ !(term %in% x), x=stoplist)
+    flt <- lazyeval::interp(~ !(word %in% x), x=stoplist)
     dplyr::filter_(counts, flt)
 }
 
-#' Remove infrequent terms
+#' Remove infrequent words
 #' 
-#' Filter out the terms in a wordcounts dataframe whose overall frequency is 
+#' Filter out the words in a wordcounts dataframe whose overall frequency is 
 #' below a threshold.
 #' 
-#' It's often useful to prune documents of one-off terms (many of which are 
+#' It's often useful to prune documents of one-off words (many of which are 
 #' OCR errors) before building MALLET instances. This is a convenience function 
 #' for doing so.
 #' 
 #' @param counts The dataframe from \code{\link{read_wordcounts}}
-#' @param n The maximum rank to keep: all terms with frequency rank below 
+#' @param n The maximum rank to keep: all words with frequency rank below 
 #'   \code{n} will be discarded
-#' @return A filtered term-counts dataframe. Because of ties, do not expect 
-#'   it to have exactly \code{n} distinct terms.
+#' @return A filtered word-counts dataframe. Because of ties, do not expect 
+#'   it to have exactly \code{n} distinct words.
 #'   
 #' @export
 #' 
 wordcounts_remove_rare <- function (counts, n) {
-    term_totals <- wordcounts_term_totals(counts)
+    word_totals <- wordcounts_word_totals(counts)
     # min_rank used here, giving a more aggressive filter than dense_rank
-    keep <- term_totals$term[
-        dplyr::min_rank(-term_totals$weight) <= n
+    keep <- word_totals$word[
+        dplyr::min_rank(-word_totals$weight) <= n
     ]
 
     # You'd think you could semi_join here, but that will scramble the order of
     # rows, so we'll use the ugly way:
 
-    flt <- lazyeval::interp(~ term %in% x, x=keep)
+    flt <- lazyeval::interp(~ word %in% x, x=keep)
     dplyr::filter_(counts, flt)
 }
     
-#' Convert long-format term-counts into documents
+#' Convert long-format word-counts into documents
 #' 
-#' This naively "inflates" term counts into a bag of words, for sending to 
+#' This naively "inflates" word counts into a bag of words, for sending to 
 #' MALLET.
 #' 
 #' You can directly pass the result from \code{link{read_wordcounts}} to this
 #' function, but normally you'll want to filter or otherwise manipulate the
-#' terms first.
+#' words first.
 #' 
-#' It is not straightforward to supply term vectors directly to MALLET; 
+#' It is not straightforward to supply feature vectors directly to MALLET; 
 #' MALLET really wants to featurize each text itself. So our task is to take the
 #' wordcounts supplied from DfR and reassemble the texts. If DfR tells us word w
 #' occurs N times, we simply paste N copies of w together, separated by spaces 
@@ -202,7 +202,7 @@ wordcounts_texts <- function (counts, shuffle=FALSE, sep=" ") {
     }
 
     smz <- setNames(list(
-        ~ stringr::str_c(rep(term, times=weight), collapse=sep)
+        ~ stringr::str_c(rep(word, times=weight), collapse=sep)
         ),
         "text")
     dplyr::summarize_(counts, .dots=smz)

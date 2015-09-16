@@ -10,7 +10,7 @@
 #' 
 #' N.B. that though topics are the most obvious row variable and documents are
 #' the most obvious column variable, it may also make sense to preaggregate
-#' multiple terms or topics into some larger construct. Similarly, if the
+#' multiple words or topics into some larger construct. Similarly, if the
 #' documents can be grouped into aggregates with their own periodicity (e.g.
 #' periodical issues), there is no reason not to set \code{tdm} to a matrix with
 #' columns already summed together. You can of course also do this summing
@@ -21,7 +21,7 @@
 #' some care.
 #' 
 #' 
-#' @param tdm a matrix (or Matrix) with some feature (e.g. topics or terms) in
+#' @param tdm a matrix (or Matrix) with some feature (e.g. topics or words) in
 #'   rows and datable  in columns
 #' @param dates a Date vector, one for each column of \code{tdm}
 #' @param breaks passed on to \code{link[base]}{cut.Date} (q.v.): what interval
@@ -45,13 +45,13 @@
 #' # time series within topic 10 of "solid", "flesh", "melt"
 #' # after loading sampling state on model m
 #' sm10 <- tdm_topic(m, 10) %>%
-#'    term_series_matrix(metadata(m)$pubdate) %>%
+#'    word_series_matrix(metadata(m)$pubdate) %>%
 #' gather_matrix(sm10[word_ids(c("solid", "flesh", "melt")), ],
-#'               col_names=c("term", "year", "weight"))
+#'               col_names=c("word", "year", "weight"))
 #' }
 #' @export
 #' 
-term_series_matrix <- function (tdm, dates, breaks="years") {
+word_series_matrix <- function (tdm, dates, breaks="years") {
     m_g <- sum_col_groups(tdm, cut(dates, breaks=breaks, ordered=TRUE))
     normalize_cols(m_g)
 }
@@ -79,7 +79,7 @@ term_series_matrix <- function (tdm, dates, breaks="years") {
 #' 
 topic_series <- function (m, breaks="years") {
     tdm <- t(dt_smooth(m)(doc_topics(m)))
-    m_s <- term_series_matrix(tdm, metadata(m)$pubdate, breaks)
+    m_s <- word_series_matrix(tdm, metadata(m)$pubdate, breaks)
     result <- gather_matrix(m_s, col_names=c("topic", "pubdate", "weight"))
     result$pubdate <- as.Date(result$pubdate)
     result
@@ -94,7 +94,7 @@ topic_series <- function (m, breaks="years") {
 #' 
 #' @param x a matrix or Matrix
 #' @param norm Either \code{"L1"}, the default (the sum of the absolute value of
-#'   terms), or \code{"L2"}, the Euclidean norm
+#'   weights), or \code{"L2"}, the Euclidean norm
 #' @param stopzero If FALSE (the default), columns with norm zero are left
 #'   as-is. If this is TRUE, an error will be thrown instead.
 #'   
