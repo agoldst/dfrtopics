@@ -129,6 +129,8 @@ normalize_cols <- function (x, norm="L1", stopzero=FALSE) {
 #'
 #' @return a matrix of the same dimensions as \code{m}
 #'
+#' @seealso \code{\link{rescale_rows}}
+#'
 #' @export
 rescale_cols <- function (m, x) {
     if (is(m, "Matrix")) {
@@ -143,6 +145,29 @@ rescale_cols <- function (m, x) {
     result
 }
 
+#' Rescale the rows of a matrix
+#'
+#' Just a mnemonic for matrix multiplication.
+#'
+#' @param m matrix or Matrix
+#' @param x vector; \code{m[j, ]} is multiplied by \code{x[j]}.
+#'
+#' @return a matrix of the same dimensions as \code{m}
+#'
+#' @seealso \code{\link{rescale_cols}}
+#' @export
+rescale_rows <- function (m, x) {
+    if (is(m, "Matrix")) {
+        s <- Matrix::Diagonal(x=x)
+    } else {
+        s <- diag(x)
+    }
+    result <- s %*% m
+    if (!is.null(dimnames(m))) {
+        dimnames(result) <- dimnames(m)
+    }
+    result
+}
 
 #' Scoring methods for words in topics
 #' 
@@ -317,7 +342,7 @@ write_Matrix_csv <- write_matrix_csv
 #' confusion over whether you are operating on smoothed weights or not.
 #' 
 #' @param m \code{mallet_model} object
-#' @return a function which operates on document-topic matrix
+#' @return a function which operates on document-topic matrix. Smoothing means adding \eqn{alpha_k} to document weights for topic \eqn{k}, normalizing means ensuring each document has total weight 1.
 #'   
 #' @seealso \code{\link{doc_topics}}, \code{\link[mallet]{mallet.doc.topics}}
 #'   
@@ -331,7 +356,7 @@ dt_smooth_normalize <- function (m) {
     function (dtm) {
         dtm <- sm(dtm)
 
-        diag(1 / rowSums(dtm)) %*% dtm
+        rescale_rows(dtm, 1 / rowSums(dtm))
     }
 }
 
@@ -344,6 +369,13 @@ dt_smooth <- function (m) {
         dtm + matrix(rep(a, each=nrow(dtm)), nrow=nrow(dtm))
     }
 }
+
+#' @export
+#' @rdname dt_smooth_normalize
+dt_normalize <- function (m) {
+    function (dtm) rescale_rows(dtm, 1 / rowSums(dtm))
+}
+
 
 #' Utility functions for finding top-ranking row/column elements
 #' 

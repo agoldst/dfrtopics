@@ -75,6 +75,24 @@ test_that("normalize_cols works", {
         "The matrix has columns of all zeroes, which cannot be normalized.")
 })
 
+test_that("rescaling row/col works", {
+    expect_equal(
+        rescale_rows(
+            matrix(c(2, 4,
+                     6, 8), ncol=2, byrow=T),
+            c(3, 2)),
+        matrix(c(6,  12,
+                 12, 16), ncol=2, byrow=T))
+
+    expect_equal(
+        rescale_cols(
+            matrix(c(2, 4,
+                     6, 8), ncol=2, byrow=T),
+            c(3, 2)),
+        matrix(c(6,  8,
+                 18, 16), ncol=2, byrow=T))
+})
+
 test_that("row/col group sums work", {
     m <- matrix(c(1, 2,
                   3, 4,
