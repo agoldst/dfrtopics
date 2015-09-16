@@ -4,7 +4,7 @@ This small R package provides bits and pieces to help make and explore topic mod
 
 I wrote most of the bits and pieces here while working on my research (I am a literary scholar), so this is not meant to be a professional, sophisticated, multipurpose tool. Nonetheless, by now it seemed worth it to make some of what I'd done conceivably reusable by others who might also want to explore topic models even if, like me, like to use R and have only very rudimentary knowledge of machine learning. The code skews to my amateurishness as a programmer. It is all very much in-progress, hacked together, catch-as-catch-can, I am not an expert, I am not a lawyer, etc., etc., etc. Use and share freely, at your own risk. 
 
-Every function has online help in R. There is an accompanying vignette (`vignette("introduction", "dfrtopics")`, but see below for notes on generating it. In the meantime it is viewable [here](https://raw.githubusercontent.com/agoldst/dfrtopics/master/inst/doc/introduction.html).
+Every function has online help in R. There is an accompanying vignette (`vignette("introduction", "dfrtopics")`, but see below for notes on generating it.
 
 ## Installation
 
