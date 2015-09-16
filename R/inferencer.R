@@ -66,7 +66,7 @@ read_inferencer <- function (filename) {
 #'
 #' @return a model object of class \code{\link{mallet_model_inferred}}, which
 #'   inherits from \code{\link{mallet_model}}. This does not have all the
-#'   elements of t original topic model, however; the new value of interest is
+#'   elements of the original topic model, however; the new value of interest is
 #'   the matrix of estimated document-topic proportions, accessible via
 #'   \code{\link{doc_topics}}. The inferencer sampling state and raw weights are
 #'   not accessible.
