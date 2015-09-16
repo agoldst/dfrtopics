@@ -223,9 +223,11 @@ plot_topic_scaled <- function (coords, labels=1:nrow(coords)) {
 
 #' Plot word frequencies within topics over time
 #'
-#' Displays the allocation among topics of a given word. This is a useful
-#' diagnostic for models of corpora that are spread over time. The Gibbs
-#' sampling state must be loaded.
+#' Displays the allocation among topics of a given word. This is a
+#' useful diagnostic for models of corpora that are spread over time.
+#' The Gibbs sampling state must be loaded. Many analogous plots that
+#' condition word weights on two or more variables are possible; see the
+#' package vignette for a description of how they can be constructed.
 #'
 #' @param m \code{dfr_lda} object
 #' @param word a term found in the model vocabulary
