@@ -9,6 +9,10 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r setup, cache=F, include=F}
+knitr::opts_chunk$set(fig.width=7, fig.height=4.5)
+```
+
 This package seeks to provide some help creating and exploring topic models using [MALLET](http://mallet.cs.umass.edu) from R. It builds on the [mallet](http://cran.r-project.org/web/packages/mallet) package. Parts of this package are specialized for working with the metadata and pre-aggregated text data supplied by JSTOR's [Data for Research](http://dfr.jstor.org) service; the topic-modeling parts are independent of this, however.
 
 This vignette will explain how to use the functions here to:
@@ -20,7 +24,7 @@ This vignette will explain how to use the functions here to:
 
 This package works best in conjunction with [dplyr](http://cran.r-project.org/web/packages/dplyr/) and [ggplot2](http://cran.r-project.org/web/packages/ggplot2/), though only the latter is not a formal requirement of this package. I load them, as well as the very useful utility packages [stringr](http://cran.r-project.org/web/packages/stringr/) and [lubridate](http://cran.r-project.org/web/packages/lubridate/), here:
 
-```{r cache=F}
+```{r cache=F, message=F}
 options(java.parameters="-Xmx2g")   # optional, but more memory for Java helps
 library("dfrtopics")
 library("dplyr")
@@ -33,11 +37,10 @@ library("stringr")
 
 DfR data has two components: document metadata and word counts. (Usually the "words" are indeed single words, but they could be bigrams or trigrams.) Other document data for "non-consumptive use" comes in similar forms. Such data cannot be "read" but it can be modeled and analyzed, and topic models are a good tool for such an analysis. 
 
->I am going to walk through an example using a more-or-less arbitrarily chosen data set: I have downloaded all items classified as full-length articles appearing in *PMLA* or *Modern Philology* between 1905 and 1915. Let us construct a model of this corpus.[^data]
+I am going to walk through an example using a more-or-less arbitrarily chosen data set: I have downloaded all items classified as full-length articles appearing in *PMLA* or *Modern Philology* between 1905 and 1915. Let us construct a model of this corpus.[^data]
 
-[^data]: To follow along with this vignette, you will have to obtain this sample data, since JSTOR's terms of use do not allow me to redistribute it (though these journal issues are themselves in the public domain). It can be freely downloaded by signing up for an account on [Data for Research](http://dfr.jstor.org), visiting 
-<http://dfr.jstor.org/fsearch/submitrequest?cs=jo%3A%28pmla+OR+%22modern+philology%22%29+AND+year%3A%5B1905+TO+1915%5D+AND+ty%3Afla%5E1.0&fs=yrm1&view=text&>
-and making a Dataset Request for wordcounts and metadata in CSV format.
+[^data]: To follow along with this vignette, you will have to obtain this sample data, since JSTOR's terms of use do not allow me to redistribute it (though these journal issues are themselves in the public domain). It can be freely downloaded by signing up for an account on [Data for Research](http://dfr.jstor.org), searching for 
+full-length articles from the two journals in the specified time period---or simply use [this link to the results](http://dfr.jstor.org/fsearch/submitrequest?cs=jo%3A%28pmla+OR+%22modern+philology%22%29+AND+year%3A%5B1905+TO+1915%5D+AND+ty%3Afla%5E1.0&fs=yrm1&view=text&)---and making a Dataset Request for wordcounts and metadata in CSV format.
 
 First we load metadata: it won't be used in "vanilla" LDA modeling, but it is useful to have at this stage in case we want to filter the corpus.
 
@@ -45,7 +48,7 @@ First we load metadata: it won't be used in "vanilla" LDA modeling, but it is us
 data_dir <- file.path(path.package("dfrtopics"), "test-data",
                       "pmla-modphil1905-1915")
 metadata_file <- file.path(data_dir, "citations.tsv")
-metadata <- read_dfr_metadata(metadata_file)
+meta <- read_dfr_metadata(metadata_file)
 ```
 
 `read_dfr_metadata` also accepts a vector of filenames, if you are working on multiple DfR downloads with their separate metadata files. 
@@ -57,7 +60,7 @@ counts <- read_wordcounts(list.files(file.path(data_dir, "wordcounts"),
                                      full.names=T))
 ```
 
-This will take some time for large numbers of files, and is of course limited by the amount of available memory on your machine. It displays a progress bar as it runs. For the `r nrow(metadata)` documents here, the resulting data frame has `r nrow(counts)` rows.
+This will take some time for large numbers of files, and is of course limited by the amount of available memory on your machine. It displays a progress bar as it runs. For the `r nrow(meta)` documents here, the resulting data frame has `r nrow(counts)` rows.
 
 ## Tailoring the corpus
 
@@ -67,7 +70,7 @@ The counts are not quite ready to be passed on to MALLET. It's important to be a
 
     ```{r}
     counts <- semi_join(counts,
-            metadata %>%
+            meta %>%
                 select(id, pubdate) %>%
                 filter(year(pubdate) != 1905),
         by="id")
@@ -165,10 +168,11 @@ all the intermediate forms of the corpus text out of memory.)
 
 Now we launch the LDA algorithm with:
 
-```{r}
+```{r message=F}
 m <- train_model(ilist, n_topics=40,
                  n_iters=300,
-                 seed=1066
+                 seed=1066,       # "reproducibility"
+                 metadata=meta    # optional but handy later
                  # many more parameters...
                  )
 ```
@@ -178,6 +182,8 @@ m <- train_model(ilist, n_topics=40,
 Note, in particular, that if we want to get exactly the same model more than once, we should set MALLET's random number seed with the `seed` parameter here.^[There are two senses in which you might want your modeling to be reproducible, however: your exact outputs should be reproducible, *and* any substantive features of interest should probably be independent of the [pseudo]-randomness of the modeling process.)]
 
 The result, here stored in `m`, is an object designed to gather together all the relevant model information. It has S3 class `mallet_model`. Though it is really just a list, the package provides accessor functions, and you can treat `m` as though it were opaque.
+
+The metadata supplied here as a parameter to `train_model` is not used in modeling, and is in fact an optional parameter. However, it is convenient to store metadata alongside the model for further analysis. If passed in here, it is accessible as `metadata(m)`. (You can also do this any time with `metadata(m) <- meta`.)
 
 # Saving and loading the results
 
@@ -198,7 +204,7 @@ m <- load_mallet_model_directory("modeling_results",
 
 (To specify individual filenames, use `load_mallet_model`.) This approach obscures, however, a series of choices I have made about which model outputs you are likely to want to load at a time. First of all, the loading function cannot reload the MALLET model object into memory. This is a limitation of the R-MALLET bridge: the `RTopicModel` class has no serialization method. (The `ParallelTopicModel` object does, however, but normally you won't use it.) Second of all, the loading function assumes you do not normally want to load the final Gibbs sampling state into memory. That can be done separately (see "The sampling state" below). Third of all, even the topic-word matrix is normally so large that it can pose problems to R. By default it is not loaded (rather, a sparser file listing just "top" words within each topic is loaded). But simply pass
 
-```{r eval=F}
+```{r}
 m <- load_mallet_model_directory("modeling_results",
     load_topic_words=T,
     metadata_file=metadata_file)
@@ -248,23 +254,22 @@ By the same token, it is often instructive to consider documents that are most f
 
 ```{r}
 dd <- top_docs(m, n=3)
+head(dd)
 ```
 
 The `doc` column here is simply the row-index of the document. To see what documents these are, we can make use of the associated metadata.^[Recall that we had metadata for more documents than we modeled, because we discarded some documents in the corpus-creation step. However, when metadata is provided for a model, the package selects and reorders rows so that rows of `metadata(m)` correspond to rows of `doc_topics(m)` and entries in `doc_ids(m)`.]
 Here is how we would derive the three "top" documents for topic 35, which we labeled `topic_labels(m)[35]`:
 
 ```{r}
-dd %>%
-    filter(topic == 35) %>%
-    transmute(id=doc_ids(m)[doc], weight) %>%
-    inner_join(metadata(m), by="id") %>%
-    arrange(desc(weight)) %>% # inner_join is not order-preserving
+ids <- doc_ids(m)[dd$doc[dd$topic == 35]]
+metadata(m) %>%
+    filter(id %in% ids) %>%
     cite_articles()
 ```
 
 These titles suggest that the top words of the topic have not misled us: this is a "Chaucer" topic. (The typo in "John Linvingston Lowes" is in the original data.)
 
-# Topics, time, metadata
+## Topics, time, metadata
 
 Though the LDA algorithm run by MALLET here makes no use of the
 time metadata, it is often instructive to see how the modeled
@@ -286,15 +291,15 @@ doc_topics(m) %>%
     normalize_cols()
 ```
 
-Here we might notice certain topics that are skew to one journal and not the other in our corpus---for example, `r topic_labels(m)[11]`.
+Here we might notice certain topics that are skew to one journal and not the other in our corpus---for example, *`r topic_labels(m)[11]`*.
 
 By the same token, if one wanted to construct super-groupings of topics, one could use `sum_col_groups` to aggregate them together.^[These are simple arithmetical operations, of course, and you may ask why we do not stick to the dplyr idiom all the way through. But converting a full document-topic or topic-word matrix to a data frame---as dplyr would require---can be a cumbersome operation. It makes more sense to stay with the matrices until the final aggregates have been created.]
 
-# Visualization
+## Visualization
 
 The complexity of a model is often easier to grasp visually than numerically. Instead of providing a comprehensive set of possible visualizations, the package tries to simplify the process of generating the sorts of data frames that can be easily plotted, especially with [ggplot2](http://cran.r-project.org/web/packages/ggplot2/). In addition to the grouping operations I have just mentioned, I have also supplied a simple function, `gather_matrix`, for turning a matrix into a "tidy" data frame.
 
-Nonetheless, I have supplied a few functions that use ggplot2 to give some overviews of aspects of the model. They operate in pipelines:
+Nonetheless, I have supplied a few functions that use ggplot2 to give some overviews of aspects of the model. They operate in pipelines with the functions for generating data frames. Rather than supply many parameters for tuning these visualizations, I find it makes more sense to make generating plot-ready data frames easy, and then leave the viz-fiddling to your expertise. Please use the source code of the package's ready-made plotting functions as a starting point. None of them do anything elaborate.
 
 To visualize the (heaviest part of) a topic-word distribution:
 
@@ -305,7 +310,7 @@ top_words(m, n=10) %>%
 
 To place the topics in a two-dimensional space:^[N.B. this requires the full topic-word matrix be loaded.]
 
-```{r}
+```{r fig.height=14, fig.width=14, out.width="600px", out.height="600px"}
 topic_scaled_2d(m) %>%
     plot_topic_scaled(labels=topic_labels(m, n=3))
 ```
@@ -314,9 +319,11 @@ Rather pleasingly, the horizontal axis of this plot appears to be interpretable:
 
 The time series mentioned above (if our time metadata is meaningful) can be visualized in a faceted plot:
 
-```{r}
+```{r fig.height=8}
+theme_update(strip.text=element_text(size=7),  # optional graphics tweaking
+             axis.text=element_text(size=7))
 topic_series(m) %>%
-    plot_series(labels=topic_labels(m, 4))
+    plot_series(labels=topic_labels(m, 2))
 ```
 
 In this case the plot will not so much reveal trends as it will indicate which particular years have items highly concentrated in one topic or another. The identical vertical scales may appear an annoyance, but this is in fact a useful way of seeing that one topic captures a great deal of the corpus and is probably not particularly coherent, semantically: `r topic_labels(m)[22]`. We can of course filter `topic_series(m)` to drop this topic from our display.
@@ -339,7 +346,7 @@ Then, in the shell, run
 
 from the `browser` directory and visit `http://localhost:8888` in your web browser.^[To skip the download and export only data files, set `download_dfb=F`.]
 
-# More elaborate visualization: a word's topic assignments
+## A more elaborate visualization: a word's topic assignments
 
 For a final, somewhat more complicated exploration, let's visualize the allocation of a single word among various topics over time. This functionality is actually provided in the package by `plot_word_topic_series`, but this function is implemented on top of functions with more general uses, so walking through the implementation will help clarify what the more general functions in the package can do, in particular in conjunction with the Gibbs sampling state from the topic model.
 
@@ -417,19 +424,22 @@ For one further refinement, we'll add topic labels as well:
 
 ```{r}
 series_frame %>%
-    mutate(topic=factor(topic_labels(m, 3)[topic])) %>%
+    mutate(topic=factor(topic_labels(m, 3)[topic])) %>% 
+    mutate(year=as.Date(year)) %>%  # restore data type (sigh)
     ggplot(aes(year, weight, group=topic, fill=topic)) +
         geom_area() +
         labs(x="year",
              y="fraction of corpus",
-             title=str_c('allocation of "', word, '" among topics'))
+             title=str_c('allocation of "', w, '" among topics'))
 ```
 
 From this plot we can see the way *`r w`* moves among topics assigned to different poets and poems: in this sense the model "understands" the referential multiplicity of *`r w`* in this corpus.
 
-# Other package features
+## Other package features
 
 Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET's other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (`instance_Matrix`--the capital M because the result is a sparse `Matrix` object). I provide `read_diagnostics` and `write_diagnostics` methods to access MALLET's own set of model diagnostics.
 
 Finally, I have included some functions for MALLET's "topic inference" functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is `infer_topics`, which returns a model object `m` whose document-topic matrix is available as `doc_topics(m)`.
+
+# Notes
 
