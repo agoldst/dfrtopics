@@ -665,7 +665,7 @@ top_words.mallet_model <- function (m, n=NULL, weighting=NULL) {
             result <- m$top_words
         } else if (nrow(m$top_words) >= n * K) {
             i <- rep(seq(n), times=K) +
-                rep(seq(0, nrow(m$top_words) / n * (n - 1), by=n), each=K)
+                rep(seq(0, by=nrow(m$top_words) / K, length.out=K), each=n)
             result <- m$top_words[i, ]
         }
     }
@@ -811,7 +811,8 @@ hyperparameters.mallet_model <- function (m) {
 #' @param hyper list of estimated hyperparameters \eqn{\alpha} and \eqn{\beta}
 #' @param metadata data frame of metadata
 #' @param model reference to an RTopicModel object from MALLET
-#' @param state final Gibbs sampling state
+#' @param ss final Gibbs sampling state represented as "simplified"
+#'   \code{big.matrix}
 #'
 #' @export
 mallet_model <- function (doc_topics=NULL,
@@ -823,7 +824,7 @@ mallet_model <- function (doc_topics=NULL,
                      hyper=NULL,
                      metadata=NULL,
                      model=NULL,
-                     state=NULL) {
+                     ss=NULL) {
     structure(list(doc_topics=doc_topics,
                    doc_ids=doc_ids,
                    vocab=vocab,
@@ -833,7 +834,7 @@ mallet_model <- function (doc_topics=NULL,
                    metadata=metadata,
                    model=model,
                    params=params,
-                   state=state),
+                   ss=ss),
               class="mallet_model")
 }
 
@@ -855,7 +856,7 @@ Number of word types: ", length(vocabulary(x)))
 #' @rdname mallet_model
 summary.mallet_model <- function (x) {
     members <- c("model", "instances", "doc_topics", "top_words", "topic_words",
-                 "vocab", "doc_ids", "hyper")
+                 "vocab", "doc_ids", "hyper", "ss")
     lst <- lapply(members, function (m) !is.null(x[[m]]))
     names(lst) <- members
     lst$n_topics <- n_topics(x)
@@ -886,7 +887,8 @@ top words data frame:   ", yesno("top_words"), "
 topic-word matrix:      ", yesno("topic_words"), "
 vocabulary:             ", yesno("vocab"), "
 document ids:           ", yesno("doc_ids"), "
-hyperparameters:        ", yesno("hyper")
+hyperparameters:        ", yesno("hyper"), "
+sampling state:         ", yesno("ss")
     )
 
     cat(s)
@@ -964,7 +966,7 @@ load_mallet_model <- function(
         topic_words=tw,
         params=params,
         hyper=hyper,
-        state=ss,
+        ss=ss,
         metadata=match_metadata(metadata, ids))
 
     result
