@@ -205,7 +205,7 @@ plot_topic_scaled <- function (coords, labels=1:nrow(coords)) {
 
     if (is.character(labels)) {
         # make labels run vertically
-        labels <- stringr::str_wrap(labels, 8)
+        labels <- stringr::str_wrap(labels, 10)
     }
 
     frm <- data.frame(label=labels,
