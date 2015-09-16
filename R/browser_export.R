@@ -33,7 +33,7 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=FALSE,
 #' Output data files for dfr-browser
 #'
 #' Transform and save modeling results in a format suitable for use by
-#' \url{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser
+#' \href{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser
 #' based model browser.
 #'
 #' This routine reports on its progress. By default, it saves zipped versions of
