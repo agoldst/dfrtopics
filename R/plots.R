@@ -229,12 +229,14 @@ plot_topic_scaled <- function (coords, labels=1:nrow(coords)) {
 #'
 #' @param m \code{dfr_lda} object
 #' @param word a term found in the model vocabulary
+#' @param n number of topics to include in plot. The cut is made by ranking
+#'   topics according to their overall totals of \code{word}.
 #' @param breaks time periodicity of the series
 #'
 #' @return A \link[ggplot2]{ggplot} object.
 #'
 #' @export
-plot_word_topic_series <- function (m, word, breaks="years") {
+plot_word_topic_series <- function (m, word, n=n_topics(m), breaks="years") {
     if (is.null(m$ss)) {
         stop(
 "The Gibbs sampling state must be available. Use load_sampling_state.")
@@ -248,13 +250,19 @@ plot_word_topic_series <- function (m, word, breaks="years") {
     series <- sum_col_groups(topic_docs_term(m, word), periods)
     series <- rescale_cols(series, 1 / total_series)
     series_frame <- gather_matrix(series, col_names=c("topic", "year", "weight"))
-    series_frame$topic <- topic_labels(m, 3)[series_frame$topic]
+
+    keep_topics <- words_top_topics(m, n)
+    flt <- lazyeval::interp(~ word == x, x=word)
+    keep_topics <- dplyr::filter_(keep_topics, flt)
+    series_frame <- series_frame[series_frame$topic %in% keep_topics$topic, ]
+    series_frame$topic <- factor(topic_labels(m, 3)[series_frame$topic])
+
     ggplot2::ggplot(series_frame,
             ggplot2::aes_string(
-                x="year", y="weight", group="topic", color="topic")) +
+                x="year", y="weight", group="topic", fill="topic")) +
         ggplot2::geom_area() +
-        ggplot2::labs(x="year",
-             y=stringr::str_c('fraction of "', word, '"'),
+        ggplot2::labs(x="date",
+             y=stringr::str_c('"', word, '" as fraction of corpus'),
              title=stringr::str_c('allocation of "', word, '" among topics'))
 }
 
