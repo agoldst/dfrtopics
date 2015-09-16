@@ -17,7 +17,8 @@ Suggests:
     XML,
     jsonlite,
     lubridate,
-    tidyr
+    tidyr,
+    knitr
 SystemRequirements: python
 License: MIT
 LazyData: true
