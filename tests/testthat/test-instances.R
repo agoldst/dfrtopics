@@ -37,8 +37,8 @@ test_that("Instance TDM generation works as expected", {
     il <- make_instances(fake_docs)
     m <- instances_Matrix(il)
     expect_equal(dim(m), c(15, 2))
-    term <- match("music", instances_vocabulary(il))
-    expect_equal(m[term, 2], 2)
+    word <- match("music", instances_vocabulary(il))
+    expect_equal(m[word, 2], 2)
     expect_equal(Matrix::colSums(m), instances_lengths(il))
 })
 
@@ -75,7 +75,7 @@ test_that("Instances are made from DfR data successfully", {
 
     # cross-check vocabulary
     stopwords <- readLines(stop_f)
-    vocab2 <- setdiff(unique(counts$term), stopwords)
+    vocab2 <- setdiff(unique(counts$word), stopwords)
 
     expect_that(sort(vocab), equals(sort(vocab2)))
 

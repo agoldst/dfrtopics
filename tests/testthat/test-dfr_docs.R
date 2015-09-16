@@ -16,7 +16,7 @@ stoplist_file <- file.path(path.package("dfrtopics"), "stoplist",
 fake_counts <- data_frame(
     id=c(rep("10.2307/123456", 3),
          rep("10.2307/654321", 3)),
-    term=c("the", "woolf", "hull",
+    word=c("the", "woolf", "hull",
               "the", "of", "hull"),
     weight=as.integer(c(3:1, 5, 5, 1)))
 
@@ -64,11 +64,11 @@ test_that("Loading real wordcounts files works as expected", {
     counts <- read_wordcounts(fs)
 
     n_feats <- sum(sapply(fs, function (f) length(readLines(f)) - 1))
-    expect_equal(colnames(counts), c("id", "term", "weight"))
+    expect_equal(colnames(counts), c("id", "word", "weight"))
     expect_equal(nrow(counts), n_feats)
     expect_equal(n_distinct(counts$id), length(fs))
                  
-    expect_equal(counts$term[1], "the")
+    expect_equal(counts$word[1], "the")
 })
 
 test_that("Document-frame generation works as expected", {
@@ -84,12 +84,12 @@ test_that("Doc lengths are correctly calculated", {
     expect_equal(lengths$length, c(6, 11))
 })
 
-test_that("term totals are correctly calculated", {
-    lengths <- wordcounts_term_totals(fake_counts)
+test_that("word totals are correctly calculated", {
+    lengths <- wordcounts_word_totals(fake_counts)
     lengths %>%
-        arrange(term) %>%
+        arrange(word) %>%
         expect_equal(data_frame(
-            term=c("hull", "of", "the", "woolf"),
+            word=c("hull", "of", "the", "woolf"),
             weight=as.integer(c(2, 5, 8, 2))
         ))
 })
@@ -98,7 +98,7 @@ test_that("Stopword removal works correctly", {
     stopped <- wordcounts_remove_stopwords(fake_counts, c("the", "of"))
     expect_equal(stopped, data_frame(
         id=c(rep("10.2307/123456", 2), "10.2307/654321"),
-        term=c("woolf", "hull", "hull"),
+        word=c("woolf", "hull", "hull"),
         weight=c(2L, 1L, 1L)))
 })
 
@@ -106,7 +106,7 @@ test_that("Frequency filtering works correctly", {
     shorter <- wordcounts_remove_rare(fake_counts, 2)
     expect_equal(shorter, data_frame(
         id=c("10.2307/123456", rep("10.2307/654321", 2)),
-        term=c("the", "the", "of"),
+        word=c("the", "the", "of"),
         weight=c(3L, 5L, 5L)))
 })
 
