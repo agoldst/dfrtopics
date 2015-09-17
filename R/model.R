@@ -425,11 +425,12 @@ instances <- function (m) UseMethod("instances")
 
 #' @export
 instances.mallet_model <- function (m) {
-    obj <- RTopicModel(m)
-    if (is.null(obj)) {
-        NULL
+    if (!is.null(m$instances)) {
+        m$instances
+    } else if (!is.null(RTopicModel(m))) {
+        RTopicModel(m)$instances
     } else {
-        obj$instances
+        NULL
     }
 }
 
