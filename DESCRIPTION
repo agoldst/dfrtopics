@@ -1,19 +1,23 @@
 Package: dfrtopics
-Title: Tools for exploring topic models of JSTOR Data for Research outputs
-Description: Tools for exploring topic models of JSTOR Data for Research outputs
+Title: Tools for exploring topic models of text
+Description: This package provides tools for exploring topic models created by MALLET, with specialized functions for handling JSTOR Data for Research data.
 Version: 0.2
 Author: Andrew Goldstone <andrew.goldstone@gmail.com>
 Maintainer: Andrew Goldstone <andrew.goldstone@gmail.com>
 Depends:
-    mallet
+    mallet,
+    rJava
 Imports:
     Matrix,
     stringr,
     dplyr,
+    lazyeval,
     magrittr
 Suggests:
     ggplot2,
+    scales,
     testthat,
+    readr,
     bigmemory,
     bigtabulate,
     XML,
@@ -22,6 +26,6 @@ Suggests:
     tidyr,
     knitr
 SystemRequirements: python
-License: MIT
+License: MIT | file LICENSE
 LazyData: true
 VignetteBuilder: knitr
