@@ -4,7 +4,7 @@ This small R package provides bits and pieces to help make and explore topic mod
 
 I wrote most of the bits and pieces here while working on my research (I am a literary scholar), so this is not meant to be a professional, sophisticated, multipurpose tool. Nonetheless, by now it seemed worth it to make some of what I'd done conceivably reusable by others who might also want to explore topic models even if, like me, like to use R and have only very rudimentary knowledge of machine learning. The code skews to my amateurishness as a programmer. It is all very much in-progress, hacked together, catch-as-catch-can, I am not an expert, I am not a lawyer, etc., etc., etc. Use and share freely, at your own risk. 
 
-Every function has online help in R. There is an accompanying vignette (`vignette("introduction", "dfrtopics")`, but see below for notes on generating it.
+Every function has online help in R. For a fairly detailed introduction to what you can do with this package, see the introductory vignette:  `vignette("introduction", "dfrtopics")` or [online here](http://agoldst.github.io/dfrtopics/introduction.html). I'm always happy to hear from anyone who makes use of this.
 
 ## Installation
 
@@ -34,8 +34,9 @@ The tests are based on a sample set of data from DfR. I do not currently have pe
 ## Version history
 
 v0.2
- :  New release. An almost completely rewritten API, so don't expect backwards compatibility. This version should be more flexible and easier to use.
+ :  New release, September 2015. An almost completely rewritten API, so don't expect backwards compatibility. This version should be more flexible and easier to use. At least it has more documentation.
 
 v0.1
  :  Earliest public version(s), 2013--2015
 
+Andrew Goldstone (<andrew.goldstone@rutgers.edu>)
