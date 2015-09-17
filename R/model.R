@@ -1004,20 +1004,70 @@ load_mallet_model_directory <- function (f, load_topic_words=F,
                  metadata_file=metadata_file)
 }
 
-#' Load a model with files from dfrtopics 0.1 (unimplemented)
+#' Load a model with files from dfrtopics 0.1
 #'
 #' The convention for exporting model outputs differed in earlier versions of
 #' this package. This file loads in a folder of model outputs on the old
-#' conventions.
+#' conventions. To skip loading some elements, set the file name to NULL.
 #'
 #' @param f directory name
-#' @param load_topic_words
+#' @param doc_topics_file document-topics CSV (document topic proportions with a header row and an extra column of document IDs)
+#' @param keys_file the "weighted keys" or top topic-words CSV with top \eqn{n} words in each topic for some \eqn{n}, together with their weights, and hyperparameter \eqn{\alpha} estimates (repeated \eqn{n} times for each topic). MALLET's own "topic keys" output is different.
+#' @param vocab_file the model vocabulary, one word per line
+#' @param params_file CSV with one data row with saved model parameters (fewer than in current version)
+#' @param topic_words_file CSV with topic-word weights (no header)
+#' @param simplified_state_file CSV with a "simplified" sampling state (same as produced by current \code{\link{simplify_state}}
+#' @param metadata_file vector of metadata files to read in (optionally) and attach to model
+#'
+#' @return \code{\link{mallet_model}} object
 #'
 #' @export
-load_mallet_model_legacy <- function (f, load_topic_words=F,
-                                 metadata_file=NULL) {
-    stop("Unimplemented.")
-    # TODO implement this
+load_mallet_model_legacy <- function (
+        f=".",
+        doc_topics_file=file.path(f, "doc_topics.csv"),
+        keys_file=file.path(f, "keys.csv"),
+        vocab_file=file.path(f, "vocab.txt"),
+        params_file=file.path(f, "params.csv"),
+        topic_words_file=NULL,
+        simplified_state_file=NULL,
+        metadata_file=NULL) {
+
+    m <- list()
+    if (!is.null(doc_topics_file)) {
+        dtf <- read.csv(doc_topics_file, header=T, as.is=T)
+        m$doc_ids <- dtf$id
+        dtf$id <- NULL
+        m$doc_topics <- as.matrix(dtf)
+    }
+    if (!is.null(keys_file)) {
+        wkf <- read.csv(keys_file, header=T, as.is=T)
+        m$hyper <- list(alpha=unique(wkf$alpha))
+        m$top_words <- wkf[ , c("topic", "word", "weight")]
+    }
+    if (!is.null(vocab_file)) {
+        m$vocab <- readLines(vocab_file)
+    }
+    if (!is.null(params_file)) {
+        p <- read.csv(params_file)
+        if (is.null(m$hyper)) m$hyper <- list()
+        m$hyper$beta <- p$beta
+        p$beta <- NULL
+        m$params <- p
+    }
+
+    if (!is.null(topic_words_file)) {
+        m$topic_words <- as(read_matrix_csv(topic_words_file), "sparseMatrix")
+    }
+
+    if (!is.null(simplified_state_file)) {
+        m$ss <- read_sampling_state(simplified_state_file)
+    }
+
+    if (!is.null(metadata_file)) {
+        m$metadata <- read_dfr_metadata(metadata_file)
+    }
+
+    do.call(mallet_model, m)
 }
 
 
