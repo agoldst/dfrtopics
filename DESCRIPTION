@@ -9,7 +9,8 @@ Depends:
 Imports:
     Matrix,
     stringr,
-    dplyr
+    dplyr,
+    magrittr
 Suggests:
     ggplot2,
     testthat,
