@@ -87,7 +87,7 @@ test_that("loading saved model files reproduces the model", {
     expect_equal(topic_words(m)[4, 95], topic_words(m)[4, 95])
     expect_equal(hyperparameters(m), hyperparameters(m2))
     expect_equal(modeling_parameters(m), modeling_parameters(m2))
-    expect_equal(metadata(m), metadata(m2))
+    expect_equal(as.list(metadata(m)), as.list(metadata(m2)))
 
     clear_files(out_files)
 })
@@ -108,7 +108,7 @@ test_that("loading from a directory reproduces the model", {
     expect_equal(topic_words(m)[5, 93], topic_words(m)[5, 93])
     expect_equal(hyperparameters(m), hyperparameters(m2))
     expect_equal(modeling_parameters(m), modeling_parameters(m2))
-    expect_equal(metadata(m), metadata(m2))
+    expect_equal(as.list(metadata(m)), as.list(metadata(m2)))
 
     clear_files(out_files)
 })
