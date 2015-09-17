@@ -88,7 +88,7 @@ simplify_state <- function (state_file, outfile) {
 #'   magnitude less than \eqn{2^15}, you can get away with \code{"short"}, but
 #'   guess what? Linguistic data hates you, and a typical vocabulary can easily
 #'   include more word types than that, so the default is \code{"integer"}.
-#' @param big_wordkir the working directory where
+#' @param big_workdir the working directory where
 #'   \code{\link[bigmemory]{read.big.matrix}} will store its temporary files. By
 #'   default, uses \code{\link[base]{tempdir}}, but if you have more scratch
 #'   space elsewhere, use that for handling large sampling states.
@@ -216,6 +216,8 @@ load_sampling_state <- function (m,
 #' @param m a \code{mallet_model} object with the sampling state loaded
 #'   \code{\link{read_sampling_state}}. Operated on using
 #'   \code{\link[bigmemory]{mwhich}}.
+#'
+#' @param topic topic (indexed from 1) to find the term-document weights for
 #'
 #' @seealso \code{\link{read_sampling_state}}, \code{\link{mallet_model}},
 #'   \code{\link{load_sampling_state}}, \code{\link{top_n_row}},

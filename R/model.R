@@ -304,6 +304,10 @@ To set metadata later, use metadata(m) <- ..."
 #'
 #' Returns the number of topics in a model.
 #'
+#' @param m \code{\link{mallet_model}} object
+#'
+#' @return The number of topics.
+#'
 #' @export
 n_topics <- function (m) UseMethod("n_topics")
 
@@ -323,6 +327,10 @@ n_topics.mallet_model <- function (m) {
 #' Access the number of documents modeled
 #'
 #' Returns the number of documents modeled.
+#'
+#' @param m \code{\link{mallet_model}} object
+#'
+#' @return The number of documents.
 #'
 #' @export
 n_docs <- function (m) UseMethod("n_docs")
@@ -912,8 +920,13 @@ sampling state:         ", yesno("ss")
 #' @param metadata_file metadata file (CSV or TSV)
 #' @param params_file modeling parameters file (read with
 #'   \code{\link[base]{dget}})
+#' @param state_file CSV with simplified Gibbs sampling state (created by
+#'   \code{\link{output_mallet_model}} or \code{\link{simplify_state}})
 #'
 #' @return a \code{mallet_model} object
+#'
+#' @seealso \code{\link{load_mallet_model_directory}},
+#'   \code{\link{load_from_mallet_state}},
 #'
 #' @export
 load_mallet_model <- function(
@@ -989,6 +1002,9 @@ load_mallet_model <- function(
 #' @param metadata_file document metadata file(s) (optional)
 #'
 #' @return \code{mallet_model} object
+#'
+#' @seealso \code{\link{load_mallet_model}},
+#'   \code{\link{load_from_mallet_state}}
 #'
 #' @export
 load_mallet_model_directory <- function (f, load_topic_words=F,
@@ -1106,6 +1122,10 @@ load_mallet_model_legacy <- function (
 #' m <- load_from_mallet_state("topic-state.gz", "state.csv",
 #'     "instances.mallet")
 #' }
+#'
+#' @seealso \code{\link{load_mallet_model}},
+#'   \code{\link{load_mallet_model_directory}},
+#'   \code{\link{write_mallet_state}}
 #'
 #' @export
 #'

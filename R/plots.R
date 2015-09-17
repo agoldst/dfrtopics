@@ -14,7 +14,7 @@
 #' @param output_dir directory to save plots to
 #' @param topic topics to generate plots for (by default, all)
 #' @param breaks time intervals by which to slice document-topic distributions
-#'   for the box plots: passed on to \code{\link{plot_topic_series}}.
+#'   for the box plots: passed on to \code{\link{plot_series}}.
 #' @param w PNG width (pixels)
 #' @param h PNG height (pixels)
 #'

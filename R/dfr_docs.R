@@ -20,7 +20,7 @@
 #' 
 #' @param files individual filenames to read.
 #' @param filename_id function that converts a file name into a document ID. By 
-#'   default, \code{\link{dfr_filename_doi}} is used.
+#'   default, \code{\link{dfr_filename_id}} is used.
 #' @return A data frame with three columns: \code{id}, the document ID; 
 #'   \code{word}, a word type or term (called \code{WORDCOUNTS} in DfR source
 #'   data files); \code{weight}, the count.

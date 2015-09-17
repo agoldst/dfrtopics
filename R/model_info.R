@@ -103,7 +103,7 @@ top_docs.mallet_model <- function (m, n, weighting=dt_smooth_normalize(m)) {
 #' @seealso \code{\link{doc_topics}}
 #' 
 #' @export
-#' 
+#'
 docs_top_topics <- function (m, n, ...) UseMethod("docs_top_topics")
 
 #' @export

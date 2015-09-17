@@ -88,6 +88,7 @@ read_dfr_citations <- function (filename, strip.white=T, ...) {
         author_sep <- "\t"
     }
 
+    result <- dplyr::tbl_df(result)
     result$pubdate <- pubdate_Date(result$pubdate)
     result$author <- stringr::str_split(result$author, author_sep)
     result$type <- factor(result$type)
@@ -104,7 +105,7 @@ read_dfr_citations <- function (filename, strip.white=T, ...) {
 #' @return a character vector of filenames
 #' @examples
 #' id_dfr_filename("10.2307/3175328")
-#' @seealso \code{\link{filename_id}}
+#' @seealso \code{\link{dfr_filename_id}}
 #' @export
 #' 
 id_dfr_filename <- function (id) {
@@ -124,7 +125,7 @@ id_dfr_filename <- function (id) {
 #' @param filename a character vector of filenames
 #' @examples
 #' dfr_filename_id("path/to/wordcounts_10.2307_3175328.CSV")
-#' @seealso \code{\link{id_filename}}
+#' @seealso \code{\link{id_dfr_filename}}
 #' @export
 #' 
 dfr_filename_id <- function (filename) {
@@ -194,7 +195,7 @@ dfr_id_url <- function(id, jstor_direct=T) {
 #'   
 #' @examples
 #' 
-#' md <- data_frame(
+#' md <- dplyr::data_frame(
 #'     id="10.2307/432680",
 #'     doi="10.2307/432680",
 #'     title='Sidney\'s "Arcadia" and "The Tryall of Chevalry"',

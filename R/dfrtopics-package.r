@@ -59,7 +59,7 @@ NULL
     if (length(jheap) == 0) {
         # shouldn't get here since rJava loading should set java.parameters
         # with a default value of "-Xmx512m"
-        message(
+        packageStartupMessage(
             "You are using rJava's default Java heap setting (512MB).")
         heap_ok <- FALSE
     } else {
@@ -79,7 +79,7 @@ NULL
     }
 
     if (!heap_ok) {
-        message(
+        packageStartupMessage(
 'I recommend giving Java at least 2GB of heap space. To do this, put the
 following command in your scripts *before* loading this package:
 
