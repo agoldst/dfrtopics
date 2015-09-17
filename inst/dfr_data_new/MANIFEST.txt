@@ -1,9 +1,0 @@
-Job Title: pmla82-83meta
-Job ID: 2014.9.22.Ne5Msr3f
-Requester: agoldst
-Query: http://dfr.jstor.org/fsearch/submitrequest?cs=jcode%3Apmla%5E1.0%7Cyear%3A%5B1982+TO+1983%5D%5E1.0&fs=yrm1&view=text&
-View(s): citations
-Format: CSV
-Documents Requested: 25000
-Date Processed: 2014-09-22 18:21:01.740518
-
