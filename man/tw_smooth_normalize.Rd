@@ -18,8 +18,8 @@ tw_sievert_shirley(m, lambda = 0.6)
 \arguments{
 \item{m}{a \code{\link{mallet_model}} object}
 
-\item{l}{For \code{sievert_shirley}, the weighting parameter \eqn{\lambda},
-by default 0.6.}
+\item{lambda}{For \code{sievert_shirley}, the weighting parameter
+\eqn{\lambda}, by default 0.6.}
 }
 \value{
 a function of one variable, to be applied to the topic-word sparse
@@ -42,12 +42,12 @@ ordering of words within topics.
 \code{tw_smooth} simply adds \eqn{\beta} but does not normalize.
 
 A method that can re-rank words has been given by Blei and Lafferty: the
-score for word \eqn{v} in topic \eqn{t} is \deqn{p(t,v)\textrm{log}(p(t,v) /
-\prod_k p(k,v)^1/K)} where \eqn{K} is the number of topics. The score gives
+score for word \eqn{v} in topic \eqn{t} is \deqn{p(t,v) log(p(t,v) /
+\prod_k p(k,v)^(1/K))} where \eqn{K} is the number of topics. The score gives
 more weight to words which are ranked highly in fewer topics.
 
 Another method is the "relevance" score of Sievert and Shirley: in this case
-the score is given by \deqn{\lambda log (p(t,v) + (1 - \lambda) log (p(t,v) /
+the score is given by \deqn{\lambda log(p(t,v) + (1 - \lambda) log(p(t,v) /
 p(v)} where \eqn{\lambda} is a weighting parameter which is by default set to
 0.6 and which determines the amount by which words common in the whole corpus
 are penalized.
