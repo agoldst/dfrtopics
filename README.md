@@ -12,7 +12,7 @@ This is too messy for CRAN. The easiest way to install is to first install the [
 
 ```R
 library(devtools)
-install_github("dfrtopics", "agoldst")
+install_github("agoldst/dfrtopics")
 ```
 
 (This should work even if you don't have git or a github account.)
