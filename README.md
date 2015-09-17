@@ -21,7 +21,7 @@ I have been profligate with dependencies. Note that if you use RStudio, getting 
 
 ## Browsing the model interactively
 
-Now in alpha release: another project of mine, [dfr-browser](http://agoldst.github.io/dfr-browser), which makes topic models of DfR data into a javascript-based interactive browser.
+Now in alpha release: another project of mine, [dfr-browser](http://agoldst.github.io/dfr-browser), which makes topic models of DfR data into a javascript-based interactive browser. To export results from this model as a browser, use the package function `export_browser_data` (see the function documentation for more detail).
 
 ## A note on licensing
 
