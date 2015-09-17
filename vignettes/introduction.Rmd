@@ -179,7 +179,7 @@ m <- train_model(ilist, n_topics=40,
 
 `ilist` here can also be the name of a file created by `write_instances` (or by command-line MALLET). Though I have supplied defaults for the many parameters for the modeling process, I have no idea of the kinds of corpora for which those defaults are sensible. It's important to adjust all the parameters (through experimentation if no principled method is to hand). See `?train_model`. 
 
-Note, in particular, that if we want to get exactly the same model more than once, we should set MALLET's random number seed with the `seed` parameter here.^[There are two senses in which you might want your modeling to be reproducible, however: your exact outputs should be reproducible, *and* any substantive features of interest should probably be independent of the [pseudo]-randomness of the modeling process.)]
+Note, in particular, that if we want to get exactly the same model more than once, we should set MALLET's random number seed with the `seed` parameter here.^[There are two senses in which you might want your modeling to be reproducible, however: your exact outputs should be reproducible, *and* any substantive features of interest should probably be independent of the [pseudo]-randomness of the modeling process.]
 
 The result, here stored in `m`, is an object designed to gather together all the relevant model information. It has S3 class `mallet_model`. Though it is really just a list, the package provides accessor functions, and you can treat `m` as though it were opaque.
 
@@ -233,6 +233,7 @@ estimated hyperparameters   `hyperparameters(m)`
 modeling parameters         `modeling_parameters(m)`
 
 
+If you have run MALLET another way but would like to use any of the data-manipulation and exploration functions here, the package can create a `mallet_model` object from MALLET's sampling-state output (and its InstancesList file input). The function is `load_from_mallet_state`. See its documentation for more details. (Finally, if you were one of the brave few who experimented with earlier versions of this package, which produced slightly different outputs, consult `?load_mallet_model_legacy`.)
 
 # Exploring model results
 
@@ -441,5 +442,6 @@ Not discussed here are a few parts of the package which help to make the bridge 
 
 Finally, I have included some functions for MALLET's "topic inference" functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is `infer_topics`, which returns a model object `m` whose document-topic matrix is available as `doc_topics(m)`.
 
-# Notes
+
+-------------------
 

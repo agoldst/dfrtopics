@@ -10,7 +10,7 @@
 
 <meta name="author" content="Andrew Goldstone" />
 
-<meta name="date" content="2015-09-16" />
+<meta name="date" content="2015-09-17" />
 
 <title>Introduction to dfrtopics</title>
 
@@ -72,7 +72,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="header">
 <h1 class="title">Introduction to dfrtopics</h1>
 <h4 class="author"><em>Andrew Goldstone</em></h4>
-<h4 class="date"><em>2015-09-16</em></h4>
+<h4 class="date"><em>2015-09-17</em></h4>
 </div>
 
 
@@ -134,6 +134,7 @@ counts %&gt;%
 <pre><code>## Source: local data frame [605 x 3]
 ## 
 ##                 id total stopped
+##              (chr) (int)   (int)
 ## 1  10.2307/3693731 10073    3028
 ## 2  10.2307/3693732  6855    3798
 ## 3  10.2307/3693733  4791    2554
@@ -276,6 +277,7 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 </tr>
 </tbody>
 </table>
+<p>If you have run MALLET another way but would like to use any of the data-manipulation and exploration functions here, the package can create a <code>mallet_model</code> object from MALLET’s sampling-state output (and its InstancesList file input). The function is <code>load_from_mallet_state</code>. See its documentation for more details. (Finally, if you were one of the brave few who experimented with earlier versions of this package, which produced slightly different outputs, consult <code>?load_mallet_model_legacy</code>.)</p>
 </div>
 <div id="exploring-model-results" class="section level1">
 <h1>Exploring model results</h1>
@@ -284,6 +286,7 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 <pre><code>## Source: local data frame [400 x 3]
 ## 
 ##    topic     word weight
+##    (int)    (chr)  (int)
 ## 1      1      two   3602
 ## 2      1 evidence   1779
 ## 3      1 original   1472
@@ -444,7 +447,7 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sampling_state</span>(m)</code></pre></div>
 <pre><code>## An object of class &quot;big.matrix&quot;
 ## Slot &quot;address&quot;:
-## &lt;pointer: 0x1208b5740&gt;</code></pre>
+## &lt;pointer: 0x14137f7f0&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dim</span>(<span class="kw">sampling_state</span>(m))</code></pre></div>
 <pre><code>## [1] 693350      4</code></pre>
 <p>What we now want is to examine the topic-document matrix <em>conditional on</em> the word poem. This is easy to do with the <code>mwhich</code> function from <code>bigmemory</code>, but as a convenience this package provides a function for this particular application (as well as the the term-document matrices conditioned on a topic, <code>tdm_topic</code>):</p>
@@ -485,17 +488,15 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 <h2>Other package features</h2>
 <p>Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET’s other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (<code>instance_Matrix</code>–the capital M because the result is a sparse <code>Matrix</code> object). I provide <code>read_diagnostics</code> and <code>write_diagnostics</code> methods to access MALLET’s own set of model diagnostics.</p>
 <p>Finally, I have included some functions for MALLET’s “topic inference” functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is <code>infer_topics</code>, which returns a model object <code>m</code> whose document-topic matrix is available as <code>doc_topics(m)</code>.</p>
+<hr />
 </div>
-</div>
-<div id="notes" class="section level1">
-<h1>Notes</h1>
 </div>
 <div class="footnotes">
 <hr />
 <ol>
 <li id="fn1"><p>To follow along with this vignette, you will have to obtain this sample data, since JSTOR’s terms of use do not allow me to redistribute it (though these journal issues are themselves in the public domain). It can be freely downloaded by signing up for an account on <a href="http://dfr.jstor.org">Data for Research</a>, searching for full-length articles from the two journals in the specified time period—or simply use <a href="http://dfr.jstor.org/fsearch/submitrequest?cs=jo%3A%28pmla+OR+%22modern+philology%22%29+AND+year%3A%5B1905+TO+1915%5D+AND+ty%3Afla%5E1.0&amp;fs=yrm1&amp;view=text&amp;">this link to the results</a>—and making a Dataset Request for wordcounts and metadata in CSV format.<a href="#fnref1">↩</a></p></li>
 <li id="fn2"><p>“Roughly” because of ties.<a href="#fnref2">↩</a></p></li>
-<li id="fn3"><p>There are two senses in which you might want your modeling to be reproducible, however: your exact outputs should be reproducible, <em>and</em> any substantive features of interest should probably be independent of the [pseudo]-randomness of the modeling process.)<a href="#fnref3">↩</a></p></li>
+<li id="fn3"><p>There are two senses in which you might want your modeling to be reproducible, however: your exact outputs should be reproducible, <em>and</em> any substantive features of interest should probably be independent of the [pseudo]-randomness of the modeling process.<a href="#fnref3">↩</a></p></li>
 <li id="fn4"><p>A more sophisticated solution would be to allow pieces to be stored on disk and load them as needed. I find R’s functional style makes this quite hard to arrange without an exhausting proliferation of parentheses.<a href="#fnref4">↩</a></p></li>
 <li id="fn5"><p>By default this matrix contains integer counts of topic-word assignments, <em>not</em> probabilities of words in topics. For the purpose of finding top words this does not matter. See the help for <code>top_words</code>, hwoever, for notes on different word-scoring schemes.<a href="#fnref5">↩</a></p></li>
 <li id="fn6"><p>Recall that we had metadata for more documents than we modeled, because we discarded some documents in the corpus-creation step. However, when metadata is provided for a model, the package selects and reorders rows so that rows of <code>metadata(m)</code> correspond to rows of <code>doc_topics(m)</code> and entries in <code>doc_ids(m)</code>.<a href="#fnref6">↩</a></p></li>
