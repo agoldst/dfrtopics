@@ -23,7 +23,7 @@ scrub the cruft found in some journals' metadata on JSTOR. Authors are simply
 concatenated into a long "A and B and C" list.
 }
 \examples{
-md <- data_frame(
+md <- dplyr::data_frame(
     id="10.2307/432680",
     doi="10.2307/432680",
     title='Sidney\\'s "Arcadia" and "The Tryall of Chevalry"',

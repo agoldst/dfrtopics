@@ -13,7 +13,7 @@ topic_report(m, output_dir = "topic_report", topics = 1:n_topics(m),
 \item{output_dir}{directory to save plots to}
 
 \item{breaks}{time intervals by which to slice document-topic distributions
-for the box plots: passed on to \code{\link{plot_topic_series}}.}
+for the box plots: passed on to \code{\link{plot_series}}.}
 
 \item{w}{PNG width (pixels)}
 

@@ -6,6 +6,12 @@
 \usage{
 n_topics(m)
 }
+\arguments{
+\item{m}{\code{\link{mallet_model}} object}
+}
+\value{
+The number of topics.
+}
 \description{
 Returns the number of topics in a model.
 }

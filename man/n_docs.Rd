@@ -6,6 +6,12 @@
 \usage{
 n_docs(m)
 }
+\arguments{
+\item{m}{\code{\link{mallet_model}} object}
+}
+\value{
+The number of documents.
+}
 \description{
 Returns the number of documents modeled.
 }

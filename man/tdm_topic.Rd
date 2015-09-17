@@ -10,6 +10,8 @@ tdm_topic(m, topic)
 \item{m}{a \code{mallet_model} object with the sampling state loaded
   \code{\link{read_sampling_state}}. Operated on using
   \code{\link[bigmemory]{mwhich}}.}
+
+\item{topic}{topic (indexed from 1) to find the term-document weights for}
 }
 \value{
 a \code{\link[Matrix]{sparseMatrix}} of \emph{within-topic} word

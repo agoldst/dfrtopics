@@ -24,6 +24,6 @@ The file extension can be anything alphabetic.
 dfr_filename_id("path/to/wordcounts_10.2307_3175328.CSV")
 }
 \seealso{
-\code{\link{id_filename}}
+\code{\link{id_dfr_filename}}
 }
 

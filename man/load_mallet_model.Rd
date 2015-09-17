@@ -22,7 +22,10 @@ load_mallet_model(doc_topics_file, doc_ids_file, vocab_file,
 \item{metadata_file}{metadata file (CSV or TSV)}
 
 \item{params_file}{modeling parameters file (read with
-  \code{\link[base]{dget}})}
+\code{\link[base]{dget}})}
+
+\item{state_file}{CSV with simplified Gibbs sampling state (created by
+  \code{\link{output_mallet_model}} or \code{\link{simplify_state}})}
 }
 \value{
 a \code{mallet_model} object
@@ -31,5 +34,9 @@ a \code{mallet_model} object
 Load a model object from a set of files (like those produced from
 \code{\link{write_mallet_model}}). Leave a filename out to skip loading that
 piece of the puzzle.
+}
+\seealso{
+\code{\link{load_mallet_model_directory}},
+  \code{\link{load_from_mallet_state}},
 }
 

@@ -18,7 +18,7 @@ magnitude less than \eqn{2^15}, you can get away with \code{"short"}, but
 guess what? Linguistic data hates you, and a typical vocabulary can easily
 include more word types than that, so the default is \code{"integer"}.}
 
-\item{big_wordkir}{the working directory where
+\item{big_workdir}{the working directory where
   \code{\link[bigmemory]{read.big.matrix}} will store its temporary files. By
   default, uses \code{\link[base]{tempdir}}, but if you have more scratch
   space elsewhere, use that for handling large sampling states.}

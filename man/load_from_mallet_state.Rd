@@ -42,4 +42,9 @@ m <- load_from_mallet_state("topic-state.gz", "state.csv",
     "instances.mallet")
 }
 }
+\seealso{
+\code{\link{load_mallet_model}},
+  \code{\link{load_mallet_model_directory}},
+  \code{\link{write_mallet_state}}
+}
 

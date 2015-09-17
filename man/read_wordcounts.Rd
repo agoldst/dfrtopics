@@ -10,7 +10,7 @@ read_wordcounts(files, filename_id = dfr_filename_id)
 \item{files}{individual filenames to read.}
 
 \item{filename_id}{function that converts a file name into a document ID. By
-default, \code{\link{dfr_filename_doi}} is used.}
+default, \code{\link{dfr_filename_id}} is used.}
 }
 \value{
 A data frame with three columns: \code{id}, the document ID;

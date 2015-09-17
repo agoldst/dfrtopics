@@ -20,6 +20,6 @@ wordcount filename like \code{wordcounts_10.2307_3175328.CSV}.
 id_dfr_filename("10.2307/3175328")
 }
 \seealso{
-\code{\link{filename_id}}
+\code{\link{dfr_filename_id}}
 }
 

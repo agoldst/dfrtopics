@@ -27,7 +27,7 @@ models, if you have used pre-aggregated data from JSTOR the "sequences" will
 be meaningless.
 }
 \seealso{
-\code{\link{instances_vocabulary}}, \code{\link{docs_frame}},
+\code{\link{instances_vocabulary}}, \code{\link{wordcounts_texts}},
 \code{\link{instance_text}}
 }
 
