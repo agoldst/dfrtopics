@@ -73,7 +73,8 @@ NULL
         jheap_bytes <- as.numeric(size_num) * size_unit
 
         if(is.na(jheap_bytes) | jheap_bytes < 2^31) {
-            message("Your current Java heap setting is ", size_str, ".")
+            packageStartupMessage("Your current Java heap setting is ",
+                                  size_str, ".")
             heap_ok <- FALSE
         }
     }
