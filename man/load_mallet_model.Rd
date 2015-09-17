@@ -29,7 +29,7 @@ a \code{mallet_model} object
 }
 \description{
 Load a model object from a set of files (like those produced from
-\code{\link{write_mallet_model}}). Leave a filename out to skip loading that piece
-of the puzzle.
+\code{\link{write_mallet_model}}). Leave a filename out to skip loading that
+piece of the puzzle.
 }
 

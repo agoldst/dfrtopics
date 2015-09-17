@@ -2,18 +2,44 @@
 % Please edit documentation in R/model.R
 \name{load_mallet_model_legacy}
 \alias{load_mallet_model_legacy}
-\title{Load a model with files from dfrtopics 0.1 (unimplemented)}
+\title{Load a model with files from dfrtopics 0.1}
 \usage{
-load_mallet_model_legacy(f, load_topic_words = F, metadata_file = NULL)
+load_mallet_model_legacy(f = ".", doc_topics_file = file.path(f,
+  "doc_topics.csv"), keys_file = file.path(f, "keys.csv"),
+  vocab_file = file.path(f, "vocab.txt"), params_file = file.path(f,
+  "params.csv"), topic_words_file = NULL, simplified_state_file = NULL,
+  metadata_file = NULL)
 }
 \arguments{
 \item{f}{directory name}
 
-\item{load_topic_words}{}
+\item{doc_topics_file}{document-topics CSV (document topic proportions with a
+header row and an extra column of document IDs)}
+
+\item{keys_file}{the "weighted keys" or top topic-words CSV with top \eqn{n}
+words in each topic for some \eqn{n}, together with their weights, and
+hyperparameter \eqn{\alpha} estimates (repeated \eqn{n} times for each
+topic). MALLET's own "topic keys" output is different.}
+
+\item{vocab_file}{the model vocabulary, one word per line}
+
+\item{params_file}{CSV with one data row with saved model parameters (fewer
+than in current version)}
+
+\item{topic_words_file}{CSV with topic-word weights (no header)}
+
+\item{simplified_state_file}{CSV with a "simplified" sampling state (same as
+produced by current \code{\link{simplify_state}}}
+
+\item{metadata_file}{vector of metadata files to read in (optionally) and
+  attach to model}
+}
+\value{
+\code{\link{mallet_model}} object
 }
 \description{
 The convention for exporting model outputs differed in earlier versions of
 this package. This file loads in a folder of model outputs on the old
-conventions.
+conventions. To skip loading some elements, set the file name to NULL.
 }
 

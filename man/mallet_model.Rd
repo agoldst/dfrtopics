@@ -9,7 +9,7 @@
 \usage{
 mallet_model(doc_topics = NULL, doc_ids = NULL, vocab = NULL,
   top_words = NULL, topic_words = NULL, params = NULL, hyper = NULL,
-  metadata = NULL, model = NULL, ss = NULL)
+  metadata = NULL, model = NULL, ss = NULL, instances = NULL)
 
 print.mallet_model(x)
 
@@ -40,17 +40,19 @@ topic}
 \item{model}{reference to an RTopicModel object from MALLET}
 
 \item{ss}{final Gibbs sampling state represented as "simplified"
-  \code{big.matrix}}
+\code{big.matrix}}
+
+\item{instances}{reference to InstanceList (redundant if \code{model}
+  specified)}
 }
 \description{
-A topic model is a complicated beastie, and exploring it
-requires keeping track of a number of different kinds of data.
-The \code{mallet_model} object strives to encapsulate some
-of this for you. Package users shouldn't need to invoke the
-constructor explicitly; to obtain model objects, use either
+A topic model is a complicated beastie, and exploring it requires keeping
+track of a number of different kinds of data. The \code{mallet_model} object
+strives to encapsulate some of this for you. Package users shouldn't need to
+invoke the constructor explicitly; to obtain model objects, use either
 \code{\link{train_model}} or \code{\link{load_mallet_model}}. The
-\code{summary} method indicates which elements of the model have been
-loaded into R's memory.
+\code{summary} method indicates which elements of the model have been loaded
+into R's memory.
 }
 \details{
 Any of the parameters to the constructor can be omitted. No validation is

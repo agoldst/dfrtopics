@@ -788,14 +788,13 @@ hyperparameters.mallet_model <- function (m) {
 
 #' The model object
 #'
-#' A topic model is a complicated beastie, and exploring it
-#' requires keeping track of a number of different kinds of data.
-#' The \code{mallet_model} object strives to encapsulate some
-#' of this for you. Package users shouldn't need to invoke the
-#' constructor explicitly; to obtain model objects, use either
+#' A topic model is a complicated beastie, and exploring it requires keeping
+#' track of a number of different kinds of data. The \code{mallet_model} object
+#' strives to encapsulate some of this for you. Package users shouldn't need to
+#' invoke the constructor explicitly; to obtain model objects, use either
 #' \code{\link{train_model}} or \code{\link{load_mallet_model}}. The
-#' \code{summary} method indicates which elements of the model have been
-#' loaded into R's memory.
+#' \code{summary} method indicates which elements of the model have been loaded
+#' into R's memory.
 #'
 #' Any of the parameters to the constructor can be omitted. No validation is
 #' performed.
@@ -814,6 +813,8 @@ hyperparameters.mallet_model <- function (m) {
 #' @param model reference to an RTopicModel object from MALLET
 #' @param ss final Gibbs sampling state represented as "simplified"
 #'   \code{big.matrix}
+#' @param instances reference to InstanceList (redundant if \code{model}
+#'   specified)
 #'
 #' @export
 mallet_model <- function (doc_topics=NULL,
@@ -825,7 +826,8 @@ mallet_model <- function (doc_topics=NULL,
                      hyper=NULL,
                      metadata=NULL,
                      model=NULL,
-                     ss=NULL) {
+                     ss=NULL,
+                     instances=NULL) {
     structure(list(doc_topics=doc_topics,
                    doc_ids=doc_ids,
                    vocab=vocab,
@@ -899,8 +901,8 @@ sampling state:         ", yesno("ss")
 #' Read in model outputs from files
 #'
 #' Load a model object from a set of files (like those produced from
-#' \code{\link{write_mallet_model}}). Leave a filename out to skip loading that piece
-#' of the puzzle.
+#' \code{\link{write_mallet_model}}). Leave a filename out to skip loading that
+#' piece of the puzzle.
 #'
 #' @param doc_topics_file document-topic matrix file (CSV)
 #' @param doc_ids_file document id file (text, one ID per line)
@@ -925,7 +927,7 @@ load_mallet_model <- function(
         state_file=NULL) {
 
     if (!is.null(top_words_file)) {
-        top_w <- tbl_df(read.csv(top_words_file, as.is=T))
+        top_w <- dplyr::tbl_df(read.csv(top_words_file, as.is=T))
     } else {
         top_w <- NULL
     }
@@ -1011,13 +1013,20 @@ load_mallet_model_directory <- function (f, load_topic_words=F,
 #' conventions. To skip loading some elements, set the file name to NULL.
 #'
 #' @param f directory name
-#' @param doc_topics_file document-topics CSV (document topic proportions with a header row and an extra column of document IDs)
-#' @param keys_file the "weighted keys" or top topic-words CSV with top \eqn{n} words in each topic for some \eqn{n}, together with their weights, and hyperparameter \eqn{\alpha} estimates (repeated \eqn{n} times for each topic). MALLET's own "topic keys" output is different.
+#' @param doc_topics_file document-topics CSV (document topic proportions with a
+#'   header row and an extra column of document IDs)
+#' @param keys_file the "weighted keys" or top topic-words CSV with top \eqn{n}
+#'   words in each topic for some \eqn{n}, together with their weights, and
+#'   hyperparameter \eqn{\alpha} estimates (repeated \eqn{n} times for each
+#'   topic). MALLET's own "topic keys" output is different.
 #' @param vocab_file the model vocabulary, one word per line
-#' @param params_file CSV with one data row with saved model parameters (fewer than in current version)
+#' @param params_file CSV with one data row with saved model parameters (fewer
+#'   than in current version)
 #' @param topic_words_file CSV with topic-word weights (no header)
-#' @param simplified_state_file CSV with a "simplified" sampling state (same as produced by current \code{\link{simplify_state}}
-#' @param metadata_file vector of metadata files to read in (optionally) and attach to model
+#' @param simplified_state_file CSV with a "simplified" sampling state (same as
+#'   produced by current \code{\link{simplify_state}}
+#' @param metadata_file vector of metadata files to read in (optionally) and
+#'   attach to model
 #'
 #' @return \code{\link{mallet_model}} object
 #'
@@ -1070,6 +1079,126 @@ load_mallet_model_legacy <- function (
     do.call(mallet_model, m)
 }
 
+#' Load model from MALLET state output
+#'
+#' If you have created a topic model using command-line mallet or another tool,
+#' this function loads that model into \code{\link{mallet_model}} form suitable
+#' for use in this package. It uses the gzipped text file representing the Gibbs
+#' sampling state. This state can be used to derive document-topic and
+#' topic-word matrices. The model vocabulary and document ID list are obtained
+#' from the MALLET instances file.
+#'
+#' @param mallet_state_file name of gzipped state file
+#' @param simplified_state_file name of file to save "simplified" representation
+#'   of the state to. If NULL, a temporary file will be used
+#' @param instances_file location of MALLET instances file used to create the
+#'   model. If NULL, this will be skipped, but the resulting model object will
+#'   have missing vocabulary and document ID's.
+#' @param keep_sampling_state If TRUE (default), the returned object will hold a
+#'   reference to the sampling state \code{big.matrix} as well.
+#' @param metadata_file metadata file (CSV or TSV; optional here)
+#' @return a \code{\link{mallet_model}} object.
+#'
+#' @examples
+#' \dontrun{
+#' system("mallet train-topics --input instances.mallet \\
+#'     --output-state topic-state.gz")
+#' m <- load_from_mallet_state("topic-state.gz", "state.csv",
+#'     "instances.mallet")
+#' }
+#'
+#' @export
+#'
+load_from_mallet_state <- function (
+        mallet_state_file,
+        simplified_state_file=file.path(dirname(mallet_state_file),
+                                        "state.csv"),
+        instances_file=NULL,
+        keep_sampling_state=TRUE,
+        metadata_file=NULL) {
 
+    gzf <- gzfile(mallet_state_file)
+    pp <- readLines(gzf, n=3)
+    on.exit(close(gzf))
+    a <- stringr::str_match(pp[2], "^#alpha : ([0-9. ]+)$")
+    b <- stringr::str_match(pp[3], "^#beta : ([0-9. ]+)$")
+    if (is.na(a) || is.na(b)) {
+        stop(
+"hyperparameter notation missing. Is this really a file produced by
+mallet train-topics --output-state?"
+        )
+    }
+
+    hyper <- list(
+        alpha=as.numeric(
+            stringr::str_split(stringr::str_trim(a[1, 2]), " ")[[1]]
+        ),
+        beta=as.numeric(b[1, 2])
+    )
+
+    ss_temp <- F
+    if (is.null(simplified_state_file)) {
+        simplified_state_file <- tempfile()
+        ss_temp <- T
+    }
+
+    simplify_state(mallet_state_file, simplified_state_file)
+
+    if (!requireNamespace("bigtabulate", quietly=TRUE)) {
+        stop(
+"bigtabulate package required for model loading from sampling state.
+Otherwise, the dplyr manipulation in memory is up to you."
+        )
+    }
+
+    ss <- read_sampling_state(simplified_state_file)
+
+    K <- length(hyper$alpha)
+    docs <- bigtabulate::bigsplit(ss, c("doc", "topic"))
+    dtl <- vapply(docs, function (i) sum(ss[i, "count"]), integer(1))
+    doc_topics <- matrix(dtl, ncol=K)
+
+    words <- bigtabulate::bigsplit(ss, c("topic", "type"),
+                                   splitret="sparselist")
+    twl <- vapply(words, function (i) sum(ss[i, "count"]), integer(1))
+    twl_ij <- stringr::str_split_fixed(names(twl), ":", 2)
+    topic_words <- Matrix::sparseMatrix(
+        i=as.integer(twl_ij[ , 1]),
+        j=as.integer(twl_ij[ , 2]),
+        x=twl)
+
+    doc_ids <- NULL
+    vocab <- NULL
+    il <- NULL
+    if (!is.null(instances_file)) {
+        il <- read_instances(instances_file)
+        doc_ids <- instances_ids(il)
+        vocab <- instances_vocabulary(il)
+    }
+
+    if (ss_temp) {
+        unlink(simplified_state_file)
+    }
+
+    if (!keep_sampling_state) {
+        ss <- NULL
+    }
+
+    meta <- NULL
+    if (!is.null(metadata_file)) {
+        meta=read_dfr_metadata(metadata_file)
+    }
+
+    mallet_model(
+        doc_topics=doc_topics,
+        topic_words=topic_words,
+        hyper=hyper,
+        ss=ss,
+        doc_ids=doc_ids,
+        vocab=vocab,
+        instances=il,
+        metadata=meta
+    )
+}
 
 
