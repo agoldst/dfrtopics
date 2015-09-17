@@ -2,9 +2,21 @@ context("Document metadata")
 
 test_that("metadata functions work as expected on old-style CSV", {
 
-    meta_f <- file.path(path.package("dfrtopics"), "test-data",
-                        "old-style", "citations.CSV")
-    expect_that(file.exists(meta_f), is_true())
+    # mock up old-style file (excerpt from a real one)
+
+    meta_f <- tempfile(fileext=".CSV")
+
+    writeLines(
+"id,doi,title,author,journaltitle,volume,issue,pubdate,pagerange,publisher,type,reviewed-work
+10.2307/2872880,10.2307/2872880	,Sterne's Novels: Gathering Up the Fragments	,Elizabeth W. Harries	,ELH	,49	,1	,1982-04-01T00:00:00Z	,pp. 35-49	,The Johns Hopkins University Press	,fla	,	,
+10.2307/461754,10.2307/461754	,Volume Information	,	,PMLA	,95	,5	,1980-10-01T00:00:00Z	,	,Modern Language Association	,mis	,	,
+10.2307/2872960,10.2307/2872960	,The Courtship of the Family: Clarissa and the Harlowes Once More	,John Allen Stevenson	,ELH	,48	,4	,1981-12-01T00:00:00Z	,pp. 757-777	,The Johns Hopkins University Press	,fla	,	,
+10.2307/461755,10.2307/461755	,Front Matter	,	,PMLA	,95	,5	,1980-10-01T00:00:00Z	,pp. 781-915	,Modern Language Association	,mis	,	,
+10.2307/462201,10.2307/462201	,The Tolstoy Connection in Bakhtin	,Caryl Emerson	,PMLA	,100	,1	,1985-01-01T00:00:00Z	,pp. 68-80	,Modern Language Association	,fla	,	,
+",
+        meta_f
+    )
+
     meta <- read_dfr_metadata(meta_f)
     meta_lines <- readLines(meta_f)
     meta_lines <- meta_lines[meta_lines != ""]
