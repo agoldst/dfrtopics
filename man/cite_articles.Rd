@@ -19,15 +19,15 @@ Given a metadata frame, return a character vector of citations.
 \details{
 The generated citations are meant for quick reference, not formal use. They
 do not handle quotations within quotations correctly and make no effort to
-scrub the cruft found in some journals' metadata on JSTOR. Authors are simply
-concatenated into a long "A and B and C" list.
+scrub the cruft found in some journals' metadata on JSTOR.  Author fields,
+whether designating one author or multiple, are left as is.
 }
 \examples{
 md <- dplyr::data_frame(
     id="10.2307/432680",
     doi="10.2307/432680",
     title='Sidney\\'s "Arcadia" and "The Tryall of Chevalry"',
-    author=list('C. R. Baskervill'),
+    author='C. R. Baskervill',
     journaltitle="Modern Philology",
     volume=10,
     issue=2,

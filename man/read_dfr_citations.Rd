@@ -28,17 +28,22 @@ This function assumes that each file has a trailing delimeter at the end of
 every line. DfR has changed their output data format before, so check results
 carefully.
 
-We do some minimal post-processing of the data. White space is trimmed by
-default. Publication dates in the \code{pubdate} column are converted to
-\code{Date} objects (but beware the false precision of these dates; see
-\code{\link{pubdate_Date}}. The \code{author} column may contain multiple
-names, so this is split into a list column. The \code{type} column is
-converted to a factor.
+We do some minimal post-processing of the data. White space is
+trimmed by default. Publication dates in the \code{pubdate} column
+are converted to \code{Date} objects (but beware the false precision
+of these dates; see \code{\link{pubdate_Date}}. The \code{type}
+column is converted to a factor.
 
 Notes about other fields: the \code{doi} column is, in my experience, always
 identical to the \code{id} field, but it is kept here just in case. The
 \code{title} and \code{abstract} fields may contain markup (HTML or even
 LaTeX). Most DfR documents lack abstracts in the metadata.
+
+The \code{author} column may contain multiple names, but must be
+inspected carefully before processing. The separator among names
+may be either a tab or \code{", "}. A single name may contain the
+separator character without disambiguation (\code{"Rudolf Tombo,
+Jr."}).
 
 Extra parameters to this function are passed on to \code{read.csv} or
 \code{read.table}.

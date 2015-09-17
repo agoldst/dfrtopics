@@ -170,10 +170,6 @@ Set overwrite=TRUE to overwrite existing files."
     drops <- match(c("publisher", "reviewed.work", "doi"),
                    names(md_frame))
     md_frame <- md_frame[ , -drops]
-    md_frame$author <- vapply(md_frame$author,
-                              stringr::str_c,
-                              character(1),
-                              collapse="\t")
 
     write_zip(function (f) {
         write.table(md_frame,f,

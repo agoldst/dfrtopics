@@ -34,17 +34,22 @@ read_dfr_metadata <- function (filenames) {
 #' every line. DfR has changed their output data format before, so check results
 #' carefully.
 #' 
-#' We do some minimal post-processing of the data. White space is trimmed by
-#' default. Publication dates in the \code{pubdate} column are converted to
-#' \code{Date} objects (but beware the false precision of these dates; see
-#' \code{\link{pubdate_Date}}. The \code{author} column may contain multiple
-#' names, so this is split into a list column. The \code{type} column is
-#' converted to a factor.
+#' We do some minimal post-processing of the data. White space is
+#' trimmed by default. Publication dates in the \code{pubdate} column
+#' are converted to \code{Date} objects (but beware the false precision
+#' of these dates; see \code{\link{pubdate_Date}}. The \code{type}
+#' column is converted to a factor.
 #' 
 #' Notes about other fields: the \code{doi} column is, in my experience, always
 #' identical to the \code{id} field, but it is kept here just in case. The
 #' \code{title} and \code{abstract} fields may contain markup (HTML or even
 #' LaTeX). Most DfR documents lack abstracts in the metadata.
+#'
+#' The \code{author} column may contain multiple names, but must be
+#' inspected carefully before processing. The separator among names
+#' may be either a tab or \code{", "}. A single name may contain the
+#' separator character without disambiguation (\code{"Rudolf Tombo,
+#' Jr."}).
 #' 
 #' Extra parameters to this function are passed on to \code{read.csv} or
 #' \code{read.table}.
@@ -73,7 +78,6 @@ read_dfr_citations <- function (filename, strip.white=T, ...) {
                              col.names=cols, quote="", as.is=T,
                              comment="", strip.white=strip.white, ...)
         result <- result[ , -length(cols)]
-        author_sep <- ", "
     } else {
         # assume old (2013) metadata format: CSV
 
@@ -85,12 +89,10 @@ read_dfr_citations <- function (filename, strip.white=T, ...) {
                            quote="", as.is=T, comment="",
                            strip.white=strip.white, ...)
         result <- result[ , -length(cols)]
-        author_sep <- "\t"
     }
 
     result <- dplyr::tbl_df(result)
     result$pubdate <- pubdate_Date(result$pubdate)
-    result$author <- stringr::str_split(result$author, author_sep)
     result$type <- factor(result$type)
     result
 }
@@ -186,9 +188,9 @@ dfr_id_url <- function(id, jstor_direct=T) {
 #' 
 #' The generated citations are meant for quick reference, not formal use. They 
 #' do not handle quotations within quotations correctly and make no effort to 
-#' scrub the cruft found in some journals' metadata on JSTOR. Authors are simply
-#' concatenated into a long "A and B and C" list.
-#' 
+#' scrub the cruft found in some journals' metadata on JSTOR.  Author fields,
+#' whether designating one author or multiple, are left as is.
+#'
 #' @param metadata data frame (from e.g. \code{\link{read_dfr_metadata}}). Often
 #'   you will want to row-subscript the metadata.
 #' @return a character vector of citations
@@ -199,7 +201,7 @@ dfr_id_url <- function(id, jstor_direct=T) {
 #'     id="10.2307/432680",
 #'     doi="10.2307/432680",
 #'     title='Sidney\'s "Arcadia" and "The Tryall of Chevalry"',
-#'     author=list('C. R. Baskervill'),
+#'     author='C. R. Baskervill',
 #'     journaltitle="Modern Philology",
 #'     volume=10,
 #'     issue=2,
@@ -219,20 +221,11 @@ dfr_id_url <- function(id, jstor_direct=T) {
 #' @export
 #' 
 cite_articles <- function (metadata)  {
-    authors <- vapply(metadata$author,
-        function (a) {
-            if (a == "") {
-                "[Anonymous]"
-            } else {
-                stringr::str_c(a, collapse=" and ")
-            }
-        },
-        character(1))
 
     dates <- strftime(metadata$pubdate, "%B %Y")
     pp <- gsub("^p?p\\. ", "", metadata$pagerange)
     result <- paste0(
-        authors, ', "', metadata$title, '," *',
+        metadata$author, ', "', metadata$title, '," *',
         metadata$journaltitle, '* ', metadata$volume, ", no. ",
         metadata$issue, " (", dates, "): ", pp, ".")
 
