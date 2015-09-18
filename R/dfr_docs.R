@@ -55,6 +55,8 @@ read_wordcounts_base <- function (files, filename_id) {
 
 read_wordcounts_readr <- function (files, filename_id) {
     result <- vector("list", length(files))
+    p <- dplyr::progress_estimated(length(files))
+    ids <- filename_id(files)
     for (i in seq_along(files)) {
         frm <- readr::read_csv(files[i],
             col_names=TRUE, col_types="ci", progress=FALSE)
@@ -63,15 +65,15 @@ read_wordcounts_readr <- function (files, filename_id) {
         if (is.na(frm[1, 1])) {
             result[[i]] <- NULL
         } else {
-            result[[i]] <- data.frame(
-                id=filename_id(files[i]),
-                word=frm[[1]],
-                weight=frm[[2]],
-                stringsAsFactors=F
-            )
+            result[[i]] <- dplyr::data_frame_(list(
+                id=~ ids[i],
+                word=~ frm[[1]],
+                weight=~ frm[[2]]
+            ))
         }
+        p$tick()
     }
-    result <- dplyr::bind_rows(result)
+    dplyr::bind_rows(result)
 }
 
 #' Calculate document lengths
