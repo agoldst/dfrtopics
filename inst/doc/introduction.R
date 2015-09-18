@@ -12,6 +12,8 @@ library("stringr")
 ## ------------------------------------------------------------------------
 data_dir <- file.path(path.package("dfrtopics"), "test-data",
                       "pmla-modphil1905-1915")
+
+## ------------------------------------------------------------------------
 metadata_file <- file.path(data_dir, "citations.tsv")
 meta <- read_dfr_metadata(metadata_file)
 
