@@ -4,8 +4,9 @@
 #' 
 #' Reads in a bunch of \code{wordcounts*.CSV} files and stacks them up in a 
 #' single long-format dataframe. These counts can be optionally manipulated,
-#' then passed on to \code{\link{wordcounts_texts}} then
-#' \code{\link{make_instances}}.
+#' then passed on to \code{\link{wordcounts_texts}} and thence to
+#' \code{\link{make_instances}}. If the \pkg{readr} package is available,
+#' it will be used to speed up file loading.
 #' 
 #' Empty documents are skipped; DfR supplies wordcounts files for documents that
 #' have no wordcount data. These will be in DfR's metadata but not in the output
@@ -30,7 +31,7 @@
 #' @export
 #' 
 read_wordcounts <- function (files, filename_id=dfr_filename_id) {
-    if (requireNamespace("readr", quietly=T)) {
+    if (requireNamespace("readr", quietly=TRUE)) {
         read_wordcounts_readr(files, filename_id)
     } else {
         read_wordcounts_base(files, filename_id)
