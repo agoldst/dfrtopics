@@ -29,7 +29,8 @@ test_that("row_dists works right", {
     x <- matrix(1:16, ncol=4)
     euc <- function (x, y) sqrt(sum((x - y)^2))
     expect_equal(row_dists(x, euc),
-                 as.matrix(dist(x)))
+                 as.matrix(dist(x)),
+                 check.attributes=FALSE)
 })
 
 # TODO test topic_divergences and topic_scaled_2d 
