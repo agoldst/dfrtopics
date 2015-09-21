@@ -119,7 +119,7 @@ top_words(m, n=10) %>%
     plot_top_words(topic=3)
 
 ## ----fig.height=14, fig.width=14, out.width="600px", out.height="600px"----
-topic_scaled_2d(m) %>%
+topic_scaled_2d(m, n_words=2000) %>%
     plot_topic_scaled(labels=topic_labels(m, n=3))
 
 ## ----fig.height=8--------------------------------------------------------

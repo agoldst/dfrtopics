@@ -311,14 +311,14 @@ top_words(m, n=10) %>%
     plot_top_words(topic=3)
 ```
 
-To place the topics in a two-dimensional space:^[N.B. this requires the full topic-word matrix be loaded.]
+To place the topics in a two-dimensional space:^[This requires the full topic-word matrix be loaded, though you can speed up the calculation by changing the value of the `n_words` parameter.]
 
 ```{r fig.height=14, fig.width=14, out.width="600px", out.height="600px"}
-topic_scaled_2d(m) %>%
+topic_scaled_2d(m, n_words=2000) %>%
     plot_topic_scaled(labels=topic_labels(m, n=3))
 ```
 
-Rather pleasingly, the horizontal axis of this plot appears to be interpretable: it runs from more purely "philological" to more "literary-historical" topics.
+Rather pleasingly, some of the spatial organization of this plot appears to be interpretable: purely "philological" topics are mostly closer together, and mutually more distant from more "literary-historical" topics.
 
 The time series mentioned above (if our time metadata is meaningful) can be visualized in a faceted plot:
 
