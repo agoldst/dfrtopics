@@ -10,8 +10,8 @@ JS_divergence(P, Q)
 \item{P,Q}{vectors representing the distributions. Must be of same length.}
 }
 \value{
-\deqn{\sum_j \frac{1}{2}P(j)\textrm{log}\left(\frac{2P(j)}{P(j) +
-Q(j)}\right) + \frac{1}{2}Q(j)\textrm{log}\left(\frac{2P(j)}{P(j) +
+\deqn{\sum_j \frac{1}{2}P(j) log\left(\frac{2P(j)}{P(j) +
+Q(j)}\right) + \frac{1}{2}Q(j) log\left(\frac{2P(j)}{P(j) +
 Q(j)}\right)}
 }
 \description{

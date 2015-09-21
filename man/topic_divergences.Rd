@@ -5,12 +5,20 @@
 \alias{topic_divergences}
 \title{Topic distance functions}
 \usage{
-topic_divergences(m)
+topic_divergences(m, n_words = 1000)
 
 doc_topic_cor(m)
 }
 \arguments{
 \item{m}{\code{mallet_model} model object}
+
+\item{n_words}{Number of columns of the topic-word matrix to use
+  in calculation. The words with the top \code{n_words} \emph{total}
+  weight in the corpus are used. Set to \code{Inf} or to
+  \code{ncol(topic_words(m))} to use all the words, but be warned
+  that R rapidly approaches its limits with large vocabularies.
+  Ordinarily, for a vocabulary of tens of thousands of features,
+  \code{n_words=1000} will be a fine approximation.}
 }
 \value{
 For \code{doc_topic_cor}, a matrix of correlations between the series

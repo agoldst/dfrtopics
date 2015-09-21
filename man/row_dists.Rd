@@ -15,12 +15,17 @@ row_dists(x, g = JS_divergence)
 matrix of distances between rows
 }
 \description{
-In topic modeling, we generally deal with matrices whose rows represent
-probability distributions. To find the distance between such distributions,
-we normally do not use the Euclidean distance or the other options supplied
-by \code{\link[stats]{dist}}. This is a utility function for taking a matrix
-with \eqn{K} rows and producing the matrix of distances between those rows,
-given an arbitrary metric. It is not fast.
+In topic modeling, we generally deal with matrices whose rows
+represent probability distributions. To find the distance between
+such distributions, we normally do not use the Euclidean distance or
+the other options supplied by \code{\link[stats]{dist}}. This is a
+utility function for taking a matrix with \eqn{K} rows and producing
+the matrix of distances between those rows, given an arbitrary
+metric. It is not fast. On matrices with very many columns, R may
+thrash endlessly; it is recommended that you drop most columns before
+calculating distances with this (usually keeping only, say, the
+thousand columns with the largest total weight does not affect the
+results unduly).
 }
 \details{
 The \pkg{flexmix} package supplies a K-L divergence function \code{KLdiv},
@@ -28,6 +33,6 @@ but I have not found an implementation of the symmetrized Jensen-Shannon
 divergence, so I have supplied one in \code{\link{JS_divergence}}.
 }
 \seealso{
-\code{\link{JS_divergence}}, \code{\link{doc_topic_cor}},
+\code{\link{topic_divergences}}, \code{\link{JS_divergence}}, \code{\link{doc_topic_cor}},
 }
 

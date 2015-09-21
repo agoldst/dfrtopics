@@ -22,12 +22,17 @@ JS_divergence <- function(P, Q) {
 
 #' Measure matrix row distances
 #'
-#' In topic modeling, we generally deal with matrices whose rows represent
-#' probability distributions. To find the distance between such distributions,
-#' we normally do not use the Euclidean distance or the other options supplied
-#' by \code{\link[stats]{dist}}. This is a utility function for taking a matrix
-#' with \eqn{K} rows and producing the matrix of distances between those rows,
-#' given an arbitrary metric. It is not fast.
+#' In topic modeling, we generally deal with matrices whose rows
+#' represent probability distributions. To find the distance between
+#' such distributions, we normally do not use the Euclidean distance or
+#' the other options supplied by \code{\link[stats]{dist}}. This is a
+#' utility function for taking a matrix with \eqn{K} rows and producing
+#' the matrix of distances between those rows, given an arbitrary
+#' metric. It is not fast. On matrices with very many columns, R may
+#' thrash endlessly; it is recommended that you drop most columns before
+#' calculating distances with this (usually keeping only, say, the
+#' thousand columns with the largest total weight does not affect the
+#' results unduly).
 #'
 #' The \pkg{flexmix} package supplies a K-L divergence function \code{KLdiv},
 #' but I have not found an implementation of the symmetrized Jensen-Shannon
@@ -38,7 +43,7 @@ JS_divergence <- function(P, Q) {
 #'
 #' @return matrix of distances between rows
 #'
-#' @seealso \code{\link{JS_divergence}}, \code{\link{doc_topic_cor}},
+#' @seealso \code{\link{topic_divergences}}, \code{\link{JS_divergence}}, \code{\link{doc_topic_cor}},
 #'
 #' @export
 #'
@@ -72,6 +77,13 @@ row_dists <- function (x, g=JS_divergence) {
 #' Two methods for extracting a matrix of topic-topic distances.
 #'
 #' @param m \code{mallet_model} model object
+#' @param n_words Number of columns of the topic-word matrix to use
+#'   in calculation. The words with the top \code{n_words} \emph{total}
+#'   weight in the corpus are used. Set to \code{Inf} or to
+#'   \code{ncol(topic_words(m))} to use all the words, but be warned
+#'   that R rapidly approaches its limits with large vocabularies.
+#'   Ordinarily, for a vocabulary of tens of thousands of features,
+#'   \code{n_words=1000} will be a fine approximation.
 #'
 #' @return For \code{doc_topic_cor}, a matrix of correlations between the series
 #'   of log-document proportions; for \code{topic_divergences}, a matrix of J-S
@@ -80,12 +92,22 @@ row_dists <- function (x, g=JS_divergence) {
 #' @seealso \code{\link{row_dists}}, \code{\link{topic_scaled_2d}}
 #'
 #' @export
-topic_divergences <- function (m) {
+topic_divergences <- function (m, n_words=1000) {
     if (is.null(topic_words(m))) {
         stop("The topic-word matrix must be loaded first. Use load_topic_words.")
     }
-    tw <- tw_smooth_normalize(m)(topic_words(m))
-    row_dists(tw)
+
+    tw <- topic_words(m)
+    tw_normed <- tw_smooth_normalize(m)(tw)
+
+    V <- ncol(tw)
+    n_words <- min(n_words, V)
+    if (n_words < V) {
+        w <- order(Matrix::colSums(tw), decreasing=TRUE)[seq(n_words)]
+        tw_normed <- tw_normed[ , w]
+    }
+
+    row_dists(tw_normed)
 }
 
 #' @export
@@ -106,6 +128,9 @@ doc_topic_cor <- function (m) {
 #'
 #' @param m \code{mallet_model} model object
 #'
+#' @param n_words Number of columns of the topic-word matrix to use
+#'   in calculation. Passed on to \code{link{topic_divergences}}.
+#'
 #' @return a matrix with 2 columns and as many rows as \code{m}.
 #'
 #' @seealso \code{\link{row_dists}}, \code{\link{topic_divergences}}
@@ -116,8 +141,8 @@ doc_topic_cor <- function (m) {
 #'
 #' @export
 #'
-topic_scaled_2d <- function (m) {
-    d <- topic_divergences(m)
+topic_scaled_2d <- function (m, n_words=1000) {
+    d <- topic_divergences(m, n_words)
     cmdscale(d, k=2)
 }
 

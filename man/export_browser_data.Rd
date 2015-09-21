@@ -5,7 +5,7 @@
 \title{Output data files for dfr-browser}
 \usage{
 export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
-  download_dfb = FALSE, overwrite = FALSE)
+  n_scaled_words = 1000, download_dfb = FALSE, overwrite = FALSE)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or
@@ -18,6 +18,9 @@ exported data files will go in a \code{"data"} directory under
 \item{zipped}{should the larger data files be zipped?}
 
 \item{n_top_words}{how many top words per topic to save?}
+
+\item{n_scaled_words}{how many word types to use in scaled coordinates
+calculation?}
 
 \item{download_dfb}{if TRUE (FALSE is default), all the files needed to run
 the browser and the exported data placed appropriately. From a shell in

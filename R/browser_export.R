@@ -49,6 +49,8 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=FALSE,
 #'   \code{out_dir}.
 #' @param zipped should the larger data files be zipped?
 #' @param n_top_words how many top words per topic to save?
+#' @param n_scaled_words how many word types to use in scaled coordinates
+#'   calculation?
 #' @param download_dfb if TRUE (FALSE is default), all the files needed to run
 #'   the browser and the exported data placed appropriately. From a shell in
 #'   \code{out_dir}, run \code{bin/server} to launch a local web server.
@@ -68,6 +70,7 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=FALSE,
 #' @export
 export_browser_data <- function (m, out_dir, zipped=TRUE,
                                  n_top_words=50,
+                                 n_scaled_words=1000,
                                  download_dfb=FALSE,
                                  overwrite=FALSE) {
     if (!requireNamespace("jsonlite", quietly=TRUE)) {
@@ -187,7 +190,7 @@ Set overwrite=TRUE to overwrite existing files."
         if (!overwrite) {
             stopifnot(!file.exists(scaled_file))
         }
-        write.table(topic_scaled_2d(m), scaled_file,
+        write.table(topic_scaled_2d(m, n_scaled_words), scaled_file,
                     quote=F, sep=",", row.names=F, col.names=F)
     } else {
         warning(

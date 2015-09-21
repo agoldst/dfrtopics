@@ -4,10 +4,13 @@
 \alias{topic_scaled_2d}
 \title{Scaled topic coordinates in 2D space}
 \usage{
-topic_scaled_2d(m)
+topic_scaled_2d(m, n_words = 1000)
 }
 \arguments{
 \item{m}{\code{mallet_model} model object}
+
+\item{n_words}{Number of columns of the topic-word matrix to use
+  in calculation. Passed on to \code{link{topic_divergences}}.}
 }
 \value{
 a matrix with 2 columns and as many rows as \code{m}.
