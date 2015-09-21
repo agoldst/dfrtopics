@@ -7,8 +7,8 @@
 #'
 #' @param P,Q vectors representing the distributions. Must be of same length.
 #'
-#' @return \deqn{\sum_j \frac{1}{2}P(j)\textrm{log}\left(\frac{2P(j)}{P(j) +
-#' Q(j)}\right) + \frac{1}{2}Q(j)\textrm{log}\left(\frac{2P(j)}{P(j) +
+#' @return \deqn{\sum_j \frac{1}{2}P(j) log\left(\frac{2P(j)}{P(j) +
+#' Q(j)}\right) + \frac{1}{2}Q(j) log\left(\frac{2P(j)}{P(j) +
 #' Q(j)}\right)}
 #'
 #' @seealso \code{\link{topic_divergences}}
@@ -17,8 +17,7 @@
 #'
 JS_divergence <- function(P, Q) {
     PQ_mean = (P + Q) / 2
-    sum((1/2) * (P * log(P / PQ_mean) + Q * log(Q / PQ_mean)))
-
+    sum((P * log(P / PQ_mean) + Q * log(Q / PQ_mean)) / 2)
 }
 
 #' Measure matrix row distances
@@ -47,13 +46,21 @@ row_dists <- function (x, g=JS_divergence) {
     # FIXME failure to vectorize. Ugh. Needs Rcpp
 
     n <- nrow(x)
-    result <- matrix(0, nrow=n, ncol=n)
 
-    for (i in seq(n)) {
-        for (j in i:n) {
-            result[i, j] <- g(x[i, ], x[j, ])
+    gs <- numeric(choose(n, 2))
+    tx <- t(x)  # column-subscripting is a little faster
+
+    k <- 0L
+    for (j in seq.int(2L, n)) {
+        r <- tx[ , j]        # store "row"
+
+        for (i in seq.int(1L, j - 1L)) {
+            gs[[k + i]] <- g(tx[ , i], r)
         }
+        k <- k + j - 1L
     }
+    result <- matrix(0, nrow=n, ncol=n)
+    result[upper.tri(result)] <- gs
 
     # at least take advantage of the symmetry
     result[lower.tri(result)] <- t(result)[lower.tri(result)]
