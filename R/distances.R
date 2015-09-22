@@ -1,31 +1,5 @@
 # Some functions for comparing topics by finding distances between them.
 
-#' Jensen-Shannon divergence between two vectors
-#'
-#' This function computes the Jensen-Shannon divergence between two vectors,
-#' understood as distributions over the index.
-#'
-#' @param P,Q vectors representing the distributions. Must be of same length.
-#'
-#' @return \deqn{\sum_j \frac{1}{2}P(j) log\left(\frac{2P(j)}{P(j) +
-#' Q(j)}\right) + \frac{1}{2}Q(j) log\left(\frac{2P(j)}{P(j) +
-#' Q(j)}\right)}
-#'
-#' @seealso \code{\link{topic_divergences}}
-#'
-#' @export
-#'
-JS_divergence <- function (P, Q) {
-    Pz <- P == 0
-    Qz <- Q == 0
-    PQ_mean = (P + Q) / 2
-    P <- P[!Pz]
-    Q <- Q[!Qz]
-    (   sum(P * log(P / PQ_mean[!Pz])) +
-        sum(Q * log(Q / PQ_mean[!Qz]))
-    ) / 2
-}
-
 #' Measure matrix row distances
 #'
 #' In topic modeling, we generally deal with matrices whose rows

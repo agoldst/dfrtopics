@@ -4,16 +4,17 @@ Description: This package provides tools for exploring topic models created by M
 Version: 0.2
 Author: Andrew Goldstone <andrew.goldstone@gmail.com>
 Maintainer: Andrew Goldstone <andrew.goldstone@gmail.com>
-Depends:
+Depends: 
     mallet,
     rJava
-Imports:
+Imports: 
     Matrix,
     stringr,
     dplyr,
     lazyeval,
-    magrittr
-Suggests:
+    magrittr,
+    Rcpp
+Suggests: 
     ggplot2,
     scales,
     testthat,
@@ -29,3 +30,4 @@ SystemRequirements: python
 License: MIT | file LICENSE
 LazyData: true
 VignetteBuilder: knitr
+LinkingTo: Rcpp

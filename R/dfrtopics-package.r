@@ -33,6 +33,8 @@
 #' 
 #' @name dfrtopics
 #' @import Matrix
+#' @useDynLib dfrtopics
+#' @importFrom Rcpp sourceCpp
 #' @docType package
 #'   
 NULL
