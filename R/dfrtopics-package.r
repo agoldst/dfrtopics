@@ -95,3 +95,8 @@ flaw in R and rJava.'
         )
     }
 }
+
+# Package unload
+.onUnload <- function (libpath) {
+    library.dynam.unload("dfrtopics", libpath)
+}
