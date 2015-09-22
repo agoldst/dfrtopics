@@ -62,31 +62,31 @@ read_dfr_metadata <- function (filenames) {
 #' @seealso \code{\link{read_dfr_metadata}}, \code{\link{pubdate_Date}}
 #' @export
 #' 
-read_dfr_citations <- function (filename, strip.white=T, ...) {
-    if (grepl("\\.tsv", filename, ignore.case=T)) {
+read_dfr_citations <- function (filename, strip.white=TRUE, ...) {
+    if (grepl("\\.tsv", filename, ignore.case=TRUE)) {
         # new (2014) metadata format: TSV
 
         # nefarious trailing comma now a nefarious trailing tab
-        cols <- scan(filename, nlines=1, what=character(), sep="\t", quiet=T)
+        cols <- scan(filename, nlines=1, what=character(), sep="\t", quiet=TRUE)
         if (length(cols) != 13) {
             warning("Expected 13 tab-delimited columns but found ",
                     length(cols), "\nResults may not be valid")
         }
         cols <- c(cols, "unused")
 
-        result <- read.table(filename, header=F, skip=1, sep="\t",
-                             col.names=cols, quote="", as.is=T,
+        result <- read.table(filename, header=FALSE, skip=1, sep="\t",
+                             col.names=cols, quote="", as.is=TRUE,
                              comment="", strip.white=strip.white, ...)
         result <- result[ , -length(cols)]
     } else {
         # assume old (2013) metadata format: CSV
 
         # the nefarious trailing comma
-        cols <- scan(filename, nlines=1, what=character(), sep=",", quiet=T)
+        cols <- scan(filename, nlines=1, what=character(), sep=",", quiet=TRUE)
         cols <- c(cols, "unused")
 
-        result <- read.csv(filename, skip=1, header=F, col.names=cols,
-                           quote="", as.is=T, comment="",
+        result <- read.csv(filename, skip=1, header=FALSE, col.names=cols,
+                           quote="", as.is=TRUE, comment="",
                            strip.white=strip.white, ...)
         result <- result[ , -length(cols)]
     }
@@ -174,7 +174,7 @@ pubdate_Date <- function (pubdate) {
 #'   figure).
 #' @export
 #' 
-dfr_id_url <- function(id, jstor_direct=T) {
+dfr_id_url <- function(id, jstor_direct=TRUE) {
     if (jstor_direct) {
         paste("http://www.jstor.org", "/stable/", id, sep="")
     } else {

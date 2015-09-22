@@ -107,7 +107,7 @@ read_instances <- function (filename) {
 #'
 #' @export
 #'
-instances_Matrix <- function (instances, verbose=F) {
+instances_Matrix <- function (instances, verbose=FALSE) {
     if(verbose) {
         log <- message
     }
@@ -122,7 +122,7 @@ instances_Matrix <- function (instances, verbose=F) {
     }
     nwords <- instances$getAlphabet()$size()
 
-    instances <- .jevalArray(instances$toArray(), simplify=T)
+    instances <- .jevalArray(instances$toArray(), simplify=TRUE)
 
     log("Compiling tdm")
 
@@ -309,7 +309,7 @@ instance_text <- function (instance,
 #'
 #' @export
 #'
-instances_vocabulary <- function (instances, newlines_significant=F) {
+instances_vocabulary <- function (instances, newlines_significant=FALSE) {
 
     if (newlines_significant) {
         # .jevalArray is slow on even a moderate vocabulary.

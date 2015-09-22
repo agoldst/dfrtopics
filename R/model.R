@@ -46,7 +46,7 @@ model_dfr_documents <- function(
         stoplist_file=file.path(path.package("dfrtopics"),
                                 "stoplist", "stoplist.txt"),
         ...)  {
-    result <- read_wordcounts(list.files(wordcounts_dirs, full.names=T))
+    result <- read_wordcounts(list.files(wordcounts_dirs, full.names=TRUE)
     result <- wordcounts_texts(result)
     result <- make_instances(result, stoplist_file)
     train_model(result, n_topics,
@@ -108,10 +108,10 @@ model_dfr_documents <- function(
 #'
 write_mallet_model <- function(m, output_dir=".",
                           n_top_words=50,
-                          save_instances=F,
-                          save_scaled=F,
-                          save_state=T,
-                          simplify_state=T) {
+                          save_instances=FALSE,
+                          save_scaled=FALSE,
+                          save_state=TRUE,
+                          simplify_state=TRUE) {
     if(!file.exists(output_dir)) {
         message("Creating output directory ",output_dir)
         dir.create(output_dir)
@@ -134,12 +134,12 @@ write_mallet_model <- function(m, output_dir=".",
 
     keys_f <- file.path(output_dir, "top_words.csv")
     write.table(top_words(m, n_top_words), keys_f,
-                quote=F, sep=",", row.names=F, col.names=T)
+                quote=FALSE, sep=",", row.names=FALSE, col.names=TRUE)
     message("Wrote ", keys_f)
 
     dt_f <- file.path(output_dir,"doc_topics.csv")
     write.table(doc_topics(m), dt_f,
-                quote=F, sep=",", row.names=F, col.names=F)
+                quote=FALSE, sep=",", row.names=FALSE, col.names=FALSE)
     message("Wrote ", dt_f)
 
     if (save_state) {
@@ -179,7 +179,7 @@ write_mallet_model <- function(m, output_dir=".",
     if (save_scaled) {
         scaled_f <- file.path(output_dir,"topic_scaled.csv")
         write.table(topic_scaled_2d(m), scaled_f,
-                    quote=F, sep=",", row.names=F, col.names=F)
+                    quote=FALSE, sep=",", row.names=FALSE, col.names=FALSE)
         message("Wrote ", scaled_f)
     }
 }
@@ -232,10 +232,10 @@ train_model <- function(instances, n_topics,
                         alpha_sum=5, beta=0.01,
                         n_iters=200,
                         n_max_iters=10,
-                        optimize_hyperparameters=T,
+                        optimize_hyperparameters=TRUE,
                         n_hyper_iters=20,
                         n_burn_in=50,
-                        symmetric_alpha=F,
+                        symmetric_alpha=FALSE,
                         threads=4L,
                         seed=NULL,
                         metadata=NULL) {
@@ -284,7 +284,7 @@ train_model <- function(instances, n_topics,
             initial_beta=beta,
             final_ll=trainer$model$modelLogLikelihood()
         ),
-        doc_topics=mallet.doc.topics(trainer, smoothed=F, normalized=F),
+        doc_topics=mallet.doc.topics(trainer, smoothed=FALSE, normalized=FALSE),
         metadata=match_metadata(metadata, trainer$getDocumentNames())
     )
 
@@ -473,7 +473,7 @@ doc_topics <- function (m) UseMethod("doc_topics")
 doc_topics.mallet_model <- function (m) {
     dtm <- m$doc_topics
     if (is.null(dtm) && !is.null(m$model)) {
-        dtm <- mallet.doc.topics(m$model, smoothed=F, normalized=F)
+        dtm <- mallet.doc.topics(m$model, smoothed=FALSE, normalized=FALSE)
     }
     dtm
 }
@@ -612,7 +612,7 @@ topic_words <- function (m, ...) UseMethod("topic_words")
 topic_words.mallet_model <- function (m) {
     tw <- m$topic_words
     if (is.null(tw) && !is.null(m$model)) {
-        tw <- as(mallet.topic.words(m$model, smoothed=F, normalized=F),
+        tw <- as(mallet.topic.words(m$model, smoothed=FALSE, normalized=FALSE),
                  "sparseMatrix")
     }
 
@@ -940,7 +940,7 @@ load_mallet_model <- function(
         state_file=NULL) {
 
     if (!is.null(top_words_file)) {
-        top_w <- dplyr::tbl_df(read.csv(top_words_file, as.is=T))
+        top_w <- dplyr::tbl_df(read.csv(top_words_file, as.is=TRUE))
     } else {
         top_w <- NULL
     }
@@ -1007,8 +1007,8 @@ load_mallet_model <- function(
 #'   \code{\link{load_from_mallet_state}}
 #'
 #' @export
-load_mallet_model_directory <- function (f, load_topic_words=F,
-                                    load_sampling_state=F,
+load_mallet_model_directory <- function (f, load_topic_words=FALSE,
+                                    load_sampling_state=FALSE,
                                     metadata_file=NULL) {
     tw <- if (load_topic_words) file.path(f, "topic_words.csv") else NULL
     ss <- if (load_sampling_state) file.path(f, "state.csv") else NULL
@@ -1059,13 +1059,13 @@ load_mallet_model_legacy <- function (
 
     m <- list()
     if (!is.null(doc_topics_file)) {
-        dtf <- read.csv(doc_topics_file, header=T, as.is=T)
+        dtf <- read.csv(doc_topics_file, header=TRUE, as.is=TRUE)
         m$doc_ids <- dtf$id
         dtf$id <- NULL
         m$doc_topics <- as.matrix(dtf)
     }
     if (!is.null(keys_file)) {
-        wkf <- read.csv(keys_file, header=T, as.is=T)
+        wkf <- read.csv(keys_file, header=TRUE, as.is=TRUE)
         m$hyper <- list(alpha=unique(wkf$alpha))
         m$top_words <- wkf[ , c("topic", "word", "weight")]
     }

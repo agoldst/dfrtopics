@@ -75,7 +75,7 @@ top_docs.mallet_model <- function (m, n, weighting=dt_smooth_normalize(m)) {
     data.frame(topic=ij[ , 2],
                doc=ij[ , 1],
                weight=dtm[ij],
-               stringsAsFactors=F)
+               stringsAsFactors=FALSE)
 }
 
 #' Top-ranked topics for documents
@@ -115,7 +115,7 @@ docs_top_topics.mallet_model <- function (m, n,
     data.frame(doc=ij[ , 1],
                topic=ij[ , 2],
                weight=dtm[ij],
-               stringsAsFactors=F)
+               stringsAsFactors=FALSE)
 }
 
 #' Top-ranked topics for documents
@@ -148,5 +148,5 @@ words_top_topics <- function (m, n, weighting=tw_smooth_normalize(m)) {
     data.frame(word=vocabulary(m)[ij[ , 2]],
                topic=ij[ , 1],
                weight=tw[ij],
-               stringsAsFactors=F)
+               stringsAsFactors=FALSE)
 }

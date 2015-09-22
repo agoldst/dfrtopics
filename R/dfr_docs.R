@@ -39,7 +39,7 @@ read_wordcounts <- function (files, filename_id=dfr_filename_id) {
 }
 
 read_wordcounts_base <- function (files, filename_id) {
-    result <- data.frame(filename=files, stringsAsFactors=F)
+    result <- data.frame(filename=files, stringsAsFactors=FALSE)
     result <- group_by_(result, ~ filename)
     result <- dplyr::do_(result,
         ~ read.csv(.$filename,

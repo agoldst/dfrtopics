@@ -110,7 +110,8 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
         dfb_files <- list.files(file.path(tmp, "dfr-browser-master"))
 
         if (!overwrite) {
-            for (f in file.path(out_dir, list.files(dfb_files, recursive=T))) {
+            for (f in file.path(out_dir, list.files(dfb_files,
+                                                    recursive=TRUE))) {
                 if (file.exists(f)) {
                     stop(paste(f, "already exists.
 Set overwrite=TRUE to overwrite existing files."
@@ -160,7 +161,7 @@ Set overwrite=TRUE to overwrite existing files."
     }
 
 
-    dtm <- Matrix::Matrix(doc_topics(m), sparse=T)
+    dtm <- Matrix::Matrix(doc_topics(m), sparse=TRUE)
         # could compress much more aggressively considering that weights are
         # integers, so could be stored as binary data rather than ASCII
 
@@ -176,8 +177,8 @@ Set overwrite=TRUE to overwrite existing files."
 
     write_zip(function (f) {
         write.table(md_frame,f,
-                    quote=T, sep=",",
-                    col.names=F, row.names=F,
+                    quote=TRUE, sep=",",
+                    col.names=FALSE, row.names=FALSE,
                     # d3.csv.* expects RFC 4180 compliance
                     qmethod="double")},
                 file.path(out_dir, "meta"),
@@ -191,7 +192,7 @@ Set overwrite=TRUE to overwrite existing files."
             stopifnot(!file.exists(scaled_file))
         }
         write.table(topic_scaled_2d(m, n_scaled_words), scaled_file,
-                    quote=F, sep=",", row.names=F, col.names=F)
+                    quote=FALSE, sep=",", row.names=FALSE, col.names=FALSE)
     } else {
         warning(
 "Topic-word matrix unavailable, so scaled coordinates have not been written."

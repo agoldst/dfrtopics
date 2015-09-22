@@ -63,7 +63,7 @@ write_diagnostics <- function(m, output_file="diagnostics.xml",
 #' @export
 #' 
 read_diagnostics <- function (xml_file) {
-    if (!requireNamespace("XML", quietly=T)) {
+    if (!requireNamespace("XML", quietly=TRUE)) {
         stop("The XML package is required to read MALLET diagnostics.")
     }
 
@@ -74,7 +74,7 @@ read_diagnostics <- function (xml_file) {
     topics <- apply(topic_attrs, 2, as.numeric)
     # add in a 1-indexed "topic" number
     topics <- data.frame(topic=topics[ , "id"] + 1, topics,
-                         stringsAsFactors=F)
+                         stringsAsFactors=FALSE)
 
     word_info <- function(node) {
         w <- XML::xmlValue(node)
@@ -94,7 +94,7 @@ read_diagnostics <- function (xml_file) {
     words <- data.frame(topic=w_topics,
                         word=w_words,
                         w_rest,
-                        stringsAsFactors=F)
+                        stringsAsFactors=FALSE)
 
 
     list(topics=topics, words=words)

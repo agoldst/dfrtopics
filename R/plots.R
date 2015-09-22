@@ -30,7 +30,7 @@ topic_report <- function (m,
                           topics=1:n_topics(m),
                           breaks="years",
                           w=1200, h=800) {
-    if (!requireNamespace("ggplot2", quietly=T)) {
+    if (!requireNamespace("ggplot2", quietly=TRUE)) {
         stop("Plotting functions require the ggplot2 package.")
     }
 
@@ -85,7 +85,7 @@ topic_report <- function (m,
 #' @export
 #'
 plot_top_words <- function (frm, topic, n=NULL) {
-    if (!requireNamespace("ggplot2", quietly=T)) {
+    if (!requireNamespace("ggplot2", quietly=TRUE)) {
         stop("Plotting functions require the ggplot2 package.")
     }
 
@@ -146,13 +146,13 @@ plot_top_words <- function (frm, topic, n=NULL) {
 #'
 plot_series <- function (series, group="topic", date="pubdate", weight="weight",
                          labels=unique(series[[group]])) {
-    if (!requireNamespace("ggplot2", quietly=T)) {
+    if (!requireNamespace("ggplot2", quietly=TRUE)) {
         stop("Plotting functions require the ggplot2 package.")
     }
 
     # ensure topics appear in order
     series[[group]] <- factor(series[[group]], levels=unique(series[[group]]),
-                              labels=labels, ordered=T)
+                              labels=labels, ordered=TRUE)
 
     # and dates are Dates
     series[[date]] <- as.Date(series[[date]])
@@ -164,7 +164,8 @@ plot_series <- function (series, group="topic", date="pubdate", weight="weight",
     result <- ggplot2::ggplot(series,
             ggplot2::aes_string(x=date, y=weight)) +
         ggplot2::geom_bar(stat="identity", fill="grey80", width=bar_width) +
-        ggplot2::geom_smooth(method="loess", fill="grey60", color="black", se=F)
+        ggplot2::geom_smooth(method="loess", fill="grey60", color="black",
+                             se=FALSE)
 
     if (length(unique(series[[group]])) > 1) {
         result <- result +
@@ -199,7 +200,7 @@ plot_series <- function (series, group="topic", date="pubdate", weight="weight",
 #' @export
 #'
 plot_topic_scaled <- function (coords, labels=1:nrow(coords)) {
-    if (!requireNamespace("ggplot2", quietly=T)) {
+    if (!requireNamespace("ggplot2", quietly=TRUE)) {
         stop("Plotting functions require the ggplot2 package.")
     }
 
