@@ -15,9 +15,15 @@
 #'
 #' @export
 #'
-JS_divergence <- function(P, Q) {
+JS_divergence <- function (P, Q) {
+    Pz <- P == 0
+    Qz <- Q == 0
     PQ_mean = (P + Q) / 2
-    sum((P * log(P / PQ_mean) + Q * log(Q / PQ_mean)) / 2)
+    P <- P[!Pz]
+    Q <- Q[!Qz]
+    (   sum(P * log(P / PQ_mean[!Pz])) +
+        sum(Q * log(Q / PQ_mean[!Qz]))
+    ) / 2
 }
 
 #' Measure matrix row distances
