@@ -13,16 +13,13 @@ Q <- Q / sum(Q)
 
 test_that("JS_divergence reproduces flexmix::KLdiv", {
     skip_if_not_installed("flexmix")
-    JS_flexmix <- function(P,Q) {
-        PQ_mean = (P + Q) / 2
-        # eps small, otherwise KLdiv replaces values less than 10^-4
-        eps = min(P, Q) / 2
-        result <- (KLdiv(cbind(P, PQ_mean), eps=eps) +
-                   KLdiv(cbind(Q, PQ_mean), eps=eps)) / 2
-        result[1,2]
-    }
+    PQ_mean = (P + Q) / 2
+    # eps small, otherwise KLdiv replaces values less than 10^-4
+    eps = min(P, Q) / 2
+    result <- (flexmix::KLdiv(cbind(P, PQ_mean), eps=eps) +
+               flexmix::KLdiv(cbind(Q, PQ_mean), eps=eps)) / 2
 
-    expect_equal(JS_flexmix(P, Q), JS_divergence(P, Q))
+    expect_equal(result[1, 2], JS_divergence(P, Q))
 
 })
 
@@ -34,7 +31,17 @@ test_that("JS_divergence copes with zeroes", {
     expect_true(is.finite(d))
     # mutual zeroes should be skipped
     expect_equal(JS_divergence(P[-1], Q[-1]), d)
+
+    expect_equal(JS_divergence(P, P), 0)
 })
+
+test_that("JS_divergence works on a 'known' example", {
+    x <- c(0.3, 0.5, 0.2)
+    y <- c(0.1, 0.4, 0.5)
+
+    expect_equal(JS_divergence(x, y), 0.06215309, tolerance=1e-7)
+})
+
 
 test_that("row_dists works right", {
     x <- matrix(1:16, ncol=4)
