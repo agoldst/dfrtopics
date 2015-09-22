@@ -40,8 +40,7 @@ def process_file(state_file):
             # so we only need to count up type-topic pairs until we get
             # to the end of the state for a given doc
 
-            line.strip()
-            doc,source,pos,typeindex,word,topic = line.split()
+            doc,source,pos,typeindex,word,topic = line.strip().split()
 
             doc = int(doc)
             typeindex = int(typeindex)
