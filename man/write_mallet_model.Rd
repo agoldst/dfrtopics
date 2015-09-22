@@ -5,8 +5,8 @@
 \title{A convenience function for saving all the model outputs at once.}
 \usage{
 write_mallet_model(m, output_dir = ".", n_top_words = 50,
-  save_instances = F, save_scaled = F, save_state = T,
-  simplify_state = T)
+  save_instances = FALSE, save_scaled = FALSE, save_state = TRUE,
+  simplify_state = TRUE)
 }
 \arguments{
 \item{m}{\code{mallet_model} object}

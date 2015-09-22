@@ -4,7 +4,7 @@
 \alias{dfr_id_url}
 \title{Convert a DfR ID into a JSTOR URL}
 \usage{
-dfr_id_url(id, jstor_direct = T)
+dfr_id_url(id, jstor_direct = TRUE)
 }
 \arguments{
 \item{id}{a document id (usually also the DOI)}

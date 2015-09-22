@@ -46,7 +46,7 @@ model_dfr_documents <- function(
         stoplist_file=file.path(path.package("dfrtopics"),
                                 "stoplist", "stoplist.txt"),
         ...)  {
-    result <- read_wordcounts(list.files(wordcounts_dirs, full.names=TRUE)
+    result <- read_wordcounts(list.files(wordcounts_dirs, full.names=TRUE))
     result <- wordcounts_texts(result)
     result <- make_instances(result, stoplist_file)
     train_model(result, n_topics,

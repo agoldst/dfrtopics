@@ -4,7 +4,7 @@
 \alias{read_dfr_citations}
 \title{Read a single \code{citations.CSV} or \code{citations.tsv} file.}
 \usage{
-read_dfr_citations(filename, strip.white = T, ...)
+read_dfr_citations(filename, strip.white = TRUE, ...)
 }
 \arguments{
 \item{filename}{the file to read. If \code{NA}, opens the file dialog.}

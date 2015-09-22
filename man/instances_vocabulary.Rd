@@ -4,7 +4,7 @@
 \alias{instances_vocabulary}
 \title{Retrieve the vocabulary from the instances}
 \usage{
-instances_vocabulary(instances, newlines_significant = F)
+instances_vocabulary(instances, newlines_significant = FALSE)
 }
 \arguments{
 \item{instances}{reference to the \code{InstanceList}}

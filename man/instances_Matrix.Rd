@@ -4,7 +4,7 @@
 \alias{instances_Matrix}
 \title{Extract term-document matrix from instances}
 \usage{
-instances_Matrix(instances, verbose = F)
+instances_Matrix(instances, verbose = FALSE)
 }
 \arguments{
 \item{instances}{file holding MALLET instances or rJava reference to a MALLET
