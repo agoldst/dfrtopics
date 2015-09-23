@@ -61,7 +61,7 @@ read_wordcounts <- function (files, ids=dfr_filename_id(files),
             ))
         }
 
-        p$tick()
+        p$tick()$print()
     }
     dplyr::bind_rows(result)
 }
