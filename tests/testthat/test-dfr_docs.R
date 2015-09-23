@@ -20,8 +20,6 @@ fake_counts <- data_frame(
               "the", "of", "hull"),
     weight=as.integer(c(3:1, 5, 5, 1)))
 
-dummy <- tempfile()
-
 test_that("Loading dummy wordcounts files works as expected", {
     dummy_dir <- file.path(tempdir(), "wordcounts")
     if (!dir.exists(dummy_dir)) dir.create(dummy_dir)
@@ -40,25 +38,58 @@ of,5
 hull,1",
         file.path(dummy_dir, "wordcounts_10.2307_654321.CSV")
     )
-    dummy_ws <- list.files(dummy_dir, full.names=T)
-    counts <- read_wordcounts(dummy_ws)
-    expect_equal(counts, fake_counts)
+    dummy_ws <- file.path(dummy_dir, c("wordcounts_10.2307_123456.CSV",
+                                       "wordcounts_10.2307_654321.CSV"))
+    expect_equal(read_wordcounts(dummy_ws), fake_counts)
 
     # now add in a header-only file
     writeLines("WORDCOUNTS,WEIGHT",
                file.path(dummy_dir, "wordcounts_10.2307_666.CSV"))
 
-    dummy_ws <- list.files(dummy_dir, full.names=T)
     # and check both file-reading methods
-    expect_equal(dfrtopics:::read_wordcounts_base(dummy_ws, dfr_filename_id),
-                 fake_counts)
-    expect_equal(dfrtopics:::read_wordcounts_readr(dummy_ws, dfr_filename_id),
-                 fake_counts)
+    expect_equal(
+        read_wordcounts(dummy_ws, reader=dfrtopics:::read_wordcounts_base),
+        fake_counts)
 
-    unlink(file.path(dummy_dir, list.files(dummy_dir)))
+    expect_equal(
+        read_wordcounts(dummy_ws, reader=dfrtopics:::read_wordcounts_readr),
+        fake_counts)
+
+    unlink(dummy_ws)
     unlink(dummy_dir)
 })
 
+test_that("A custom reading method works", {
+    dummy_dir <- file.path(tempdir(), "wordcounts")
+    if (!dir.exists(dummy_dir)) dir.create(dummy_dir)
+    writeLines(
+"zorf\tnargle
+the\t3
+woolf\t2
+hull\t1",
+        file.path(dummy_dir, "wordcounts_10.2307_123456.tsv")
+    )
+    writeLines(
+"zorf\tnargle
+the\t5
+of\t5
+hull\t1",
+        file.path(dummy_dir, "wordcounts_10.2307_654321.tsv")
+    )
+
+    dummy_ws <- file.path(dummy_dir, c("wordcounts_10.2307_123456.tsv",
+                                       "wordcounts_10.2307_654321.tsv"))
+    ids <- basename(dummy_ws) %>%
+        stringr::str_replace_all("(wordcounts_|\\.tsv)", "") %>%
+        stringr::str_replace_all("_", "/")
+
+    expect_equal(
+        read_wordcounts(dummy_ws, ids, readr::read_tsv),
+        fake_counts
+    )
+    unlink(dummy_ws)
+    unlink(dummy_dir)
+})
 
 test_that("Loading real wordcounts files works as expected", {
     counts <- read_wordcounts(fs)
@@ -67,7 +98,7 @@ test_that("Loading real wordcounts files works as expected", {
     expect_equal(colnames(counts), c("id", "word", "weight"))
     expect_equal(nrow(counts), n_feats)
     expect_equal(n_distinct(counts$id), length(fs))
-                 
+
     expect_equal(counts$word[1], "the")
 })
 
@@ -115,7 +146,3 @@ test_that("Loading a big folder of files completes", {
     counts <- read_wordcounts(ff)
     expect_equal(n_distinct(counts$id), length(ff))
 })
-
-if (file.exists(dummy)) {
-    unlink(dummy)
-}
