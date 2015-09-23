@@ -1,5 +1,7 @@
 context("dfr-browser export")
 
+library(dplyr)
+
 clear_files <- function (fs, ...) {
     for (f in fs) {
         if (file.exists(f)) {
@@ -46,57 +48,113 @@ m <- train_model(
     metadata=read_dfr_metadata(file.path(data_dir, "citations.tsv"))
 )
 
+
+out_dir <- file.path(tempdir(), "browser_export")
+if (!file.exists(out_dir)) {
+    dir.create(out_dir, recursive=T)
+}
+
+out_files <- file.path(out_dir, c(
+    "dt.json.zip",
+    "info.json",
+    "meta.csv.zip",
+    "topic_scaled.csv",
+    "tw.json"))
+
 test_that("dfr-browser export produces the right files", {
 
-
     # check that export works with data objects
-
-    out_dir <- file.path(tempdir(), "browser_export")
-    if (!file.exists(out_dir)) {
-        dir.create(out_dir, recursive=T)
-    }
-
-    out_files <- file.path(out_dir, c(
-        "dt.json.zip",
-        "info.json",
-        "meta.csv.zip",
-        "topic_scaled.csv",
-        "tw.json"))
-
-
-    clear_files(out_files)
-
-    export_browser_data(m, out_dir=out_dir, zipped=T)
-
+    clear_files(out_files) 
+    export_browser_data(m, out_dir=out_dir, zipped=T,
+                        n_scaled_words=100)
     expect_files(out_files, "Export with data objects:") 
 
     # Check that we fail to overwrite files by default
     expect_error(
-        export_browser_data(m, out_dir=out_dir, zipped=T)
+        export_browser_data(m, out_dir=out_dir, zipped=T,
+                            n_scaled_words=100)
     )
 
     # Check that we succeed in overwriting when needed
 
     export_browser_data(m, out_dir=out_dir, zipped=T,
-                        overwrite=T)
+                        overwrite=T,
+                        n_scaled_words=100)
 
     expect_files(out_files, "Overwrite with data objects:") 
 
     clear_files(out_files)
+})
 
-    # check that non-zipped export produces files
+test_that("metadata checking acts as expected", {
+
+    md <- metadata(m)
+    metadata(m) <- NULL
+    expect_warning(
+        export_browser_data(m, out_dir=out_dir, zipped=T,
+                            n_scaled_words=100),
+        "Metadata frame unavailable"
+    )
+
+    expect_files(setdiff(out_files, file.path(out_dir, "meta.csv.zip")),
+                 "NULL metadata export")
+
+    clear_files(out_files)
+
+    metadata(m) <- md
+})
+
+test_that("metadata munging acts as expected", {
+    export_browser_data(m, out_dir=out_dir, zipped=T,
+                        n_scaled_words=100)
+    md <- read.csv(unz(file.path(out_dir, "meta.csv.zip"), "meta.csv"),
+                   header=F, as.is=T)
+    expect_equal(ncol(md), ncol(metadata(m)))
+    expect_equal(metadata(m),
+                 md[ , c(1, 9, 2:8, 10:13)] %>%
+                        mutate(V7=as.Date(V7),
+                               V11=factor(V11)),
+                 check.attributes=F)
+
+    clear_files(out_files)
+    md <- metadata(m)
+    metadata(m)$journaltitle <- NULL
+
+    expect_warning(
+        export_browser_data(m, out_dir=out_dir, zipped=T,
+                            n_scaled_words=100),
+        "Not all expected metadata columns"
+    )
+    md_out <- read.csv(unz(file.path(out_dir, "meta.csv.zip"), "meta.csv"),
+                       header=F, as.is=T)
+    expect_equal(metadata(m),
+                 md_out %>%
+                    mutate(V7=as.Date(V7),
+                           V10=factor(V10)),
+                 check.attributes=F)
+
+    clear_files(out_files)
+
+    metadata(m) <- md
+})
+
+test_that("non-zipped export produces files", {
 
     out_files_non_zip <- gsub("\\.zip$", "", out_files)
-    export_browser_data(m, out_dir=out_dir, zipped=F)
+    clear_files(out_files_non_zip)
+    export_browser_data(m, out_dir=out_dir, zipped=F,
+                        n_scaled_words=100)
 
     expect_files(out_files_non_zip, "Non-zipped export:") 
     clear_files(out_files_non_zip)
+})
 
-    # check that dfb download works too
+test_that("dfb download works too", {
 
     expect_message(
         export_browser_data(m, out_dir=out_dir, zipped=T,
-                            download_dfb=T),
+                            download_dfb=T,
+                            n_scaled_words=100),
         "Downloading"
     )
     dfb_files <- file.path(out_dir,
@@ -115,7 +173,8 @@ test_that("dfr-browser export produces the right files", {
 
     expect_error(
         export_browser_data(m, out_dir=out_dir, zipped=T,
-                            download_dfb=T)
+                            download_dfb=T,
+                            n_scaled_words=100)
     )
 
     # check that overwrite succeeds here too when some files are present
@@ -123,7 +182,8 @@ test_that("dfr-browser export produces the right files", {
     clear_files(file.path(out_dir, "data", "tw.json"))
     clear_files(file.path(out_dir, "index.html"))
     export_browser_data(m, out_dir=out_dir, zipped=T,
-                        download_dfb=T, overwrite=T)
+                        download_dfb=T, overwrite=T,
+                        n_scaled_words=100)
 
     expect_files(dfb_files, "dfb-download overwrite: ")
     expect_files(file.path(out_dir, "data", c(
@@ -132,6 +192,7 @@ test_that("dfr-browser export produces the right files", {
         "meta.csv.zip",
         "topic_scaled.csv",
         "tw.json")))
+
 
     # clean up
 

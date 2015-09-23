@@ -39,6 +39,31 @@ the document-topics matrix and metadata files; dfr-browser supports
 client-side unzipping. This function compresses files using R's
 \code{\link{zip}} command. If that fails, set \code{zipped=F} (and, if you
 wish, zip the files using another program).
+
+A detailed description of the output files can be found in the dfr-browser
+technical notes at \url{http://github.com/agoldst/dfr-browser}.
+
+If you are working with non-JSTOR documents, the one file that will reflect
+this is the exported metadata. dfr-browser expects seven metadata columns:
+\code{id,title,author,journaltitle,volume,issue,pubdate,pagerange}. This
+function looks for these seven columns and, if it finds them, writes the
+metadata with these columns in this order. Any remaining columns are pushed
+all the way to the right of the output. (dfr-browser ignores them unless you
+customize it.) If any these columns is not present in \code{metadata(m)},
+then \code{export_browser_data} will simply save all the metadata as is,
+adjusting only the CSV format to match the baseline expectation of
+dfr-browser (namely, a headerless CSV conforming to
+\href{http://tools.ietf.org/html/rfc4180}{RFC 4180}.). If your metadata does
+not match these expectations, you may have to write out the metadata yourself
+and/or customize dfr-browser to get satisfactory results.
+
+Note that you can adjust the metadata held on the model object by assigning
+to \code{metadata(m)} before exporting the browser data. In particular, if
+you have many documents, you may wish to conserve space by eliminating
+metadata columns that are not used by the visualization: for example,
+\code{metadata(m)$publisher <- NULL}. Earlier versions of dfrtopics tried to
+eliminate such columns automatically, but this more conservative approach
+aims to allow you more flexibility about what gets exported.
 }
 \examples{
 \dontrun{

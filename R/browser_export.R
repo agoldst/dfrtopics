@@ -31,42 +31,68 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=FALSE,
 }
 
 #' Output data files for dfr-browser
-#'
-#' Transform and save modeling results in a format suitable for use by
-#' \href{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser
+#' 
+#' Transform and save modeling results in a format suitable for use by 
+#' \href{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser 
 #' based model browser.
-#'
+#' 
 #' This routine reports on its progress. By default, it saves zipped versions of
-#' the document-topics matrix and metadata files; dfr-browser supports
-#' client-side unzipping. This function compresses files using R's
-#' \code{\link{zip}} command. If that fails, set \code{zipped=F} (and, if you
+#' the document-topics matrix and metadata files; dfr-browser supports 
+#' client-side unzipping. This function compresses files using R's 
+#' \code{\link{zip}} command. If that fails, set \code{zipped=F} (and, if you 
 #' wish, zip the files using another program).
-#'
-#' @param m \code{mallet_model} object from \code{\link{train_model}} or
+#' 
+#' A detailed description of the output files can be found in the dfr-browser
+#' technical notes at \url{http://github.com/agoldst/dfr-browser}.
+#' 
+#' If you are working with non-JSTOR documents, the one file that will reflect
+#' this is the exported metadata. dfr-browser expects seven metadata columns:
+#' \code{id,title,author,journaltitle,volume,issue,pubdate,pagerange}. This
+#' function looks for these seven columns and, if it finds them, writes the
+#' metadata with these columns in this order. Any remaining columns are pushed
+#' all the way to the right of the output. (dfr-browser ignores them unless you
+#' customize it.) If any these columns is not present in \code{metadata(m)},
+#' then \code{export_browser_data} will simply save all the metadata as is,
+#' adjusting only the CSV format to match the baseline expectation of
+#' dfr-browser (namely, a headerless CSV conforming to
+#' \href{http://tools.ietf.org/html/rfc4180}{RFC 4180}.). If your metadata does
+#' not match these expectations, you may have to write out the metadata yourself
+#' and/or customize dfr-browser to get satisfactory results.
+#' 
+#' Note that you can adjust the metadata held on the model object by assigning
+#' to \code{metadata(m)} before exporting the browser data. In particular, if
+#' you have many documents, you may wish to conserve space by eliminating
+#' metadata columns that are not used by the visualization: for example,
+#' \code{metadata(m)$publisher <- NULL}. Earlier versions of dfrtopics tried to
+#' eliminate such columns automatically, but this more conservative approach
+#' aims to allow you more flexibility about what gets exported.
+#' 
+#' 
+#' @param m \code{mallet_model} object from \code{\link{train_model}} or 
 #'   \code{\link{load_mallet_model}}
-#' @param out_dir directory for output. If \code{download_dfb} is TRUE, the
-#'   exported data files will go in a \code{"data"} directory under
+#' @param out_dir directory for output. If \code{download_dfb} is TRUE, the 
+#'   exported data files will go in a \code{"data"} directory under 
 #'   \code{out_dir}.
 #' @param zipped should the larger data files be zipped?
 #' @param n_top_words how many top words per topic to save?
-#' @param n_scaled_words how many word types to use in scaled coordinates
+#' @param n_scaled_words how many word types to use in scaled coordinates 
 #'   calculation?
-#' @param download_dfb if TRUE (FALSE is default), all the files needed to run
-#'   the browser and the exported data placed appropriately. From a shell in
+#' @param download_dfb if TRUE (FALSE is default), all the files needed to run 
+#'   the browser and the exported data placed appropriately. From a shell in 
 #'   \code{out_dir}, run \code{bin/server} to launch a local web server.
 #' @param overwrite if TRUE, this will clobber existing files
-#'
+#'   
 #' @examples
-#'
+#' 
 #' \dontrun{
 #' m <- model_dfr_documents("citations.CSV", "wordcounts",
 #'     "stoplist.txt", n_topics=40)
 #' export_browser_data(m, out_dir="data")
 #' }
-#'
-#' @seealso \code{\link{model_dfr_documents}}, \code{\link{train_model}},
+#' 
+#' @seealso \code{\link{model_dfr_documents}}, \code{\link{train_model}}, 
 #'   \code{\link{topic_scaled_2d}}
-#'
+#'   
 #' @export
 export_browser_data <- function (m, out_dir, zipped=TRUE,
                                  n_top_words=50,
@@ -171,19 +197,37 @@ Set overwrite=TRUE to overwrite existing files."
               overwrite=overwrite)
 
     md_frame <- metadata(m)
-    drops <- match(c("publisher", "reviewed.work", "doi"),
-                   names(md_frame))
-    md_frame <- md_frame[ , -drops]
+    if (!is.null(md_frame)) {
+        dfb_expected <- c(
+            "id", "title", "author", "journaltitle", "volume", "issue",
+            "pubdate", "pagerange")
 
-    write_zip(function (f) {
-        write.table(md_frame,f,
-                    quote=TRUE, sep=",",
-                    col.names=FALSE, row.names=FALSE,
-                    # d3.csv.* expects RFC 4180 compliance
-                    qmethod="double")},
-                file.path(out_dir, "meta"),
-                ".csv", no_zip=!zipped,
-                overwrite=overwrite)
+        if (any(! dfb_expected %in% colnames(md_frame))) {
+            warning(
+"Not all expected metadata columns are present. All available metadata
+will be written, without any column rearrangement. dfr-browser document
+display may not work as expected. See ?export_browser_data for details."
+)
+        } else {
+            # reorder columns
+            rest_cols <- setdiff(colnames(md_frame), dfb_expected)
+            md_frame <- md_frame[ , c(dfb_expected, rest_cols)]
+        }
+
+        write_zip(function (f) {
+            write.table(md_frame,f,
+                        quote=TRUE, sep=",",
+                        col.names=FALSE, row.names=FALSE,
+                        # d3.csv.* expects RFC 4180 compliance
+                        qmethod="double")},
+                    file.path(out_dir, "meta"),
+                    ".csv", no_zip=!zipped,
+                    overwrite=overwrite)
+    } else {
+        warning(
+"Metadata frame unavailable, so document metadata has not been written."
+)
+    }
 
     if (!is.null(topic_words(m))) {
 
