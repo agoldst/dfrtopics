@@ -4,13 +4,21 @@
 \alias{read_wordcounts}
 \title{Convert DfR wordcount files to a long-format data frame}
 \usage{
-read_wordcounts(files, filename_id = dfr_filename_id)
+read_wordcounts(files, ids = dfr_filename_id(files), reader = NULL)
 }
 \arguments{
 \item{files}{individual filenames to read.}
 
-\item{filename_id}{function that converts a file name into a document ID. By
-default, \code{\link{dfr_filename_id}} is used.}
+\item{ids}{a vector of document IDs corresponding to \code{files}. By
+default, \code{\link{dfr_filename_id}} is applied to \code{files}.
+\code{ids=files} would work fine too (to use whole filenames as IDs).}
+
+\item{reader}{a function or the name of one that takes a filename and returns
+a two-column data frame with words (terms) in the first column and counts
+in the second. If NULL (by default), a CSV-reading function is
+used---\code{read_csv} from \pkg{readr} if available, \code{read.csv}
+otherwise. For TSV's, setting \code{reader=\link{readr::read_tsv}} should
+Just Work.}
 }
 \value{
 A data frame with three columns: \code{id}, the document ID;
@@ -21,20 +29,21 @@ A data frame with three columns: \code{id}, the document ID;
 Reads in a bunch of \code{wordcounts*.CSV} files and stacks them up in a
 single long-format dataframe. These counts can be optionally manipulated,
 then passed on to \code{\link{wordcounts_texts}} and thence to
-\code{\link{make_instances}}. If the \pkg{readr} package is available,
-it will be used to speed up file loading.
+\code{\link{make_instances}}. If the \pkg{readr} package is available, it
+will be used to speed up file loading.
 }
 \details{
 Empty documents are skipped; DfR supplies wordcounts files for documents that
 have no wordcount data. These will be in DfR's metadata but not in the output
 dataframe here.
 
-This is slow. An outboard script in python or Perl is faster, but this keeps
-us in R and does everything in memory.
+Even with readr and dplyr's fast row-binding, this is not altogether fast. An
+outboard script in python or Perl is faster, but this keeps us in R and does
+everything in memory.
 
 Memory usage: for N typical journal articles, the resulting dataframe seems
 to need about 20N K of memory. So R on a laptop will hit its limits somewhere
-around 100K articles of typical length.
+below 100,000 articles of typical length.
 }
 \seealso{
 \code{\link{wordcounts_texts}}, \code{\link{instances_Matrix}} for
