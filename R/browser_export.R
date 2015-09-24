@@ -162,6 +162,7 @@ Set overwrite=TRUE to overwrite existing files."
     }
 
     keys <- top_words(m, n_top_words)
+    tw_file <- file.path(out_dir, "tw.json")
     if (!is.null(keys)) {
         tw <- list(
             alpha=hyperparameters(m)$alpha,
@@ -176,25 +177,28 @@ Set overwrite=TRUE to overwrite existing files."
             )
         )
 
-        tw_file <- file.path(out_dir, "tw.json")
         if (!overwrite) {
             stopifnot(!file.exists(tw_file))
         }
         writeLines(jsonlite::toJSON(tw, dataframe="columns"), tw_file)
         message("Wrote ", tw_file)
     } else {
-        warning("Unable to write ", tw_file)
+        warning("Topic top words unavailable; unable to write tw.json")
     }
 
 
-    dtm <- Matrix::Matrix(doc_topics(m), sparse=TRUE)
-        # could compress much more aggressively considering that weights are
-        # integers, so could be stored as binary data rather than ASCII
+    if (!is.null(doc_topics(m))) {
+        dtm <- Matrix::Matrix(doc_topics(m), sparse=TRUE)
+            # could compress much more aggressively considering that weights are
+            # integers, so could be stored as binary data rather than ASCII
 
-    dtm_json <- jsonlite::toJSON(list(i=dtm@i, p=dtm@p, x=dtm@x))
-    write_zip(function (f) { writeLines(dtm_json, f) },
-              file.path(out_dir, "dt"), ".json", no_zip=!zipped,
-              overwrite=overwrite)
+        dtm_json <- jsonlite::toJSON(list(i=dtm@i, p=dtm@p, x=dtm@x))
+        write_zip(function (f) { writeLines(dtm_json, f) },
+                  file.path(out_dir, "dt"), ".json", no_zip=!zipped,
+                  overwrite=overwrite)
+    } else {
+        warning("Document topics unavailable; unable to write dt.json.zip")
+    }
 
     md_frame <- metadata(m)
     if (!is.null(md_frame)) {
