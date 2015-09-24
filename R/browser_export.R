@@ -104,7 +104,7 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
     }
 
     if (file.exists(out_dir)) {
-        if (!dir.exists(out_dir)) {
+        if (!file.info(out_dir)$isdir) {
             stop(paste(out_dir, "exists and is a file; expected a directory"))
         }
     } else {
