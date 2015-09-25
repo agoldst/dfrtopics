@@ -940,7 +940,8 @@ load_mallet_model <- function(
         state_file=NULL) {
 
     if (!is.null(top_words_file)) {
-        top_w <- dplyr::tbl_df(read.csv(top_words_file, as.is=TRUE))
+        top_w <- dplyr::tbl_df(read.csv(top_words_file, as.is=TRUE,
+                                        quote=""))
     } else {
         top_w <- NULL
     }
