@@ -146,3 +146,18 @@ test_that("Loading a big folder of files completes", {
     counts <- read_wordcounts(ff)
     expect_equal(n_distinct(counts$id), length(ff))
 })
+
+test_that("matrix conversion works as expected", {
+    dtm <- wordcounts_Matrix(fake_counts)
+    expect_is(dtm, "Matrix")
+    expect_equal(dim(dtm), c(2, 4))
+    expect_equal(rownames(dtm), c("10.2307/123456", "10.2307/654321"))
+    expect_equal(colnames(dtm), c("the", "woolf", "hull", "of"))
+    expect_equal(as.matrix(dtm),
+                 matrix(c(3, 2, 1, 0,
+                          5, 0, 1, 5), byrow=T, nrow=2),
+                 check.attributes=F)
+})
+
+
+
