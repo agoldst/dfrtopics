@@ -100,6 +100,7 @@ topic_series <- function (m, breaks="years") {
 #'
 #' @return the column-normalized matrix (except for any zero columns)
 #'
+#' @seealso \code{\link{normalize_cols}}
 #' @export
 #'
 normalize_cols <- function (x, norm="L1", stopzero=FALSE) {
@@ -118,6 +119,42 @@ normalize_cols <- function (x, norm="L1", stopzero=FALSE) {
     }
 
     rescale_cols(x, 1 / norms)
+}
+
+#' Normalize rows to sum to one
+#'
+#' A convenience function for a frequent operation of normalizing the rows of
+#' a matrix. The typical application in document modeling is to to ensure that
+#' the rows sum to one (L1 normalization). Sometimes it is convenient instead
+#' to set the rows to have a unit Euclidean norm (L2 normalization).
+#'
+#' @param x a matrix or Matrix
+#' @param norm Either \code{"L1"}, the default (the sum of the absolute value of
+#'   weights), or \code{"L2"}, the Euclidean norm
+#' @param stopzero If FALSE (the default), rows with norm zero are left
+#'   as-is. If this is TRUE, an error will be thrown instead.
+#'
+#' @return the row-normalized matrix (except for any zero rows)
+#'
+#' @seealso \code{\link{normalize_cols}}
+#' @export
+#'
+normalize_rows <- function (x, norm="L1", stopzero=FALSE) {
+    if (norm == "L1") {
+        norms <- Matrix::rowSums(abs(x))
+    } else if (norm == "L2") {
+        norms <- sqrt(Matrix::rowSums(x * x))
+    } else {
+        stop("norm must be L1 or L2")
+    }
+
+    if (!stopzero) {
+        norms[norms == 0] <- Inf
+    } else if (any(norms == 0)) {
+        stop("The matrix has rows of all zeroes, which cannot be normalized.")
+    }
+
+    rescale_rows(x, 1 / norms)
 }
 
 #' Rescale the columns of a matrix

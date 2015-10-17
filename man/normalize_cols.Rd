@@ -24,4 +24,7 @@ a matrix. The typical application in document modeling is to to ensure that
 the columns sum to one (L1 normalization). Sometimes it is convenient instead
 to set the columns to have a unit Euclidean norm (L2 normalization).
 }
+\seealso{
+\code{\link{normalize_cols}}
+}
 

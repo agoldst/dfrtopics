@@ -49,8 +49,8 @@ test_that("gather_matrix works", {
                  ))
 })
 
-test_that("normalize_cols works", {
-    expect_equal( 
+test_that("normalize_cols/rows works", {
+    expect_equal(
         normalize_cols(
             matrix(c(1, 0,
                      3, 2), ncol=2, byrow=T)
@@ -58,7 +58,7 @@ test_that("normalize_cols works", {
         matrix(c(0.25, 0,
                  0.75, 1), ncol=2, byrow=T))
 
-    expect_equal( 
+    expect_equal(
         normalize_cols(
             matrix(c(3, 0.3,
                      4, 0.4), ncol=2, byrow=T), norm="L2"
@@ -73,6 +73,32 @@ test_that("normalize_cols works", {
                  0.75, 1, 0), ncol=3, byrow=T))
     expect_error(normalize_cols(m, stopzero=T),
         "The matrix has columns of all zeroes, which cannot be normalized.")
+
+    expect_equal(
+        normalize_rows(
+            matrix(c(1, 3,
+                     0, 2), ncol=2, byrow=T)
+        ),
+        matrix(c(0.25, 0.75,
+                 0,    1), ncol=2, byrow=T))
+
+    expect_equal(
+        normalize_rows(
+            matrix(c(3,   4,
+                     0.3, 0.4), ncol=2, byrow=T), norm="L2"
+        ),
+        matrix(c(0.6, 0.8,
+                 0.6, 0.8), ncol=2, byrow=T))
+
+    m <- matrix(c(1, 3,
+                  0, 0,
+                  2, 0), ncol=2, byrow=T)
+    expect_equal(normalize_rows(m),
+        matrix(c(0.25, 0.75,
+                 0,    0,
+                 1,    0), ncol=2, byrow=T))
+    expect_error(normalize_rows(m, stopzero=T),
+        "The matrix has rows of all zeroes, which cannot be normalized.")
 })
 
 test_that("rescaling row/col works", {
