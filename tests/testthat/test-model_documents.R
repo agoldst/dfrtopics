@@ -33,8 +33,11 @@ test_that("Modeling on some sample data works", {
 
     expect_is(m, "mallet_model")
     expect_equal(class(RTopicModel(m)), "jobjRef", check.attributes=F)
-    expect_equal(.jstrVal(RTopicModel(m)$getClass()),
-                 "class cc.mallet.topics.RTopicModel")
+    expect_equal(
+        rJava::.jstrVal(
+            rJava::.jcall(RTopicModel(m), "Ljava/lang/Class;", "getClass")
+        ),
+        "class cc.mallet.topics.RTopicModel")
 
     # right number of rows in doc-topics?
     expect_that(nrow(doc_topics(m)), equals(length(fs)))

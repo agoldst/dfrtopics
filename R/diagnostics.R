@@ -15,13 +15,15 @@
 #' 
 write_diagnostics <- function(m, output_file="diagnostics.xml",
                               n_top_words=50) {
-    ptm <- ParallelTopicModel(m)
-    if (is.null(ptm)) {
+    rtm <- RTopicModel(m)
+    if (is.null(rtm)) {
         stop("MALLET model object is not available.")
     }
-    d <- .jnew("cc/mallet/topics/TopicModelDiagnostics",
-          ptm, as.integer(n_top_words))
-    xml <- d$toXML()
+    d <- rJava::.jnew("cc/mallet/topics/TopicModelDiagnostics",
+        rJava::.jcast(rtm, "cc/mallet/topics/ParallelTopicModel"),
+        as.integer(n_top_words))
+
+    xml <- rJava::.jcall(d, "S", "toXML")
     writeLines(xml, output_file)
 }
 
