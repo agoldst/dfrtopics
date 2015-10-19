@@ -4,9 +4,6 @@ Description: This package provides tools for exploring topic models created by M
 Version: 0.2.1
 Author: Andrew Goldstone <andrew.goldstone@gmail.com>
 Maintainer: Andrew Goldstone <andrew.goldstone@gmail.com>
-Depends: 
-    mallet,
-    rJava
 Imports: 
     Matrix,
     stringr,
@@ -15,6 +12,7 @@ Imports:
     magrittr,
     Rcpp
 Suggests: 
+    mallet,
     ggplot2,
     scales,
     testthat,
