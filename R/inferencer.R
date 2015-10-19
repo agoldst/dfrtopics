@@ -26,9 +26,9 @@ inferencer <- function (m) {
 #' @export
 #'
 write_inferencer <- function (inf, out_file) {
-    fos <- .jnew("java/io/FileOutputStream", out_file)
-    oos <- .jnew("java/io/ObjectOutputStream",
-                 .jcast(fos, "java/io/OutputStream"))
+    fos <- rJava::.jnew("java/io/FileOutputStream", out_file)
+    oos <- rJava::.jnew("java/io/ObjectOutputStream",
+                 rJava::.jcast(fos, "java/io/OutputStream"))
     oos$writeObject(inf)
     oos$close()
 }
@@ -42,8 +42,10 @@ write_inferencer <- function (inf, out_file) {
 #'
 #' @export
 read_inferencer <- function (filename) {
-    J("cc.mallet.topics.TopicInferencer")$read(
-        new(J("java.io.File"), path.expand(filename))
+    load_mallet()
+
+    rJava::J("cc.mallet.topics.TopicInferencer")$read(
+        new(rJava::J("java.io.File"), path.expand(filename))
     )
 }
 
@@ -107,7 +109,7 @@ infer_topics.default <- function (m, instances,
 
     doc_topics <- vector("list", instances$size())
     for (j in 1:instances$size()) {
-        inst <- .jcall(iter, "Ljava/lang/Object;", "next")
+        inst <- rJava::.jcall(iter, "Ljava/lang/Object;", "next")
         doc_topics[[j]] <- m$getSampledDistribution(inst,
             n_iterations, sampling_interval, burn_in)
     }

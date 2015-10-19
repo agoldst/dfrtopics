@@ -245,7 +245,9 @@ train_model <- function(instances, n_topics,
     # for integers. So we have to do some coercions to avoid rJava
     # complaints.
 
-    trainer <- MalletLDA(
+    load_mallet()
+
+    trainer <- mallet::MalletLDA(
         as.numeric(n_topics),
         as.numeric(alpha_sum),
         as.numeric(beta))
@@ -284,7 +286,8 @@ train_model <- function(instances, n_topics,
             initial_beta=beta,
             final_ll=trainer$model$modelLogLikelihood()
         ),
-        doc_topics=mallet.doc.topics(trainer, smoothed=FALSE, normalized=FALSE),
+        doc_topics=mallet::mallet.doc.topics(trainer,
+            smoothed=FALSE, normalized=FALSE),
         metadata=match_metadata(metadata, trainer$getDocumentNames())
     )
 
@@ -473,7 +476,8 @@ doc_topics <- function (m) UseMethod("doc_topics")
 doc_topics.mallet_model <- function (m) {
     dtm <- m$doc_topics
     if (is.null(dtm) && !is.null(m$model)) {
-        dtm <- mallet.doc.topics(m$model, smoothed=FALSE, normalized=FALSE)
+        dtm <- mallet::mallet.doc.topics(m$model,
+            smoothed=FALSE, normalized=FALSE)
     }
     dtm
 }
@@ -612,8 +616,11 @@ topic_words <- function (m, ...) UseMethod("topic_words")
 topic_words.mallet_model <- function (m) {
     tw <- m$topic_words
     if (is.null(tw) && !is.null(m$model)) {
-        tw <- as(mallet.topic.words(m$model, smoothed=FALSE, normalized=FALSE),
-                 "sparseMatrix")
+        tw <- as(
+            mallet::mallet.topic.words(m$model,
+                smoothed=FALSE, normalized=FALSE),
+            "sparseMatrix"
+        )
     }
 
     tw
