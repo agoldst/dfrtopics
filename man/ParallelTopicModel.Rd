@@ -2,7 +2,7 @@
 % Please edit documentation in R/model.R
 \name{ParallelTopicModel}
 \alias{ParallelTopicModel}
-\title{Access MALLET's model object}
+\title{Access MALLET's model object (deprecated)}
 \usage{
 ParallelTopicModel(m)
 }
@@ -10,21 +10,11 @@ ParallelTopicModel(m)
 \item{m}{a \code{mallet_model} object}
 }
 \value{
-a reference to the ParallelTopicModel object
+a reference to the RTopicModel object (or NULL if unavailable)
 }
 \description{
 This function returns a reference to the main Java object representing an LDA
 model in MALLET.
-}
-\details{
-For its R interface, MALLET uses a class RTopicModel, but most of the
-modeling functionality is carried out by a ParallelTopicModel instance. This
-object is reachable from R. Once you have the reference to it here, you can
-use rJava to access all its public methods and members.
-
-Java's strict typing means you'll have some funtimes with
-\code{\link[rJava]{.jcall}}. To index into array-like objects from Java,
-apply \code{\link[base]{as.integer}} to parameters.
 }
 \seealso{
 \code{\link{RTopicModel}}
