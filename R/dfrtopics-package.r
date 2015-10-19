@@ -52,46 +52,42 @@ NULL
 #' @usage lhs \%>\% rhs
 NULL
 
+dfrtopics_flags <- new.env(parent=emptyenv())
+dfrtopics_flags$mallet_loaded <- FALSE
 
-# Package loading: check the Java heap allocation
-.onAttach <- function (libname, pkgname) {
-    jheap <- grep("-Xmx\\w+", options("java.parameters"), value=TRUE)
-    heap_ok <- TRUE
-
-    if (length(jheap) == 0) {
-        # shouldn't get here since rJava loading should set java.parameters
-        # with a default value of "-Xmx512m"
-        packageStartupMessage(
-            "You are using rJava's default Java heap setting (512MB).")
-        heap_ok <- FALSE
-    } else {
-        size_str <- substring(jheap, first=5)
-        size_num <- gsub("\\D", "", size_str)
-        size_unit <- switch(gsub("\\d", "", size_str), 
-                            k=2^10, K=2^10, 
-                            m=2^20, M=2^20, 
-                            g=2^30, G=2^30, 
-                            t=2^40, T=2^40)
-        jheap_bytes <- as.numeric(size_num) * size_unit
-
-        if(is.na(jheap_bytes) | jheap_bytes < 2^31) {
-            packageStartupMessage("Your current Java heap setting is ",
-                                  size_str, ".")
-            heap_ok <- FALSE
-        }
+load_mallet <- function () {
+    if (dfrtopics_flags$mallet_loaded) {
+        return()
     }
 
-    if (!heap_ok) {
-        packageStartupMessage(
-'I recommend giving Java at least 2GB of heap space. To do this, put the
-following command in your scripts *before* loading this package:
+    javap <- options("java.parameters")[[1]]
+    jheap <- grep("-Xmx\\w+", javap, value=TRUE)
 
-    options(java.parameters="-Xmx2g")
+    if (length(jheap) == 0) {
+        message(
+"Using a Java heap allocation of 2GB, which I recommend over the rJava
+default of 512MB. To change this allocation, put the following command in your
+scripts *before* loading this package:
+
+    options(java.parameters=\"-Xmx4g\")
 
 If you change this option in this session, you must then detach and
 reload this package, mallet, and rJava. You can also simply restart R,
 set the option, and then load this package. I apologize for this design
-flaw in R and rJava.' 
+flaw in R and rJava."
+        )
+
+        options(java.parameters="-Xmx2g")
+        on.exit(options(java.parameters=javap), add=TRUE)
+    }
+
+    if (requireNamespace("mallet", quietly=TRUE)) {
+        dfrtopics_flags$mallet_loaded <- TRUE
+    } else {
+        stop(
+"Unable to load mallet and rJava. Ensure mallet is installed with
+install.packages(\"mallet\"). If you still have problems, you may have to
+adjust environment variables."
         )
     }
 }
