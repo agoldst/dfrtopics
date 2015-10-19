@@ -26,17 +26,19 @@
 #' @export
 #'
 make_instances <- function (docs, stoplist_file=NULL, ...) {
+    load_mallet()
+
     no_stop <- is.null(stoplist_file)
     if (!no_stop && !file.exists(stoplist_file)) {
         warning("Stoplist file not found. Using an empty stoplist.")
-        no_stop <- T
+        no_stop <- TRUE
     }
 
     if (no_stop) {
         stoplist_file <- tempfile()
         writeLines("", stoplist_file)
     }
-    insts <- mallet.import(docs$id, docs$text,
+    insts <- mallet::mallet.import(docs$id, docs$text,
         stoplist.file=stoplist_file, ...)
     if (no_stop) {
         unlink(stoplist_file)
@@ -58,7 +60,8 @@ make_instances <- function (docs, stoplist_file=NULL, ...) {
 #' @export
 #'
 write_instances <- function (instances, filename) {
-    instances$save(new(J("java.io.File"), path.expand(filename)))
+    f <- rJava::.jnew("java/io/File", path.expand(filename))
+    rJava::.jcall(instances, "V", "save", f)
 }
 
 #' Read a mallet \code{InstanceList} object from a file
@@ -73,9 +76,11 @@ write_instances <- function (instances, filename) {
 #' @export
 #'
 read_instances <- function (filename) {
-    J("cc.mallet.types.InstanceList", "load",
-             new(J("java.io.File"), path.expand(filename))
-    )
+    load_mallet()
+
+    f <- rJava::.jnew("java/io/File", path.expand(filename))
+    rJava::.jcall("cc/mallet/types/InstanceList",
+                  "Lcc/mallet/types/InstanceList;", "load", f)
 }
 
 #' Extract term-document matrix from instances
@@ -108,11 +113,11 @@ read_instances <- function (filename) {
 #' @export
 #'
 instances_Matrix <- function (instances, verbose=FALSE) {
-    if(verbose) {
+    if (verbose) {
         log <- message
     }
     else {
-        log <- function(...) {NULL}
+        log <- function (...) { NULL }
     }
 
     log("Retrieving instances")
@@ -120,9 +125,15 @@ instances_Matrix <- function (instances, verbose=FALSE) {
         log("Loading from ", instances)
         instances <- read_instances(instances)
     }
-    nwords <- instances$getAlphabet()$size()
+    nwords <- rJava::.jcall(
+        rJava::.jcall(instances, "Lcc/mallet/types/Alphabet;", "getAlphabet"),
+        "I", "size"
+    )
 
-    instances <- .jevalArray(instances$toArray(), simplify=TRUE)
+    instances <- rJava::.jcall(instances,
+        "[Ljava/lang/Object;", "toArray",
+        evalArray=TRUE, simplify=TRUE
+    )
 
     log("Compiling tdm")
 
@@ -200,14 +211,17 @@ instances_Matrix <- function (instances, verbose=FALSE) {
 #' @export
 #'
 instances_ids <- function (instances) {
-    iter <- instances$iterator()
+    iter <- rJava::.jcall(instances, "Ljava/util/Iterator;", "iterator")
 
     instance_name <- function() {
-        inst <- .jcall(iter, "Ljava/lang/Object;", "next")
-        .jstrVal(.jcall(inst, "Ljava/lang/Object;", "getName"))
+        inst <- rJava::.jcall(iter, "Ljava/lang/Object;", "next")
+        rJava::.jstrVal(rJava::.jcall(inst, "Ljava/lang/Object;", "getName"))
     }
 
-    replicate(instances$size(), instance_name())
+    replicate(
+        rJava::.jcall(instances, "I", "size"),
+        instance_name()
+    )
 }
 
 #' Retrieve an instance from the instance list by id
@@ -235,7 +249,7 @@ instances_ids <- function (instances) {
 #'
 get_instance <- function (instances, id, id_map=instances_ids(instances)) {
     j <- match(id, id_map) - 1
-    .jcall(instances, "Ljava/lang/Object;", "get", as.integer(j))
+    rJava::.jcall(instances, "Ljava/lang/Object;", "get", as.integer(j))
 }
 
 #' Convert a MALLET Instance to an integer vector
@@ -261,8 +275,8 @@ get_instance <- function (instances, id, id_map=instances_ids(instances)) {
 #' @export
 #'
 instance_vector <- function (instance) {
-    fs <- .jcall(instance, "Ljava/lang/Object;", "getData")
-    .jcall(fs, "[I", "getFeatures") + 1
+    fs <- rJava::.jcall(instance, "Ljava/lang/Object;", "getData")
+    rJava::.jcall(fs, "[I", "getFeatures") + 1
 }
 
 #' Transform an instance back into text
@@ -311,18 +325,20 @@ instance_text <- function (instance,
 #'
 instances_vocabulary <- function (instances, newlines_significant=FALSE) {
 
+    alph <- rJava::.jcall(instances,
+        "Lcc/mallet/types/Alphabet;", "getAlphabet")
+
     if (newlines_significant) {
         # .jevalArray is slow on even a moderate vocabulary.
-        vocab <- vapply(.jevalArray(instances$getAlphabet()$toArray()),
-                        .jstrVal, character(1))
+        alph_arr <- rJava::.jcall(alph, "[Ljava/lang/Object;", "toArray")
+        
+        vocab <- vapply(alph_arr, rJava::.jstrVal, character(1))
     } else {
         # This silly-looking method is faster, though it assumes
         # that none of the vocabulary items contain '\n'
+        alph_str <- rJava::.jcall(alph, "S", "toString")
         vocab <- unlist(
-            stringr::str_split(
-                stringr::str_trim(instances$getAlphabet()$toString()),
-                "\n"
-            )
+            stringr::str_split(stringr::str_trim(alph_str), "\n")
         )
     }
 
@@ -339,9 +355,17 @@ instances_vocabulary <- function (instances, newlines_significant=FALSE) {
 #' @export
 #'
 instances_lengths <- function (instances) {
-    iter <- instances$iterator()
-    replicate(instances$size(),
-        .jcall(iter, "Ljava/lang/Object;", "next")$getData()$size()
+    iter <- rJava::.jcall(instances, "Ljava/util/Iterator;", "iterator")
+
+    instance_size <- function() {
+        inst <- rJava::.jcall(iter, "Ljava/lang/Object;", "next")
+        rJava::.jcall(rJava::.jcall(inst, "Ljava/lang/Object;", "getData"),
+            "I",
+            "size"
+        )
+    }
+    replicate(rJava::.jcall(instances, "I", "size"),
+        instance_size()
     )
 }
 
@@ -368,12 +392,14 @@ instances_lengths <- function (instances) {
 #' @export
 #'
 compatible_instances <- function (docs, instances) {
-    mallet_pipe <- instances$getPipe()
 
-    new_insts <- .jnew("cc/mallet/types/InstanceList",
-                       .jcast(mallet_pipe, "cc/mallet/pipe/Pipe"))
+    mallet_pipe <- rJava::.jcall(instances,
+        "Lcc/mallet/pipe/Pipe;", "getPipe")
 
-    J("cc/mallet/topics/RTopicModel")$addInstances(
+    new_insts <- rJava::.jnew("cc/mallet/types/InstanceList",
+                       rJava::.jcast(mallet_pipe, "cc/mallet/pipe/Pipe"))
+
+    rJava::.jcall("cc/mallet/topics/RTopicModel", "V", "addInstances",
         new_insts, docs$id, docs$text)
 
     new_insts
