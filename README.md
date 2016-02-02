@@ -39,6 +39,9 @@ The tests are based on a sample set of data from DfR. I do not currently have pe
 
 ## Version history
 
+v0.2.2
+ : TODO DATE. New mallet package version allows us to postpone loading the JVM (and makes mallet a suggestion, not a dependency).
+
 v0.2.1
  : 9/23/15. Minor updates. `read_wordcounts` accepts a `reader` method for improved flexibility about data sources, and `export_browser_data` is more tolerant of variant metadata formats. Scaled topic coordinates now use `JS_divergence` written in C++ (introducing a direct Rcpp dependency for a questionable speed gain in a function no one uses). Various code- and documentation-cleaning tweaks.
 
