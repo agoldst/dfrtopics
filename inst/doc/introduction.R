@@ -55,6 +55,7 @@ counts <- counts %>%
     filter(sum(weight) > 3)
 
 ## ----eval=F--------------------------------------------------------------
+#  # not run for this vignette's example
 #  library("SnowballC")
 #  counts <- counts %>%
 #      mutate(word=wordStem(word)) # English stemmer
@@ -127,6 +128,12 @@ theme_update(strip.text=element_text(size=7),  # optional graphics tweaking
              axis.text=element_text(size=7))
 topic_series(m) %>%
     plot_series(labels=topic_labels(m, 2))
+
+## ------------------------------------------------------------------------
+d <- read_diagnostics(file.path("modeling_results", "diagnostics.xml"))
+which.min(d$topics$corpus_dist)
+# in terms of standard deviations from the mean distance:
+sort(scale(d$topics$corpus_dist))[1:3]
 
 ## ----eval=F--------------------------------------------------------------
 #  topic_report(m, "plots")
