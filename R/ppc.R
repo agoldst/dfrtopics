@@ -1,84 +1,275 @@
-imi <- function (m, k, w=vocab(m)) {
+#' Instantaneous mutual information of words and documents
+#'
+#' Calculates the instantaneous mutual information (IMI) for words and documents within a given topic. This measures the degree to which words assigned to that topic are independently distributed over documents. With a specified document-grouping \code{groups}, this instead measures the degree to which words are distributed independently over those groups of documents.
+#'
+#' In ordinary LDA, the distribution of words over topics is independent of documents: that is, in the model's assignment of words to topics, knowing which document a word is in shouldn't tell you anything about more about that word than knowing its topic. In practice, this independence assumption is always violated by the estimated topics. For a given topic \eqn{k}, the IMI measures a given word's contribution to this violation as
+#'
+#' \deqn{
+#' H(D|K=k) - H(D|W=w, K=k)
+#' }
+#' where \eqn{H} denotes the entropy, that is,
+#'
+#' \deqn{
+#' -\sum_d p(d|k) \log p(d|k) + \sum_d p(d|w, k) \log p(d|w, k)
+#' }
+#'
+#' The probabilities are simply found from the counts of word tokens within documents \eqn{d} assigned to topic \eqn{k}, as these are recorded in the final Gibbs sampling state.
+#'
+#' The overall independence violation for topic \eqn{k} is the expectation of #' this quantity over words in that topic,
+#'
+#' \deqn{
+#' \sum_w p(w|k) (H(D|k) - H(D|w, k)) 
+#' }
+#'
+#' For the sum, see \code{\link{mi_topic}}.
+#'
+#' If a grouping factor \code{groups} is given, the IMI is instead taken not over documents but over groups of documents For example, suppose that the documents are articles drawn from three different periodicals; we might measure the degree to which knowing which periodical the document comes from tells us about which words have been assigned to the topic. Sampled word counts are simply summed over the document groups and then the calculation proceeds with groups in place of documents \eqn{d} in the formulas above.
+#'
+#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
+#'
+#' @param k topic number (calculations are only done for one topic at a time)
+#'
+#' @param words vector of words to calculate IMI values for.
+#'
+#' @param groups optional grouping factor with one element for each document. If not NULL, IMIs are calculated over document groups rather than documents.
+#'
+#' @return a vector of scores, in the same order as \code{w}
+#'
+#' @seealso \code{\link{mi_topic}}, \code{\link{calc_imi}} for the calculation
+#'
+#' @references Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models. \emph{Empirical Methods in Natural Language Processing}. \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
+#'
+#' @export
+#'
+imi <- function (m, k, words=vocabulary(m), groups=NULL) {
     doc_topics_k <- doc_topics(m)[ , k]
-    term_doc_k <- tdm_topic(m, k)
-    calc_imi(doc_topics_k, term_doc_k, match(w, vocab(m)))
+    w <- match(words, vocabulary(m)))
+
+    # TODO could skip getting the full tdm_k using bigsplit
+    term_doc_k <- tdm_topic(m, k)[w, ]
+
+    # apply grouping if given
+    if (!is.null(groups)) {
+        groups <- as.factor(groups)
+        stopifnot(length(groups) == n_docs(m))
+        doc_topics_k <- tapply(doc_topics_k, groups, sum)
+        term_doc_k <- sum_row_groups(term_doc_k, groups)
+    }
+
+    calc_imi(doc_topics_k, term_doc_k)
 }
 
-imi_group <- function (m, k, g, w=vocab(m)) {
-    g <- as.factor(g)
-    stopifnot(length(g) == n_docs(m))
-    group_topics_k <- tapply(doc_topics(m)[ , k], g, sum)
-    term_group_k <- sum_row_groups(tdm_topic(m, k), g)
-    calc_imi(group_topics_k, term_group_k, match(w, vocab(m)))
-}
-
-# David M helps out here:
-# https://lists.cs.princeton.edu/pipermail/topic-models/2012-March/001779.html
-calc_imi <- function (doc_topics_k, term_doc_k, w) {
+#' IMI calculation routine
+#'
+#' The actual computation of IMI (instantaneous mutual information) values for \code{\link{imi}} is done by
+#' this routine. If you are calling \code{imi} repeatedly
+#' for a given topic, you can gain some speed by pre-calculating the
+#' inputs and supplying them directly to this function.
+#'
+#' @param doc_topics_k vector of \emph{counts}, one for each document, of words assigned to topic \eqn{k}
+#'
+#' @param term_doc_k matrix of counts, where element \eqn{i,j} is the number of words of type \eqn{i} in document (or document-group) \eqn{j} is assigned to topic \eqn{k}
+#'
+#' @return a vector of scores, one for each row of \code{term_doc_k}
+#'
+#' @seealso \code{\link{imi}} which calls this; see under "Details" there for more detail on IMI
+#'
+#' @references I have referred to a helpful note by David Mimno here: \url{https://lists.cs.princeton.edu/pipermail/topic-models/2012-March/001779.html}.
+#'
+#' @export
+#'
+calc_imi <- function (doc_topics_k, term_doc_k) {
     # add pseudo-count of 1 so we never take log 0
     # TODO would it be better just to throw out docs with weight 0 ?
     num_docs <- length(doc_topics_k)
-    p_d <- (doc_topics_k + 1) /
-        (sum(doc_topics_k) + num_docs)
+    # documents with zero words in this topic make no contribution
+    doc_topics_k <- doc_topics_k[doc_topics_k != 0]
+    p_d <- doc_topics_k / sum(doc_topics_k)
+
+    # H(D|k)
     H_D <- -sum(p_d * log2(p_d))
+
     # p(d|w) = N(w, d) / N(w) = N(w, d) / sum_d N(w, d)
-    # and add pseudo-count of 1
-
     # TODO RCpp or RCppParallel or gtfo
-    p_dw <- normalize_rows(
-        term_doc_k[w, ] + 1
-    )
-
-    H_Dw <- -rowSums(p_dw * log2(p_dw))
+    p_dw <- normalize_rows(term_doc_k) 
+    log_p_dw <- log(p_dw)
+    # where N(w, d) = 0, zero out the term from the entropy calculation
+    log_p_dw[!is.finite(log_p_dw)] <- 0
+    H_Dw <- -rowSums(p_dw * log_p_dw))
 
     H_D - H_Dw
 }
 
-topic_imi <- function (m, k, n_words) { 
-    if (missing(n_words)) { 
-        topw <- top_words(m)
-    } else {
-        topw <- top_words(m, n_words)
-    }
-
-    imi(m, k, topw$word[topw$topic == k])
-}
-
-topic_mi <- function (m, k, g) {
+#' Mutual information of words and documents in a topic
+#'
+#' Calculates the mutual information of words and documents within a given topic. This measures the degree to which the estimated distribution over words within the topic violates the assumption that it is independent of the distribution of words over documents.
+#'
+#' The mutual information is given by
+#'
+#' \deqn{
+#' MI(W, D|K=k) = \sum_{w, d} p(w, d|k) \log\frac{p(w, d|k)}{p(w|k) p(d|k)}
+#' }
+#'
+#' In the limit of true independence, the fraction in the log is one and the MI 
+#' is zero. In general, we can rewrite the sum as
+#'
+#' \deqn{
+#' \sum_d p(d|k) \sum_w p(w|d, k) \log\frac{p(w|d, k)}{p(w|k)}
+#' }
+#'
+#' which is \eqn{E_D(KL(W|d, W)}, the expected divergence of the conditional distribution from the marginal distribution. It can be shown with some algebra that
+#'
+#' \deqn{
+#' MI(W, D|k) = \sum_{w} p(w|k) IMI(w|k)
+#' }
+#'
+#' where the IMI is defined as specified in the Details for \code{\link{imi}}. This is the formula used for calculation here.
+#'
+#' We can replace \eqn{D} with a grouping over documents and the formulas carry 
+#' over without further change, now expressing the mutual information of those groupings and words within the topic.
+#'
+#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
+#'
+#' @param k topic number (calculations are only done for one topic at a time)
+#'
+#' @param groups optional grouping factor for documents. If omitted, the MI over documents is calculated.
+#'
+#' @return a single value, giving the estimated mutual information.
+#'
+#' @seealso \code{\link{imi}}, \code{\link{imi_check}}, \code{\link{mi_check}}
+#'
+#' @export
+mi_topic <- function (m, k, groups=NULL) {
     pw <- tw_smooth_normalize(m)(topic_words(m))[k, ] 
-    if (missing(g)) {
-        imis <- imi(m, k)
-    } else {
-        imis <- imi_group(m, k, g)
-    }
-    calc_topic_mi(pw, imis)
+    imis <- imi(m, k, groups)
+    sum(pw * imis)
 }
 
-calc_topic_mi <- function (pw, imi_w) sum(pw * imi_w)
+#' Calculate IMI scores for the top words in a topic
+#'
+#' As a convenience, this function extracts a topic's top words and returns a data frame with their IMI scores over documents or document groups.
+#'
+#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
+#'
+#' @param k topic number (calculations are only done for one topic at a time)
+#'
+#' @param groups optional grouping factor with one element for each document
+#'
+#' @param ... passed on to \code{\link{top_words}}: use to specify number of top words and/or weighting function
+#'
+#' @return the data frame from \code{\link{top_words} with an addition \code{imi} column
+#'
+#' @seealso \code{\link{imi}}, \code{\link{mi_topic}}, \code{\link{top_words}}
+#' 
+#' @export
+#'
+top_words_imi <- function (m, k, groups=NULL, ...) {
+    result <- top_words(m, ...)
+    result <- result[result$topic == k, ]
+    imis <- imi(m, k, result$word, groups)
+    result$imi <- imis
+    result
+}
 
-ppc_word <- function (m, k, words, n_reps=10) {
+#' Posterior predictive checking for individual words
+#'
+#' This function provides a way to check the fit of the topic model at the individual words-in-topics level by comparing the obtained instantaneous mutual information for those words to scores derived from simulations from the posterior. Large deviations from simulated values may indicate a poorer fit. In particular, large negative deviations indicate words which are more uniformly distributed across documents that the model expects (e.g., boilerplate text appearing in every document), and large positive deviations indicate words which are more sharply localized than the model expects.
+#'
+#' For a given topic \eqn{k}, a simulation draws a new term-document matrix from the posterior for \eqn{d}. Since a topic is simply a multinomial distribution over the words, for a given document \eqn{d} we simply draw the same number of samples from this multinomial as there were words allocated to topic \eqn{k} in \eqn{d} in the model we are checking. Under the assumptions of the model, this is how the distribution \eqn{p(w, d|k)} arises. With this simulated topic-specific term-document matrix in hand, we recalculate the IMI scores for the given \code{words}. The process is replicated to obtain a reference distribution to compare the values from \code{\link{imi}} to.
+#'
+#' A reasonable way to make the comparison is to standardize the "actual" IMI values by the mean and standard deviation of the simulated values. Mimno and Blei (2011) call this the "deviance" measure, recommending over \eqn{p} values because the latter are likely to vanish.
+#'
+#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
+#'
+#' @param k topic number (calculations are only done for one topic at a time)
+#'
+#' @param words vector of words to calculate IMI values for
+#'
+#' @param groups optional grouping factor for documents. If supplied, the IMI values will be for words over groups rather than over individual documents
+#'
+#' @param n_reps number of simulations
+#'
+#' @return a matrix of simulated IMI values, with one row for each element of \code{words} and one column for each simulation
+#'
+#' @seealso \code{\link{mi_check}}
+#'
+#' @export
+#' 
+imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
     p_w <- topic_words(m)[k, ] / sum(topic_words(m)[k, ])
 
-    dt_k <- doc_topics(m)[k, ]
+    dt_k <- doc_topics(m)[ , k]
     w <- match(words, vocab(m))
+
+    # TODO verify this is not stupid
+
+    # there's no point simulating frequencies for words we're not scoring 
+    # since IMI(w|k) depends only on p(d|k) and p(d|w, k)
+    if (length(w) < length(p_w)) {
+        p_w <- c(p_w[w], sum(p_w[-w]))
+        skipped_words <- TRUE
+    } else {
+        skipped_words <- FALSE
+    }
+
     imi_rep <- replicate(n_reps,
-        calc_imi(dt_k, simulate_tdm_topic(dt_k, p_w), w)
+        calc_imi(dt_k, simulate_tdm_topic(dt_k, p_w))
     )
+
+    if (skipped_words) {
+        imi_rep <- imi_rep[-length(p_w), ]
+    }
 
     rownames(imi_rep) <- words
 
     imi_rep
 }
 
+
+#' Posterior predictive checking for topics
+#'
+#' This function provides a way to check the fit of the topic model by comparing the obtained mutual information for topics to values derived from simulations from the posterior. Large deviations from simulated values may indicate a poorer fit.
+#'
+#' For a given topic \eqn{k}, a simulation draws a new term-document matrix from the posterior for \eqn{d}. Since a topic is simply a multinomial distribution over the words, for a given document \eqn{d} we simply draw the same number of samples from this multinomial as there were words allocated to topic \eqn{k} in \eqn{d} in the model we are checking. Under the assumptions of the model, this is how the distribution \eqn{p(w, d|k)} arises. With this simulated topic-specific term-document matrix in hand, we recalculate the MI. The process is replicated to obtain a reference distribution to compare the values from \code{\link{mi_topic}} to.
+#'
+#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
+#'
+#' @param k topic number (calculations are only done for one topic at a time)
+#'
+#' @param groups optional grouping factor for documents. If supplied, the IMI values will be for words over groups rather than over individual documents
+#'
+#' @param n_reps number of simulations
+#'
+#' @return a vector of simulated MI values
+#'
+#' @seealso \code{\link{imi_check}}
+#'
+#' @export
+#' 
+mi_check <- function (m, k, groups=NULL, n_reps=10) {
+    p_w <- topic_words(m)[k, ] / sum(topic_words(m)[k, ])
+
+    replicate(n_reps,
+        sum(p_w * calc_imi(dt_k, simulate_tdm_topic(dt_k, p_w)))
+    )
+}
+
+# Simulation function
+#
+# dt_k: vector of counts of words assigned to topic k in documents, N(d|k)
+# p_w_k: vector of word probabilities in topic k, p(w|k)
+
 simulate_tdm_topic <- function (dt_k, p_w_k) {
     # for each document d, all that matters is the total number of words
     # assigned to topic k. This gives the number of words to draw from k
     # in the simulation.
-    # FUN.VALUE just gives vapply the length of the vector (V)
+    # rmultinom is not vectorized in the sample size parameter, so we
+    # resort to vapply
+    # FUN.VALUE just gives vapply the length of the vector
+
+    # TODO somehow get sparsity back
     vapply(dt_k, rmultinom, FUN.VALUE=p_w_k,
            n=1, prob=p_w_k)
 }
 
 
-
-# TODO GROUPS
