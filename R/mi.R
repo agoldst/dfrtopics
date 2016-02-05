@@ -15,7 +15,8 @@
 #'
 #' The probabilities are simply found from the counts of word tokens within documents \eqn{d} assigned to topic \eqn{k}, as these are recorded in the final Gibbs sampling state.
 #'
-#' The overall independence violation for topic \eqn{k} is the expectation of #' this quantity over words in that topic,
+#' The overall independence violation for topic \eqn{k} is the expectation of 
+#' this quantity over words in that topic,
 #'
 #' \deqn{
 #' \sum_w p(w|k) (H(D|k) - H(D|w, k)) 
@@ -43,10 +44,10 @@
 #'
 imi <- function (m, k, words=vocabulary(m), groups=NULL) {
     doc_topics_k <- doc_topics(m)[ , k]
-    w <- match(words, vocabulary(m)))
+    w <- match(words, vocabulary(m))
 
     # TODO could skip getting the full tdm_k using bigsplit
-    term_doc_k <- tdm_topic(m, k)[w, ]
+    term_doc_k <- tdm_topic(m, k)[w, , drop=FALSE]
 
     # apply grouping if given
     if (!is.null(groups)) {
@@ -90,11 +91,11 @@ calc_imi <- function (doc_topics_k, term_doc_k) {
     # p(d|w) = N(w, d) / N(w) = N(w, d) / sum_d N(w, d)
     # TODO RCpp or RCppParallel or gtfo
     p_dw <- normalize_rows(term_doc_k) 
-    log_p_dw <- log(p_dw)
+    log_p_dw <- log2(p_dw)
     # where N(w, d) = 0, zero out the term from the entropy calculation
     # TODO is this right?
     log_p_dw[!is.finite(log_p_dw)] <- 0
-    H_Dw <- -rowSums(p_dw * log_p_dw))
+    H_Dw <- -rowSums(p_dw * log_p_dw)
 
     H_D - H_Dw
 }
@@ -156,7 +157,7 @@ mi_topic <- function (m, k, groups=NULL) {
 #'
 #' @param ... passed on to \code{\link{top_words}}: use to specify number of top words and/or weighting function
 #'
-#' @return the data frame from \code{\link{top_words} with an addition \code{imi} column
+#' @return the data frame from \code{\link{top_words}} with an addition \code{imi} column
 #'
 #' @seealso \code{\link{imi}}, \code{\link{mi_topic}}, \code{\link{top_words}}
 #' 

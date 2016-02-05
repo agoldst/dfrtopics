@@ -7,8 +7,8 @@ test_that("calc_imi is correct", {
     tdm <- matrix(c(1, 1, 1,
                     1, 5, 1), nrow=2, byrow=TRUE)
     imis <- calc_imi(doc_counts, tdm)
-    expect_equal(imis, 1.37 - c(1.58, 1.14),
-        tolerance=5e-3)
+    expect_equal(imis, 1.37 - c(1.58, 1.15),
+        tolerance=0.02)
 })
 
 
@@ -63,12 +63,12 @@ test_that("An IMI calculation does what we think", {
 })
 
 test_that("Getting IMIs for top words proceeds as expected", {
-    scores <- top_words_imi(m, k)
-    expect_equal(names(scores), c("word", "topic", "weight", "imi"))
+    scores <- top_words_imi(m, k, n=10)
+    expect_equal(names(scores), c("topic", "word", "weight", "imi"))
 })
 
 test_that("Scoring for overall MI proceeds as expected", {
-    mi5 <- mi(m, k)
+    mi5 <- mi_topic(m, k)
     expect_equal(length(mi5), 1)
     expect_true(is.finite(mi5))
 })
@@ -87,7 +87,7 @@ test_that("Grouping for IMIs does what we think", {
 })
 
 test_that("Grouping for MI proceeds as we expect", {
-    mi5 <- mi(m, k, groups=year)
+    mi5 <- mi_topic(m, k, groups=year)
     expect_equal(length(mi5), 1)
     expect_true(is.finite(mi5))
 })
