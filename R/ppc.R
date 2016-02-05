@@ -21,7 +21,7 @@
 #' \sum_w p(w|k) (H(D|k) - H(D|w, k)) 
 #' }
 #'
-#' For the sum, see \code{\link{mi_topic}}.
+#' For obtaining the sum, see \code{\link{mi_topic}}.
 #'
 #' If a grouping factor \code{groups} is given, the IMI is instead taken not over documents but over groups of documents For example, suppose that the documents are articles drawn from three different periodicals; we might measure the degree to which knowing which periodical the document comes from tells us about which words have been assigned to the topic. Sampled word counts are simply summed over the document groups and then the calculation proceeds with groups in place of documents \eqn{d} in the formulas above.
 #'
@@ -191,7 +191,9 @@ top_words_imi <- function (m, k, groups=NULL, ...) {
 #'
 #' @return a matrix of simulated IMI values, with one row for each element of \code{words} and one column for each simulation
 #'
-#' @seealso \code{\link{mi_check}}
+#' @seealso \code{\link{mi_check}}, \code{\link{imi}}
+#'
+#' @references Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models. \emph{Empirical Methods in Natural Language Processing}. \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
 #'
 #' @export
 #' 
@@ -242,7 +244,9 @@ imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
 #'
 #' @return a vector of simulated MI values
 #'
-#' @seealso \code{\link{imi_check}}
+#' @seealso \code{\link{imi_check}}, \code{\link{mi_topic}}
+#'
+#' @references Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models. \emph{Empirical Methods in Natural Language Processing}. \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
 #'
 #' @export
 #' 
@@ -266,8 +270,12 @@ simulate_tdm_topic <- function (dt_k, p_w_k) {
     # rmultinom is not vectorized in the sample size parameter, so we
     # resort to vapply
     # FUN.VALUE just gives vapply the length of the vector
+    #
+    # TODO speed and space, dude. Considering that the rmultinom algorithm
+    # is just to take a binomial for category 1, then take another binomial for
+    # category 2 using the remaining trials, etc., we could just implement
+    # this sparsely ourselves by terminating.
 
-    # TODO somehow get sparsity back
     vapply(dt_k, rmultinom, FUN.VALUE=p_w_k,
            n=1, prob=p_w_k)
 }
