@@ -79,10 +79,8 @@ imi <- function (m, k, words=vocabulary(m), groups=NULL) {
 #' @export
 #'
 calc_imi <- function (doc_topics_k, term_doc_k) {
-    # add pseudo-count of 1 so we never take log 0
-    # TODO would it be better just to throw out docs with weight 0 ?
-    num_docs <- length(doc_topics_k)
     # documents with zero words in this topic make no contribution
+    # TODO is this right?
     doc_topics_k <- doc_topics_k[doc_topics_k != 0]
     p_d <- doc_topics_k / sum(doc_topics_k)
 
@@ -94,6 +92,7 @@ calc_imi <- function (doc_topics_k, term_doc_k) {
     p_dw <- normalize_rows(term_doc_k) 
     log_p_dw <- log(p_dw)
     # where N(w, d) = 0, zero out the term from the entropy calculation
+    # TODO is this right?
     log_p_dw[!is.finite(log_p_dw)] <- 0
     H_Dw <- -rowSums(p_dw * log_p_dw))
 
@@ -264,17 +263,21 @@ mi_check <- function (m, k, groups=NULL, n_reps=10) {
 # p_w_k: vector of word probabilities in topic k, p(w|k)
 
 simulate_tdm_topic <- function (dt_k, p_w_k) {
+
     # for each document d, all that matters is the total number of words
     # assigned to topic k. This gives the number of words to draw from k
     # in the simulation.
-    # rmultinom is not vectorized in the sample size parameter, so we
-    # resort to vapply
-    # FUN.VALUE just gives vapply the length of the vector
     #
-    # TODO speed and space, dude. Considering that the rmultinom algorithm
-    # is just to take a binomial for category 1, then take another binomial for
-    # category 2 using the remaining trials, etc., we could just implement
-    # this sparsely ourselves by terminating.
+    # rmultinom is not vectorized in the sample size parameter, so we
+    # resort to vapply; FUN.VALUE just gives vapply the length of the
+    # rvector
+    #
+    # TODO speed and space, dude. Considering that the rmultinom
+    # algorithm is just to take a binomial for category 1, then take
+    # another binomial for category 2 using the remaining trials, etc.,
+    # we could just implement this sparsely ourselves by terminating
+    # when we reach the needed number of words and then returning
+    # triplets instead of a vector padded out with zeroes
 
     vapply(dt_k, rmultinom, FUN.VALUE=p_w_k,
            n=1, prob=p_w_k)
