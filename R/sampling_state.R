@@ -108,8 +108,10 @@ read_sampling_state <- function(filename,
     state <- bigmemory::read.big.matrix(
         filename, type=data_type, header=TRUE, sep=",",
         backingpath=big_workdir,
-        backingfile="state.bin",
-        descriptorfile="state.desc")
+        # use tempfile for guarantee that filename is unused
+        backingfile=basename(tempfile("state", tmpdir=big_workdir, ".bin")),
+        descriptorfile=basename(tempfile("state", tmpdir=big_workdir, ".desc"))
+    )
     message("Done.")
 
     # change mallet's 0-based indices to 1-based
