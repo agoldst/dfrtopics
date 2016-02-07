@@ -54,7 +54,7 @@ imi <- function (m, k, words=vocabulary(m), groups=NULL) {
         groups <- as.factor(groups)
         stopifnot(length(groups) == n_docs(m))
         doc_topics_k <- tapply(doc_topics_k, groups, sum)
-        term_doc_k <- sum_row_groups(term_doc_k, groups)
+        term_doc_k <- sum_col_groups(term_doc_k, groups)
     }
 
     calc_imi(doc_topics_k, term_doc_k)
@@ -141,7 +141,7 @@ calc_imi <- function (doc_topics_k, term_doc_k) {
 #' @export
 mi_topic <- function (m, k, groups=NULL) {
     pw <- tw_smooth_normalize(m)(topic_words(m))[k, ] 
-    imis <- imi(m, k, groups)
+    imis <- imi(m, k, groups=groups)
     sum(pw * imis)
 }
 
@@ -201,7 +201,11 @@ imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
     p_w <- topic_words(m)[k, ] / sum(topic_words(m)[k, ])
 
     dt_k <- doc_topics(m)[ , k]
-    w <- match(words, vocab(m))
+    if (!is.null(groups)) {
+        groups <- factor(groups)
+        dt_k <- tapply(dt_k, groups, sum)
+    }
+    w <- match(words, vocabulary(m))
 
     # TODO verify this is not stupid
 
@@ -252,6 +256,11 @@ imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
 #' 
 mi_check <- function (m, k, groups=NULL, n_reps=10) {
     p_w <- topic_words(m)[k, ] / sum(topic_words(m)[k, ])
+    dt_k <- doc_topics(m)[ , k]
+    if (!is.null(groups)) {
+        groups <- factor(groups)
+        dt_k <- tapply(dt_k, groups, sum)
+    }
 
     replicate(n_reps,
         sum(p_w * calc_imi(dt_k, simulate_tdm_topic(dt_k, p_w)))

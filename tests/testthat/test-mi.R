@@ -31,18 +31,20 @@ insts <- read_wordcounts(fs) %>%
     wordcounts_texts() %>%
     make_instances(stoplist_file)
 
-m <- train_model(
-    insts,
-    n_topics=n_topics,
-    n_iters=200,
-    threads=1, 
-    alpha_sum=5,
-    beta=0.01,
-    n_hyper_iters=20,
-    n_burn_in=20,
-    n_max_iters=10,
-    seed=42,
-    metadata=read_dfr_metadata(file.path(data_dir, "citations.tsv"))
+suppressMessages(
+    m <- train_model(
+        insts,
+        n_topics=n_topics,
+        n_iters=200,
+        threads=1, 
+        alpha_sum=5,
+        beta=0.01,
+        n_hyper_iters=20,
+        n_burn_in=20,
+        n_max_iters=10,
+        seed=42,
+        metadata=read_dfr_metadata(file.path(data_dir, "citations.tsv"))
+    )
 )
 
 m <- load_sampling_state(m)
@@ -78,6 +80,7 @@ year <- factor(substr(metadata(m)$pubdate, 1, 4))
 test_that("Grouping for IMIs does what we think", {
     imi_chaucer <- imi(m, k, words="chaucer", groups=year)
     Nd <- sum_row_groups(doc_topics(m), year)[ , k]
+    N <- sum(doc_topics(m)[ , k])
     Hd <- -sum(Nd[Nd != 0] / N * log2(Nd[Nd != 0] / N))
     w <- match("chaucer", vocabulary(m))
     Nwd <- sum_col_groups(tdm_topic(m, k), year)[w, ]
@@ -93,7 +96,7 @@ test_that("Grouping for MI proceeds as we expect", {
 })
 
 test_that("Simulated tdm_topic has the right look", {
-    x <- simulate_tdm_topic(doc_topics(m)[ , k],
+    x <- dfrtopics:::simulate_tdm_topic(doc_topics(m)[ , k],
        tw_smooth_normalize(m)(topic_words(m))[k, ])
     expect_equal(dim(x), c(length(vocabulary(m)), n_docs(m)))
     expect_equal(colSums(x), doc_topics(m)[ , k])
