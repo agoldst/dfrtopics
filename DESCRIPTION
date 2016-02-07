@@ -1,6 +1,7 @@
 Package: dfrtopics
 Title: Tools for exploring topic models of text
-Description: This package provides tools for exploring topic models created by MALLET, with specialized functions for handling JSTOR Data for Research data.
+Description: This package provides tools for exploring topic models created by
+    MALLET, with specialized functions for handling JSTOR Data for Research data.
 Version: 0.2.1
 Author: Andrew Goldstone <andrew.goldstone@gmail.com>
 Maintainer: Andrew Goldstone <andrew.goldstone@gmail.com>
@@ -25,9 +26,11 @@ Suggests:
     jsonlite,
     lubridate,
     tidyr,
-    knitr
+    knitr,
+    rmarkdown
 SystemRequirements: python
 License: MIT | file LICENSE
 LazyData: true
 VignetteBuilder: knitr
 LinkingTo: Rcpp
+RoxygenNote: 5.0.1
