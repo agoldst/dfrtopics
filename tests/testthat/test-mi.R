@@ -1,11 +1,28 @@
 context("Mutual Information")
 
+# 5 vectors summing to 1 
+p <- t(rmultinom(5, 100, runif(8)) / 100)
+
+test_that("entropy is correct", {
+    p1 <- p[1, ]
+    h <- -sum(p1[p1 != 0] * log2(p1[p1 != 0]))
+    expect_equal(entropy(p1), h)
+})
+
+test_that("row_entropy is correct", {
+    lp <- log2(p)
+    lp[!is.finite(lp)] <- 0
+    h <- -rowSums(p * lp)
+    expect_equal(row_entropy(p), h)
+    expect_equal(row_entropy(Matrix::Matrix(p, sparse=TRUE)), h)
+})
+
 test_that("calc_imi is correct", {
     # example from
     # https://lists.cs.princeton.edu/pipermail/topic-models/2012-March/001779.html
     doc_counts <- c(2, 6, 2)
-    tdm <- matrix(c(1, 1, 1,
-                    1, 5, 1), nrow=2, byrow=TRUE)
+    tdm <- Matrix::Matrix(c(1, 1, 1,
+                            1, 5, 1), nrow=2, byrow=TRUE, sparse=TRUE)
     imis <- calc_imi(doc_counts, tdm)
     expect_equal(imis, 1.37 - c(1.58, 1.15),
         tolerance=0.02)
@@ -31,20 +48,18 @@ insts <- read_wordcounts(fs) %>%
     wordcounts_texts() %>%
     make_instances(stoplist_file)
 
-suppressMessages(
-    m <- train_model(
-        insts,
-        n_topics=n_topics,
-        n_iters=200,
-        threads=1, 
-        alpha_sum=5,
-        beta=0.01,
-        n_hyper_iters=20,
-        n_burn_in=20,
-        n_max_iters=10,
-        seed=42,
-        metadata=read_dfr_metadata(file.path(data_dir, "citations.tsv"))
-    )
+m <- train_model(
+    insts,
+    n_topics=n_topics,
+    n_iters=200,
+    threads=1, 
+    alpha_sum=5,
+    beta=0.01,
+    n_hyper_iters=20,
+    n_burn_in=20,
+    n_max_iters=10,
+    seed=42,
+    metadata=read_dfr_metadata(file.path(data_dir, "citations.tsv"))
 )
 
 m <- load_sampling_state(m)

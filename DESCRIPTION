@@ -14,7 +14,8 @@ Imports:
     dplyr,
     lazyeval,
     magrittr,
-    Rcpp
+    Rcpp,
+    RcppEigen
 Suggests: 
     ggplot2,
     scales,
@@ -32,5 +33,5 @@ SystemRequirements: python
 License: MIT | file LICENSE
 LazyData: true
 VignetteBuilder: knitr
-LinkingTo: Rcpp
+LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 5.0.1

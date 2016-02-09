@@ -35,7 +35,8 @@ where \eqn{H} denotes the entropy, that is,
 
 The probabilities are simply found from the counts of word tokens within documents \eqn{d} assigned to topic \eqn{k}, as these are recorded in the final Gibbs sampling state.
 
-The overall independence violation for topic \eqn{k} is the expectation of #' this quantity over words in that topic,
+The overall independence violation for topic \eqn{k} is the expectation of 
+this quantity over words in that topic,
 
 \deqn{
 \sum_w p(w|k) (H(D|k) - H(D|w, k)) 

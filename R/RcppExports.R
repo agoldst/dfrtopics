@@ -19,3 +19,21 @@ JS_divergence <- function(P, Q) {
     .Call('dfrtopics_JS_divergence', PACKAGE = 'dfrtopics', P, Q)
 }
 
+calc_row_entropy <- function(m) {
+    .Call('dfrtopics_calc_row_entropy', PACKAGE = 'dfrtopics', m)
+}
+
+#' Entropy of a vector
+#'
+#' This function computes the entropy of a vector, understood as a discrete
+#' distribution over the index.
+#'
+#' @param x vector representing the distribution. Not checked to see whether it is properly normalized.
+#'
+#' @return \eqn{sum_i x_i \log x_i}, where the log is base 2 and the sum is taken only over non-zero elements of \eqn{x}.
+#'
+#' @export
+entropy <- function(x) {
+    .Call('dfrtopics_entropy', PACKAGE = 'dfrtopics', x)
+}
+

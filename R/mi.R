@@ -80,24 +80,32 @@ imi <- function (m, k, words=vocabulary(m), groups=NULL) {
 #' @export
 #'
 calc_imi <- function (doc_topics_k, term_doc_k) {
-    # documents with zero words in this topic make no contribution
-    # TODO is this right?
-    doc_topics_k <- doc_topics_k[doc_topics_k != 0]
     p_d <- doc_topics_k / sum(doc_topics_k)
 
     # H(D|k)
-    H_D <- -sum(p_d * log2(p_d))
+    H_D <- entropy(p_d)
 
     # p(d|w) = N(w, d) / N(w) = N(w, d) / sum_d N(w, d)
-    # TODO RCpp or RCppParallel or gtfo
     p_dw <- normalize_rows(term_doc_k) 
-    log_p_dw <- log2(p_dw)
-    # where N(w, d) = 0, zero out the term from the entropy calculation
-    # TODO is this right?
-    log_p_dw[!is.finite(log_p_dw)] <- 0
-    H_Dw <- -rowSums(p_dw * log_p_dw)
+    H_Dw <- row_entropy(p_dw)
 
     H_D - H_Dw
+}
+
+#' Entropy of sparse-matrix rows
+#'
+#' Given a sparse matrix in which each row is a discrete probability distribution over the index, takes the entropy \eqn{-\sum_j x_j \log_2 x_j} row-wise (considering only non-zero entries).
+#'
+#' @param m sparse \code{\link[Matrix]{Matrix}}.
+#'
+#' @return ordinary vector of entropies.
+#'
+#' @export
+row_entropy <- function (m) {
+    if (!is(m, "sparseMatrix")) {
+        m <- Matrix::Matrix(m, sparse=TRUE)
+    }
+    calc_row_entropy(m)
 }
 
 #' Mutual information of words and documents in a topic
