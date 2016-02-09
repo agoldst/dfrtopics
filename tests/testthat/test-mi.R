@@ -110,11 +110,11 @@ test_that("Grouping for MI proceeds as we expect", {
     expect_true(is.finite(mi5))
 })
 
-test_that("Simulated tdm_topic has the right look", {
-    x <- dfrtopics:::simulate_tdm_topic(doc_topics(m)[ , k],
+test_that("Simulated topic TDM has the right look", {
+    x <- rmultinom_sparse(doc_topics(m)[ , k],
        tw_smooth_normalize(m)(topic_words(m))[k, ])
     expect_equal(dim(x), c(length(vocabulary(m)), n_docs(m)))
-    expect_equal(colSums(x), doc_topics(m)[ , k])
+    expect_equal(Matrix::colSums(x), doc_topics(m)[ , k])
     expect_true(all(x >= 0))
 })
 

@@ -148,7 +148,8 @@ row_entropies <- function (m) {
 #'
 #' @export
 mi_topic <- function (m, k, groups=NULL) {
-    pw <- tw_smooth_normalize(m)(topic_words(m))[k, ] 
+    # TODO should we bother with smoothing?
+    pw <- topic_words(m)[k, ] / sum(topic_words(m)[k, ])
     imis <- imi(m, k, groups=groups)
     sum(pw * imis)
 }
@@ -206,7 +207,7 @@ top_words_imi <- function (m, k, groups=NULL, ...) {
 #' @export
 #' 
 imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
-    p_w <- topic_words(m)[k, ] / sum(topic_words(m)[k, ])
+    N_w <- topic_words(m)[k, ]
 
     dt_k <- doc_topics(m)[ , k]
     if (!is.null(groups)) {
@@ -215,23 +216,22 @@ imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
     }
     w <- match(words, vocabulary(m))
 
-    # TODO verify this is not stupid
-
+    # TODO verify this is not stupid:
     # there's no point simulating frequencies for words we're not scoring 
     # since IMI(w|k) depends only on p(d|k) and p(d|w, k)
-    if (length(w) < length(p_w)) {
-        p_w <- c(p_w[w], sum(p_w[-w]))
+    if (length(w) < length(N_w)) {
+        N_w <- c(N_w[w], sum(N_w[-w]))
         skipped_words <- TRUE
     } else {
         skipped_words <- FALSE
     }
 
     imi_rep <- replicate(n_reps,
-        calc_imi(dt_k, simulate_tdm_topic(dt_k, p_w))
+        calc_imi(dt_k, rmultinom_sparse(dt_k, N_w))
     )
 
     if (skipped_words) {
-        imi_rep <- imi_rep[-length(p_w), ]
+        imi_rep <- imi_rep[-length(N_w), ]
     }
 
     rownames(imi_rep) <- words
@@ -263,7 +263,8 @@ imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
 #' @export
 #' 
 mi_check <- function (m, k, groups=NULL, n_reps=10) {
-    p_w <- topic_words(m)[k, ] / sum(topic_words(m)[k, ])
+    N_w <- topic_words(m)[k, ]
+    p_w <- N_w / sum(N_w)
     dt_k <- doc_topics(m)[ , k]
     if (!is.null(groups)) {
         groups <- factor(groups)
@@ -271,34 +272,8 @@ mi_check <- function (m, k, groups=NULL, n_reps=10) {
     }
 
     replicate(n_reps,
-        sum(p_w * calc_imi(dt_k, simulate_tdm_topic(dt_k, p_w)))
+        sum(p_w * calc_imi(dt_k, rmultinom_sparse(dt_k, N_w)))
     )
-}
-
-# Simulation function
-#
-# dt_k: vector of counts of words assigned to topic k in documents, N(d|k)
-# p_w_k: vector of word probabilities in topic k, p(w|k)
-
-simulate_tdm_topic <- function (dt_k, p_w_k) {
-
-    # for each document d, all that matters is the total number of words
-    # assigned to topic k. This gives the number of words to draw from k
-    # in the simulation.
-    #
-    # rmultinom is not vectorized in the sample size parameter, so we
-    # resort to vapply; FUN.VALUE just gives vapply the length of the
-    # rvector
-    #
-    # TODO speed and space, dude. Considering that the rmultinom
-    # algorithm is just to take a binomial for category 1, then take
-    # another binomial for category 2 using the remaining trials, etc.,
-    # we could just implement this sparsely ourselves by terminating
-    # when we reach the needed number of words and then returning
-    # triplets instead of a vector padded out with zeroes
-
-    vapply(dt_k, rmultinom, FUN.VALUE=p_w_k,
-           n=1, prob=p_w_k)
 }
 
 

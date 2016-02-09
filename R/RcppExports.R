@@ -37,3 +37,7 @@ JS_divergence <- function(P, Q) {
     .Call('dfrtopics_JS_divergence', PACKAGE = 'dfrtopics', P, Q)
 }
 
+draw_multinom <- function(nn, probs) {
+    .Call('dfrtopics_draw_multinom', PACKAGE = 'dfrtopics', nn, probs)
+}
+

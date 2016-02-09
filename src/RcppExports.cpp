@@ -40,3 +40,15 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// draw_multinom
+List draw_multinom(const IntegerVector nn, const NumericVector probs);
+RcppExport SEXP dfrtopics_draw_multinom(SEXP nnSEXP, SEXP probsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< const IntegerVector >::type nn(nnSEXP);
+    Rcpp::traits::input_parameter< const NumericVector >::type probs(probsSEXP);
+    __result = Rcpp::wrap(draw_multinom(nn, probs));
+    return __result;
+END_RCPP
+}
