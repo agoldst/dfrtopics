@@ -87,7 +87,7 @@ calc_imi <- function (doc_topics_k, term_doc_k) {
 
     # p(d|w) = N(w, d) / N(w) = N(w, d) / sum_d N(w, d)
     p_dw <- normalize_rows(term_doc_k) 
-    H_Dw <- row_entropy(p_dw)
+    H_Dw <- row_entropies(p_dw)
 
     H_D - H_Dw
 }
@@ -101,11 +101,11 @@ calc_imi <- function (doc_topics_k, term_doc_k) {
 #' @return ordinary vector of entropies.
 #'
 #' @export
-row_entropy <- function (m) {
+row_entropies <- function (m) {
     if (!is(m, "sparseMatrix")) {
         m <- Matrix::Matrix(m, sparse=TRUE)
     }
-    calc_row_entropy(m)
+    calc_row_entropies(m)
 }
 
 #' Mutual information of words and documents in a topic

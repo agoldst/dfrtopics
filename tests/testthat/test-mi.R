@@ -9,12 +9,12 @@ test_that("entropy is correct", {
     expect_equal(entropy(p1), h)
 })
 
-test_that("row_entropy is correct", {
+test_that("row_entropies is correct", {
     lp <- log2(p)
     lp[!is.finite(lp)] <- 0
     h <- -rowSums(p * lp)
-    expect_equal(row_entropy(p), h)
-    expect_equal(row_entropy(Matrix::Matrix(p, sparse=TRUE)), h)
+    expect_equal(row_entropies(Matrix::Matrix(p, sparse=TRUE)), h)
+    expect_equal(row_entropies(p), h, info="cast from ordinary matrix")
 })
 
 test_that("calc_imi is correct", {

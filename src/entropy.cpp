@@ -4,11 +4,11 @@
 
 using namespace Rcpp;
 
-// Calculate row entropy of a sparse matrix. Wrapped by R function
-// row_entropy().
+// Calculate entropies of the rows of a sparse matrix. Wrapped by R function
+// row_entropies().
 //
 // [[Rcpp::export]]
-NumericVector calc_row_entropy(const Eigen::MappedSparseMatrix<double> m) {
+NumericVector calc_row_entropies(const Eigen::MappedSparseMatrix<double> m) {
     NumericVector result(m.rows());
     // TODO parallelize
     for (int j = 0; j < m.outerSize(); ++j) {

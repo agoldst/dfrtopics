@@ -6,26 +6,14 @@
 
 using namespace Rcpp;
 
-// JS_divergence
-double JS_divergence(NumericVector P, NumericVector Q);
-RcppExport SEXP dfrtopics_JS_divergence(SEXP PSEXP, SEXP QSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< NumericVector >::type P(PSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type Q(QSEXP);
-    __result = Rcpp::wrap(JS_divergence(P, Q));
-    return __result;
-END_RCPP
-}
-// calc_row_entropy
-NumericVector calc_row_entropy(const Eigen::MappedSparseMatrix<double> m);
-RcppExport SEXP dfrtopics_calc_row_entropy(SEXP mSEXP) {
+// calc_row_entropies
+NumericVector calc_row_entropies(const Eigen::MappedSparseMatrix<double> m);
+RcppExport SEXP dfrtopics_calc_row_entropies(SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< const Eigen::MappedSparseMatrix<double> >::type m(mSEXP);
-    __result = Rcpp::wrap(calc_row_entropy(m));
+    __result = Rcpp::wrap(calc_row_entropies(m));
     return __result;
 END_RCPP
 }
@@ -37,6 +25,18 @@ BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
     __result = Rcpp::wrap(entropy(x));
+    return __result;
+END_RCPP
+}
+// JS_divergence
+double JS_divergence(NumericVector P, NumericVector Q);
+RcppExport SEXP dfrtopics_JS_divergence(SEXP PSEXP, SEXP QSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericVector >::type P(PSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Q(QSEXP);
+    __result = Rcpp::wrap(JS_divergence(P, Q));
     return __result;
 END_RCPP
 }
