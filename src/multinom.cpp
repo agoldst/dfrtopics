@@ -2,22 +2,34 @@
 
 using namespace Rcpp;
 
-void multinom_sparse_trial(int N, const NumericVector p, double p_total,
+void multinom_sparse_trial(int N, const std::vector<double> p,
         std::vector<std::vector<int> >& result);
 
 // [[Rcpp::export]]
 List draw_multinom(const IntegerVector nn, const NumericVector probs) {
-    std::vector<int> col_p(nn.size() + 1);
-    std::vector<int> i;
-    std::vector<int> x;
-    std::vector<std::vector<int> > trial(2);
-    NumericVector p = probs / sum(probs);
-    double p_total = sum(p);
+    // p := probs, normalized to sum to 1
+    double p_sum = sum(probs);
+    std::vector<double> p = as<std::vector<double> >(probs);
+    int last_nz = 0;
+    for (std::vector<double>::iterator it = p.begin();
+            it != p.end(); ++it) {
+        if (*it != 0) {
+            *it /= p_sum;
+            last_nz = std::distance(p.begin(), it);
+        }
+    }
+    // and truncate to the last non-zero entry
+    p.resize(last_nz + 1);
 
+    std::vector<int> i;     // sparse matrix row (word) indices
+    std::vector<int> x;     // sparse matrix values (weights)
+    std::vector<int> col_p(nn.size() + 1); // column pointer
     col_p[0] = 0;
+
+    std::vector<std::vector<int> > trial(2);
     for (int j = 0; j < nn.size(); ++j) {
         if (nn[j] != 0) {
-            multinom_sparse_trial(nn[j], p, p_total, trial);
+            multinom_sparse_trial(nn[j], p, trial);
             i.insert(i.end(), trial[0].begin(), trial[0].end());
             x.insert(x.end(), trial[1].begin(), trial[1].end());
             col_p[j + 1] = col_p[j] + trial[0].size();
@@ -36,8 +48,8 @@ List draw_multinom(const IntegerVector nn, const NumericVector probs) {
 // Closely based on src/nmath/rmultinom.c in the R source
 // found at https://github.com/wch/r-source/
 
-// TODO should p_total be a long double as in rmultinom.c?
-void multinom_sparse_trial(int N, const NumericVector p, double p_total,
+// TODO should we keep track of p_total in a long double as in rmultinom.c?
+void multinom_sparse_trial(int N, const std::vector<double> p,
         std::vector<std::vector<int> >& result) {
     result[0].clear();
     result[1].clear();
@@ -46,7 +58,7 @@ void multinom_sparse_trial(int N, const NumericVector p, double p_total,
         return;
     }
 
-    double p_left = p_total;
+    double p_left = 1.0;
     double n_left = N;
     double pb;
     int n;
@@ -72,6 +84,7 @@ void multinom_sparse_trial(int N, const NumericVector p, double p_total,
         }
     }
     // if any left, they go in the last slot
+    // which, N.B., is assumed to have non-zero probability.
     if (n_left > 0) {
         result[0].push_back(p.size() - 1);
         result[1].push_back(n_left);

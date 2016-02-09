@@ -111,11 +111,14 @@ test_that("Grouping for MI proceeds as we expect", {
 })
 
 test_that("Simulated topic TDM has the right look", {
-    x <- rmultinom_sparse(doc_topics(m)[ , k],
-       tw_smooth_normalize(m)(topic_words(m))[k, ])
+    N_w <- topic_words(m)[k, ]
+    x <- rmultinom_sparse(doc_topics(m)[ , k], N_w)
     expect_equal(dim(x), c(length(vocabulary(m)), n_docs(m)))
     expect_equal(Matrix::colSums(x), doc_topics(m)[ , k])
     expect_true(all(x >= 0))
+    # zero-probability words should be...zero
+    w_z <- topic_words(m)[k, ] == 0
+    expect_true(all(x[w_z, ] == 0))
 })
 
 test_that("IMI PPC at least yields something of the right shape", {
