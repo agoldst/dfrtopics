@@ -1,5 +1,6 @@
 ## ----setup, cache=F, include=F-------------------------------------------
 knitr::opts_chunk$set(fig.width=7, fig.height=4.5)
+options(dplyr.print_min=10)
 
 ## ----cache=F, message=F--------------------------------------------------
 options(java.parameters="-Xmx2g")   # optional, but more memory for Java helps
@@ -55,6 +56,7 @@ counts <- counts %>%
     filter(sum(weight) > 3)
 
 ## ----eval=F--------------------------------------------------------------
+#  # not run for this vignette's example
 #  library("SnowballC")
 #  counts <- counts %>%
 #      mutate(word=wordStem(word)) # English stemmer
@@ -73,7 +75,7 @@ m <- train_model(ilist, n_topics=40,
                  # many more parameters...
                  )
 
-## ------------------------------------------------------------------------
+## ----message=F-----------------------------------------------------------
 write_mallet_model(m, "modeling_results")
 
 ## ----eval=F--------------------------------------------------------------
@@ -127,6 +129,12 @@ theme_update(strip.text=element_text(size=7),  # optional graphics tweaking
              axis.text=element_text(size=7))
 topic_series(m) %>%
     plot_series(labels=topic_labels(m, 2))
+
+## ------------------------------------------------------------------------
+d <- read_diagnostics(file.path("modeling_results", "diagnostics.xml"))
+which.min(d$topics$corpus_dist)
+# in terms of standard deviations from the mean distance:
+sort(scale(d$topics$corpus_dist))[1:3]
 
 ## ----eval=F--------------------------------------------------------------
 #  topic_report(m, "plots")
