@@ -40,6 +40,16 @@
 #'
 #' @references Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models. \emph{Empirical Methods in Natural Language Processing}. \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
 #'
+#' @examples \dontrun{
+#' # obtain imi scores for a topic's top words
+#' library(dplyr)
+#' k <- 15
+#' top_words(m, n=10) %>%
+#'     filter(topic == k) %>%
+#'     mutate(imi=imi_topic(m, k, word))
+#' }
+#'
+#'
 #' @export
 #'
 imi_topic <- function (m, k, words=vocabulary(m), groups=NULL) {
