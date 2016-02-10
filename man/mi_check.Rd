@@ -4,7 +4,7 @@
 \alias{mi_check}
 \title{Posterior predictive checking for topics}
 \usage{
-mi_check(m, k, groups = NULL, n_reps = 10)
+mi_check(m, k, groups = NULL, n_reps = 20)
 }
 \arguments{
 \item{m}{\code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}}
@@ -16,7 +16,7 @@ mi_check(m, k, groups = NULL, n_reps = 10)
 \item{n_reps}{number of simulations}
 }
 \value{
-a vector of simulated MI values
+a single-row data frame with \code{topic}, \code{mi}, and \code{deviance} columns. The latter is the MI standardized by the mean and standard deviation of the simulated values. The vector of simulated values is available as the \code{"simulated"} attribute of the returned data frame.
 }
 \description{
 This function provides a way to check the fit of the topic model by comparing the obtained mutual information for topics to values derived from simulations from the posterior. Large deviations from simulated values may indicate a poorer fit.

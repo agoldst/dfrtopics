@@ -1,4 +1,4 @@
-#' Instantaneous mutual information of words and documents
+#' Instantaneous mutual information of words and documents in a topic
 #'
 #' Calculates the instantaneous mutual information (IMI) for words and documents within a given topic. This measures the degree to which words assigned to that topic are independently distributed over documents. With a specified document-grouping \code{groups}, this instead measures the degree to which words are distributed independently over those groups of documents.
 #'
@@ -7,7 +7,7 @@
 #' \deqn{
 #' H(D|K=k) - H(D|W=w, K=k)
 #' }
-#' where \eqn{H} denotes the entropy, that is,
+#' where \eqn{H} denotes the entropy; i.e., the IMI is calculated as
 #'
 #' \deqn{
 #' -\sum_d p(d|k) \log p(d|k) + \sum_d p(d|w, k) \log p(d|w, k)
@@ -36,13 +36,13 @@
 #'
 #' @return a vector of scores, in the same order as \code{w}
 #'
-#' @seealso \code{\link{mi_topic}}, \code{\link{calc_imi}} for the calculation
+#' @seealso \code{\link{mi_topic}}, \code{\link{calc_imi_topic}} for the calculation
 #'
 #' @references Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models. \emph{Empirical Methods in Natural Language Processing}. \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
 #'
 #' @export
 #'
-imi <- function (m, k, words=vocabulary(m), groups=NULL) {
+imi_topic <- function (m, k, words=vocabulary(m), groups=NULL) {
     doc_topics_k <- doc_topics(m)[ , k]
     w <- match(words, vocabulary(m))
 
@@ -62,8 +62,8 @@ imi <- function (m, k, words=vocabulary(m), groups=NULL) {
 
 #' IMI calculation routine
 #'
-#' The actual computation of IMI (instantaneous mutual information) values for \code{\link{imi}} is done by
-#' this routine. If you are calling \code{imi} repeatedly
+#' The actual computation of IMI (instantaneous mutual information) values for \code{\link{imi_topic}} is done by
+#' this routine. If you are calling \code{imi_topic} repeatedly
 #' for a given topic, you can gain some speed by pre-calculating the
 #' inputs and supplying them directly to this function.
 #'
@@ -73,7 +73,7 @@ imi <- function (m, k, words=vocabulary(m), groups=NULL) {
 #'
 #' @return a vector of scores, one for each row of \code{term_doc_k}
 #'
-#' @seealso \code{\link{imi}} which calls this; see under "Details" there for more detail on IMI
+#' @seealso \code{\link{imi_topic}} which calls this; see under "Details" there for more detail on IMI
 #'
 #' @references I have referred to a helpful note by David Mimno here: \url{https://lists.cs.princeton.edu/pipermail/topic-models/2012-March/001779.html}.
 #'
@@ -131,7 +131,7 @@ row_entropies <- function (m) {
 #' MI(W, D|k) = \sum_{w} p(w|k) IMI(w|k)
 #' }
 #'
-#' where the IMI is defined as specified in the Details for \code{\link{imi}}. This is the formula used for calculation here.
+#' where the IMI is defined as specified in the Details for \code{\link{imi_topic}}. This is the formula used for calculation here.
 #'
 #' We can replace \eqn{D} with a grouping over documents and the formulas carry 
 #' over without further change, now expressing the mutual information of those groupings and words within the topic.
@@ -144,47 +144,22 @@ row_entropies <- function (m) {
 #'
 #' @return a single value, giving the estimated mutual information.
 #'
-#' @seealso \code{\link{imi}}, \code{\link{imi_check}}, \code{\link{mi_check}}
+#' @seealso \code{\link{imi_topic}}, \code{\link{imi_check}}, \code{\link{mi_check}}
 #'
 #' @export
 mi_topic <- function (m, k, groups=NULL) {
     # TODO should we bother with smoothing?
     pw <- topic_words(m)[k, ] / sum(topic_words(m)[k, ])
-    imis <- imi(m, k, groups=groups)
+    imis <- imi_topic(m, k, groups=groups)
     sum(pw * imis)
 }
 
-#' Calculate IMI scores for the top words in a topic
-#'
-#' As a convenience, this function extracts a topic's top words and returns a data frame with their IMI scores over documents or document groups.
-#'
-#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
-#'
-#' @param k topic number (calculations are only done for one topic at a time)
-#'
-#' @param groups optional grouping factor with one element for each document
-#'
-#' @param ... passed on to \code{\link{top_words}}: use to specify number of top words and/or weighting function
-#'
-#' @return the data frame from \code{\link{top_words}} with an addition \code{imi} column
-#'
-#' @seealso \code{\link{imi}}, \code{\link{mi_topic}}, \code{\link{top_words}}
-#' 
-#' @export
-#'
-top_words_imi <- function (m, k, groups=NULL, ...) {
-    result <- top_words(m, ...)
-    result <- result[result$topic == k, ]
-    imis <- imi(m, k, result$word, groups)
-    result$imi <- imis
-    result
-}
 
 #' Posterior predictive checking for individual words
 #'
 #' This function provides a way to check the fit of the topic model at the individual words-in-topics level by comparing the obtained instantaneous mutual information for those words to scores derived from simulations from the posterior. Large deviations from simulated values may indicate a poorer fit. In particular, large negative deviations indicate words which are more uniformly distributed across documents that the model expects (e.g., boilerplate text appearing in every document), and large positive deviations indicate words which are more sharply localized than the model expects.
 #'
-#' For a given topic \eqn{k}, a simulation draws a new term-document matrix from the posterior for \eqn{d}. Since a topic is simply a multinomial distribution over the words, for a given document \eqn{d} we simply draw the same number of samples from this multinomial as there were words allocated to topic \eqn{k} in \eqn{d} in the model we are checking. Under the assumptions of the model, this is how the distribution \eqn{p(w, d|k)} arises. With this simulated topic-specific term-document matrix in hand, we recalculate the IMI scores for the given \code{words}. The process is replicated to obtain a reference distribution to compare the values from \code{\link{imi}} to.
+#' For a given topic \eqn{k}, a simulation draws a new term-document matrix from the posterior for \eqn{d}. Since a topic is simply a multinomial distribution over the words, for a given document \eqn{d} we simply draw the same number of samples from this multinomial as there were words allocated to topic \eqn{k} in \eqn{d} in the model we are checking. Under the assumptions of the model, this is how the distribution \eqn{p(w, d|k)} arises. With this simulated topic-specific term-document matrix in hand, we recalculate the IMI scores for the given \code{words}. The process is replicated to obtain a reference distribution to compare the values from \code{\link{imi_topic}} to.
 #'
 #' A reasonable way to make the comparison is to standardize the "actual" IMI values by the mean and standard deviation of the simulated values. Mimno and Blei (2011) call this the "deviance" measure, recommending over \eqn{p} values because the latter are likely to vanish.
 #'
@@ -198,15 +173,49 @@ top_words_imi <- function (m, k, groups=NULL, ...) {
 #'
 #' @param n_reps number of simulations
 #'
-#' @return a matrix of simulated IMI values, with one row for each element of \code{words} and one column for each simulation
+#' @return a data frame with \code{word}, \code{imi}, and \code{deviance} columns. The latter is the IMI standardized by the mean and standard deviation of the simulated values. The matrix of simulated values (one row per word) is available as the \code{"simulated"} attribute of the returned data frame.
 #'
-#' @seealso \code{\link{mi_check}}, \code{\link{imi}}
+#' @seealso \code{\link{imi_simulate}} for just the simulation results, \code{\link{mi_check}}, \code{\link{imi_topic}}
 #'
 #' @references Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models. \emph{Empirical Methods in Natural Language Processing}. \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
 #'
 #' @export
 #' 
-imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
+imi_check <- function (m, k, words, groups=NULL, n_reps=20) {
+    sims <- imi_simulate(m, k, words, groups, n_reps)
+
+    imi <- imi_topic(m, k, words, groups)
+    result <- data.frame(
+        word=words,
+        imi=imi,
+        deviance=(imi - rowMeans(sims)) / apply(sims, 1, sd),
+        stringsAsFactors=FALSE)
+    attr(result, "simulated") <- sims
+    result
+}
+
+
+#' Simulated IMI values
+#'
+#' Given a topic and particular words, this function calculates IMI scores for those words based on a simulated term-document matrix (conditioned on the topic). These simulations are the basis for the posterior check in \code{\link{imi_check}} (q.v.).
+#'
+#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
+#'
+#' @param k topic number (calculations are only done for one topic at a time)
+#'
+#' @param words vector of words to calculate IMI values for
+#'
+#' @param groups optional grouping factor for documents. If supplied, the IMI values will be for words over groups rather than over individual documents
+#'
+#' @param n_reps number of simulations
+#'
+#' @return a matrix of simulated IMI values, with one row for each element of \code{words} and one column for each simulation
+#'
+#' @seealso \code{\link{imi_check}}
+#'
+#' @export
+#'
+imi_simulate <- function (m, k, words, groups=NULL, n_reps=20) {
     N_w <- topic_words(m)[k, ]
 
     dt_k <- doc_topics(m)[ , k]
@@ -231,7 +240,7 @@ imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
     )
 
     if (skipped_words) {
-        imi_rep <- imi_rep[-length(N_w), ]
+        imi_rep <- imi_rep[-length(N_w), , drop=FALSE]
     }
 
     rownames(imi_rep) <- words
@@ -254,7 +263,7 @@ imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
 #'
 #' @param n_reps number of simulations
 #'
-#' @return a vector of simulated MI values
+#' @return a single-row data frame with \code{topic}, \code{mi}, and \code{deviance} columns. The latter is the MI standardized by the mean and standard deviation of the simulated values. The vector of simulated values is available as the \code{"simulated"} attribute of the returned data frame.
 #'
 #' @seealso \code{\link{imi_check}}, \code{\link{mi_topic}}
 #'
@@ -262,7 +271,37 @@ imi_check <- function (m, k, words, groups=NULL, n_reps=10) {
 #'
 #' @export
 #' 
-mi_check <- function (m, k, groups=NULL, n_reps=10) {
+mi_check <- function (m, k, groups=NULL, n_reps=20) {
+    sims <- mi_simulate(m, k, groups, n_reps)
+    mi <- mi_topic(m, k, groups)
+    result <- data.frame(
+        topic=k,
+        mi=mi,
+        deviance=(mi - mean(sims)) / sd(sims)
+    )
+    attr(result, "simulated") <- sims
+    result
+}
+
+#' Simulated MI values
+#'
+#' Given a topic, this function resamples its distribution over words and documents from the posterior. These simulations are the basis for the posterior check in \code{\link{mi_check}} (q.v.).
+#'
+#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
+#'
+#' @param k topic number (calculations are only done for one topic at a time)
+#'
+#' @param groups optional grouping factor for documents. If supplied, the IMI values will be for words over groups rather than over individual documents
+#'
+#' @param n_reps number of simulations
+#'
+#' @return a vector of MI scores for the simulations
+#'
+#' @seealso \code{\link{mi_check}}, \code{\link{imi_simulate}}
+#'
+#' @export
+#' 
+mi_simulate <- function (m, k, groups=NULL, n_reps=20) {
     N_w <- topic_words(m)[k, ]
     p_w <- N_w / sum(N_w)
     dt_k <- doc_topics(m)[ , k]
@@ -276,4 +315,129 @@ mi_check <- function (m, k, groups=NULL, n_reps=10) {
     )
 }
 
+
+
+#' Visualize IMI scores for the top words in topics
+#'
+#' As a diagnostic visualization, this function displays the IMI scores of the top-weighted words in a topic, together with simulated values, on a scale set by the distribution of simulated values. Extreme deviations of the actual IMI scores indicate departures from the multinomial assumption of the model.
+#'
+#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
+#'
+#' @param k topic number (only one topic at a time)
+#'
+#' @param groups optional grouping factor with one element for each document
+#'
+#' @param n_reps number of simulations
+#'
+#' @param ... passed on to \code{\link{top_words}}: use to specify number of top words and/or weighting function
+#'
+#' @return \code{ggplot2} plot object
+#'
+#' @seealso \code{\link{imi_topic}}, \code{\link{imi_check}}
+#' \code{\link{plot_imi_check}}
+#' 
+#' @export
+#'
+plot_imi_check <- function (m, k,
+                            groups=NULL, n_reps=20, ...) {
+    if (!requireNamespace("ggplot2", quietly=TRUE)) {
+        stop("Plotting functions require the ggplot2 package.")
+    }
+
+    top <- top_words(m, ...)
+    top <- top[top$topic == k, ]
+    ck <- imi_check(m, k, top$word, groups, n_reps)
+    tidy_check(ck) %>%
+        ggplot2::ggplot(
+            ggplot2::aes(deviance, word, color=type, alpha=type)
+        ) +
+            ggplot2::geom_point(ggplot2::aes(color=type, alpha=type)) +
+            ggplot2::scale_alpha_manual(values=c(actual=1, simulated=0.25)) +
+            ggplot2::scale_color_manual(
+                values=c(actual="red", simulated="black")
+            ) +
+            ggplot2::scale_y_discrete(limits=rev(top$word)) +
+            ggplot2::theme(
+                axis.title.y=ggplot2::element_blank(),
+                axis.ticks.y=ggplot2::element_blank(),
+                axis.text.y=ggplot2::element_text(color="black")
+            ) +
+        ggplot2::ggtitle(
+            paste0("Instantaneous mutual information of words in topic ", k)
+        )
+}
+
+#' Visualize a topic's MI score in comparison to simulated values
+#'
+#' As a diagnostic visualization, this function displays the MI score of a topic in comparison with the distribution of simulated values, on a scale normalized to the latter. Extreme deviations of the actual MI score indicates a departure from the multinomial assumption of the model. Exploring these deviations over various document groupings may help to reveal the driving factor of those deviations (e.g. variation over time).
+#'
+#' @param m \code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}
+#'
+#' @param k topic number (only one topic at a time)
+#'
+#' @param groups optional grouping factor with one element for each document
+#'
+#' @param n_reps number of simulations
+#'
+#' @return \code{ggplot2} plot object
+#'
+#' @seealso \code{\link{mi_topic}}, \code{\link{mi_check}}, \code{\link{plot_imi_check}}
+#' 
+#' @export
+#'
+plot_mi_check <- function (m, k, groups=NULL, n_reps=20) {
+    if (!requireNamespace("ggplot2", quietly=TRUE)) {
+        stop("Plotting functions require the ggplot2 package.")
+    }
+
+    ck <- tidy_check(mi_check(m, k, groups, n_reps))
+    act_dev <- ck$deviance[ck$type == "actual"]
+    ggplot2::ggplot(ck[ck$type == "simulated", ],
+        ggplot2::aes(deviance)) +
+        ggplot2::geom_histogram(binwidth=0.75, fill="grey70") +
+        ggplot2::annotate(geom="text",
+            label="actual", x=act_dev, y=n_reps / 10, vjust=0) +
+        ggplot2::annotate(geom="segment", x=act_dev, y=0,
+                 xend=act_dev, yend=n_reps / 10) +
+        ggplot2::ggtitle(paste0("Simulated mutual information: ",
+                                topic_labels(m, 5)[k]))
+}
+
+#' Tidy results of posterior checks
+#'
+#' This is a little utility function for bringing the results of \code{\link{imi_check}} and \code{\link{mi_check}} into a tidy data-frame form.
+#'
+#' @param x result of \code{\link{imi_check}} or \code{\link{mi_check}}
+#'
+#' @return data frame with columns corresponding to the checking unit (word or topic), the discrepancy (IMI or MI), the rescaled discrepancy (deviance), and an indicator, \code{type}, of whether the value is simulated or actual
+#'
+#' @seealso \code{\link{mi_check}}, \code{\link{imi_check}}
+#'
+#' @export
+#'
+tidy_check <- function (x) { 
+    key <- names(x)[1]
+    score <- names(x)[2]
+    sims <- attr(x, "simulated")
+    if (is.vector(sims)) {  # mi_check just gives a vector of sims
+        sims_frm <- data.frame(key=x[[key]], score=sims)
+        names(sims_frm) <- c(key, score)
+        sims_frm$deviance <- scale(sims)
+    } else if (is.matrix(sims)) {
+        sims_frm <- gather_matrix(sims,
+            col_names=c(key, "trial", score),
+            row_major=TRUE)
+
+        # scale() operates on columns, not rows; when we unroll the
+        # transpose by columns, we'll get the (rescaled) original by rows 
+        sims_frm$deviance <- as.numeric(scale(t(sims)))
+    } else {
+        stop('"simulated" attribute is missing or of the wrong type.')
+    }
+    result <- dplyr::bind_rows(
+        actual=x[, c(key, score, "deviance")],
+        simulated=sims_frm[ , c(key, score, "deviance")],
+        .id="type")
+    result[ , c(key, score, "deviance", "type")]
+}
 

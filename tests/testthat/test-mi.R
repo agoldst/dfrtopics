@@ -68,7 +68,7 @@ m <- load_sampling_state(m)
 k <- 5
 
 test_that("An IMI calculation does what we think", {
-    score <- imi(m, k, words="chaucer")
+    score <- imi_topic(m, k, words="chaucer")
     Nd <- doc_topics(m)[ , k]
     N <- sum(Nd)
     Hd <- -sum(Nd[Nd != 0] / N * log2(Nd[Nd != 0] / N))
@@ -77,11 +77,6 @@ test_that("An IMI calculation does what we think", {
     Nw <- topic_words(m)[k, w]
     Hdw <- -sum(Nwd[Nwd != 0] / Nw * log2(Nwd[Nwd != 0] / Nw))
     expect_equal(score, Hd - Hdw)
-})
-
-test_that("Getting IMIs for top words proceeds as expected", {
-    scores <- top_words_imi(m, k, n=10)
-    expect_equal(names(scores), c("topic", "word", "weight", "imi"))
 })
 
 test_that("Scoring for overall MI proceeds as expected", {
@@ -93,7 +88,7 @@ test_that("Scoring for overall MI proceeds as expected", {
 year <- factor(substr(metadata(m)$pubdate, 1, 4))
 
 test_that("Grouping for IMIs does what we think", {
-    imi_chaucer <- imi(m, k, words="chaucer", groups=year)
+    imi_chaucer <- imi_topic(m, k, words="chaucer", groups=year)
     Nd <- sum_row_groups(doc_topics(m), year)[ , k]
     N <- sum(doc_topics(m)[ , k])
     Hd <- -sum(Nd[Nd != 0] / N * log2(Nd[Nd != 0] / N))
@@ -122,14 +117,52 @@ test_that("Simulated topic TDM has the right look", {
 })
 
 test_that("IMI PPC at least yields something of the right shape", {
-    ppc <- imi_check(m, k, c("chaucer", "tale"), n_reps=20)
+    ppc <- imi_simulate(m, k, c("chaucer", "tale"), n_reps=20)
     expect_equal(dim(ppc), c(2, 20))
     expect_true(all(is.finite(ppc)))
 })
 
+test_that("imi_check proceeds as expected", {
+    ck <- imi_check(m, k, c("chaucer", "tale"), n_reps=20)
+
+    expect_equal(dim(ck), c(2, 3))
+    sims <- attr(ck, "simulated")
+    expect_equal(dim(sims), c(2, 20))
+    expect_equal(ck$deviance[1], (ck$imi[1] - mean(sims[1, ])) / sd(sims[1, ]))
+})
 
 test_that("MI PPC at least yields something of the right shape", {
-    ppc <- mi_check(m, k, n_reps=20)
+    ppc <- mi_simulate(m, k, n_reps=20)
     expect_equal(length(ppc), 20)
     expect_true(all(is.finite(ppc)))
 })
+
+test_that("mi_check proceeds as expected", {
+    ck <- mi_check(m, k, n_reps=20)
+
+    expect_equal(dim(ck), c(1, 3))
+    sims <- attr(ck, "simulated")
+    expect_equal(length(sims), 20)
+    expect_equal(ck$deviance, (ck$mi - mean(sims)) / sd(sims))
+})
+
+test_that("tidying PPC checks is sane", {
+    ck <- tidy_check(imi_check(m, k, c("chaucer", "tale"), n_reps=20))
+    expect_equal(nrow(ck), c(42))
+    expect_equal(names(ck), c("word", "imi", "deviance", "type"))
+    expect_equal(sum(ck$type == "actual"), 2)
+    expect_equal(sum(ck$type == "simulated"), 40)
+
+    ck <- tidy_check(mi_check(m, k, n_reps=10))
+    expect_equal(nrow(ck), 11)
+    expect_equal(names(ck), c("topic", "mi", "deviance", "type"))
+    expect_equal(sum(ck$type == "actual"), 1)
+    expect_equal(sum(ck$type == "simulated"), 10)
+})
+
+test_that("check-plotters at least yield plots", {
+    skip_if_not_installed("ggplot2")
+    expect_is(plot_imi_check(m, k, n_reps=20, n=10), "ggplot")
+    expect_is(plot_mi_check(m, k, n_reps=20), "ggplot")
+})
+

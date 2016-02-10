@@ -15,8 +15,8 @@ calc_imi(doc_topics_k, term_doc_k)
 a vector of scores, one for each row of \code{term_doc_k}
 }
 \description{
-The actual computation of IMI (instantaneous mutual information) values for \code{\link{imi}} is done by
-this routine. If you are calling \code{imi} repeatedly
+The actual computation of IMI (instantaneous mutual information) values for \code{\link{imi_topic}} is done by
+this routine. If you are calling \code{imi_topic} repeatedly
 for a given topic, you can gain some speed by pre-calculating the
 inputs and supplying them directly to this function.
 }
@@ -24,6 +24,6 @@ inputs and supplying them directly to this function.
 I have referred to a helpful note by David Mimno here: \url{https://lists.cs.princeton.edu/pipermail/topic-models/2012-March/001779.html}.
 }
 \seealso{
-\code{\link{imi}} which calls this; see under "Details" there for more detail on IMI
+\code{\link{imi_topic}} which calls this; see under "Details" there for more detail on IMI
 }
 

@@ -39,12 +39,12 @@ which is \eqn{E_D(KL(W|d, W)}, the expected divergence of the conditional distri
 MI(W, D|k) = \sum_{w} p(w|k) IMI(w|k)
 }
 
-where the IMI is defined as specified in the Details for \code{\link{imi}}. This is the formula used for calculation here.
+where the IMI is defined as specified in the Details for \code{\link{imi_topic}}. This is the formula used for calculation here.
 
 We can replace \eqn{D} with a grouping over documents and the formulas carry 
 over without further change, now expressing the mutual information of those groupings and words within the topic.
 }
 \seealso{
-\code{\link{imi}}, \code{\link{imi_check}}, \code{\link{mi_check}}
+\code{\link{imi_topic}}, \code{\link{imi_check}}, \code{\link{mi_check}}
 }
 
