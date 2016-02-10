@@ -11,6 +11,7 @@ vignette: >
 
 ```{r setup, cache=F, include=F}
 knitr::opts_chunk$set(fig.width=7, fig.height=4.5)
+options(dplyr.print_min=10)
 ```
 
 This package seeks to provide some help creating and exploring topic models using [MALLET](http://mallet.cs.umass.edu) from R. It builds on the [mallet](http://cran.r-project.org/web/packages/mallet) package. Parts of this package are specialized for working with the metadata and pre-aggregated text data supplied by JSTOR's [Data for Research](http://dfr.jstor.org) service; the topic-modeling parts are independent of this, however.
@@ -136,6 +137,7 @@ The counts are not quite ready to be passed on to MALLET. It's important to be a
 3. DfR wordcounts are already casefolded, but you may wish to transform the features further, by, for example, stripping accents, normalizing orthography, or stemming. These are straightforward operations with `dplyr`, and no functions are provided for this. As an example, however, here is how you might apply a popular stemmer:
 
     ```{r eval=F}
+    # not run for this vignette's example
     library("SnowballC")
     counts <- counts %>%
         mutate(word=wordStem(word)) # English stemmer
@@ -191,7 +193,7 @@ The metadata supplied here as a parameter to `train_model` is not used in modeli
 
 Though this `r n_docs(m)`-corpus needs only minutes to model, it often takes hours or more to produce a topic model of even a moderately-sized corpus. you are likely to want to save the results. It is most convenient, I have found, to save both the richest possible MALLET outputs and user-friendlier transformations: many analyses need only the estimated document-topic and topic-word matrices, for example. For this reason, the default `write_mallet_model` function takes the results of `train_model` and outputs a directory of files.
 
-```{r}
+```{r message=F}
 write_mallet_model(m, "modeling_results")
 ```
 
@@ -274,16 +276,14 @@ These titles suggest that the top words of the topic have not misled us: this is
 
 ## Topics, time, metadata
 
-Though the LDA algorithm run by MALLET here makes no use of the
-time metadata, it is often instructive to see how the modeled
-topics are spread over time in a corpus of JSTOR articles. For convenience, this operation is condensed into the `topic_series` function:
+Though the LDA algorithm run by MALLET here makes no use of the time metadata, it is often instructive to see how the modeled topics are spread over time in a corpus of JSTOR articles. For convenience, this operation is condensed into the `topic_series` function:
 
 ```{r}
 srs <- topic_series(m, breaks="years")
 head(srs)
 ```
 
-This is a "long" data frame suitable for plotting, which we turn to shortly. But it is important to underline that `topic_series` is a special case of the more general operation of combining modeled topic scores for *groups* of documents. That is, one of the main uses of a topic model is to consider estimated topics as dependent variables, and metadata as independent variables.^[A more formal way to do this, however, requires more elaborating modeling. See, in particular, the [stm](http://cran.r-project.org/web/packages/stm/) package for the Structured Topic Model.]
+This is a "long" data frame suitable for plotting, which we turn to shortly. But it is important to underline that `topic_series` is a special case of the more general operation of combining modeled topic scores for *groups* of documents. That is, one of the main uses of a topic model is to consider estimated topics as dependent variables, and metadata as independent variables.^[A more formal way to do this, however, requires more elaborate modeling. See, in particular, the [stm](http://cran.r-project.org/web/packages/stm/) package for the Structured Topic Model.]
 
 To make this more general operation a little easier, I have supplied generalized aggregator functions `sum_row_groups` and `sum_col_groups` which take a matrix and a grouping factor. As a simple example, suppose we wanted to tabulate the way topics are split up between the two journals in our corpus:
 
@@ -294,7 +294,7 @@ doc_topics(m) %>%
     normalize_cols()
 ```
 
-Here we might notice certain topics that are skew to one journal and not the other in our corpus---for example, *`r topic_labels(m)[11]`*.
+Here we might notice certain topics that skew to one or the other of the two journals in our corpus---for example, *`r topic_labels(m)[11]`*.
 
 By the same token, if one wanted to construct super-groupings of topics, one could use `sum_col_groups` to aggregate them together.^[These are simple arithmetical operations, of course, and you may ask why we do not stick to the dplyr idiom all the way through. But converting a full document-topic or topic-word matrix to a data frame---as dplyr would require---can be a cumbersome operation. It makes more sense to stay with the matrices until the final aggregates have been created.]
 
@@ -329,7 +329,18 @@ topic_series(m) %>%
     plot_series(labels=topic_labels(m, 2))
 ```
 
-In this case the plot will not so much reveal trends as it will indicate which particular years have items highly concentrated in one topic or another. The identical vertical scales may appear an annoyance, but this is in fact a useful way of seeing that one topic captures a great deal of the corpus and is probably not particularly coherent, semantically: `r topic_labels(m)[22]`. We can of course filter `topic_series(m)` to drop this topic from our display.
+In this case the plot will not so much reveal trends as it will indicate which particular years have items highly concentrated in one topic or another. The identical vertical scales may appear an annoyance, but this is in fact a useful way of seeing that one topic captures a great deal of the corpus and is probably not particularly meaningful: *`r topic_labels(m)[22]`*.[^sem-coh]   We can of course filter `topic_series(m)` to drop this topic from our display.
+
+[^sem-coh]: For algorithmic diagnostics of topic quality, try examining MALLET's topic diagnostics. In this case, the revealing quantity is the topic's distance from the overall corpus (by K-L divergence).
+
+    ```{r}
+    d <- read_diagnostics(file.path("modeling_results", "diagnostics.xml"))
+    which.min(d$topics$corpus_dist)
+    # in terms of standard deviations from the mean distance:
+    sort(scale(d$topics$corpus_dist))[1:3]
+    ```
+
+    Topic 22 is much closer to the corpus (by K-L divergence) than the other topics. (The MALLET "coherence" measure is not useful in this case.)
 
 The `topic_report` function generates a folder full of these plots for all the topics in the model.
 

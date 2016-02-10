@@ -11,6 +11,7 @@ vignette: >
 
 ```{r setup, cache=F, include=F}
 knitr::opts_chunk$set(fig.width=7, fig.height=4.5)
+options(dplyr.print_min=10)
 ```
 
 This package seeks to provide some help creating and exploring topic models using [MALLET](http://mallet.cs.umass.edu) from R. It builds on the [mallet](http://cran.r-project.org/web/packages/mallet) package. Parts of this package are specialized for working with the metadata and pre-aggregated text data supplied by JSTOR's [Data for Research](http://dfr.jstor.org) service; the topic-modeling parts are independent of this, however.
@@ -192,7 +193,7 @@ The metadata supplied here as a parameter to `train_model` is not used in modeli
 
 Though this `r n_docs(m)`-corpus needs only minutes to model, it often takes hours or more to produce a topic model of even a moderately-sized corpus. you are likely to want to save the results. It is most convenient, I have found, to save both the richest possible MALLET outputs and user-friendlier transformations: many analyses need only the estimated document-topic and topic-word matrices, for example. For this reason, the default `write_mallet_model` function takes the results of `train_model` and outputs a directory of files.
 
-```{r}
+```{r message=F}
 write_mallet_model(m, "modeling_results")
 ```
 
