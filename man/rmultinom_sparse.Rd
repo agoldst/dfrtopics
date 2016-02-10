@@ -22,13 +22,14 @@ returned matrix.
 }
 \description{
 According to the generative model of LDA, documents are drawn from
-mixtures of multinomial distributions over the vocabulary. When we
-simulate from the posterior, our task in practice is: given the
-number of words \eqn{n} allocated to topic \eqn{k} in document
-\eqn{d}, generate the result of \eqn{n} multinomial trials with word
-probabilities given from topic \eqn{k}. This function tries to do
-this efficiently given a vector of \eqn{n} values and a vector of
-topic weights.
+mixtures of multinomial distributions over the vocabulary. When
+we simulate from the posterior, our task in practice is: for each
+document \eqn{d}, given the number of words \eqn{n} allocated to
+topic \eqn{k} in \eqn{d}, generate the result of \eqn{n} multinomial
+trials with word probabilities given from topic \eqn{k}. This
+function tries to do this efficiently given a vector of \eqn{n}
+values (one for each document) and a vector of topic weights,
+yielding a simulated term-document matrix of within-topic weights.
 }
 \details{
 R's built-in \code{\link[stats]{rmultinom}} has two disadvantages

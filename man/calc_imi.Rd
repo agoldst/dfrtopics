@@ -7,23 +7,28 @@
 calc_imi(doc_topics_k, term_doc_k)
 }
 \arguments{
-\item{doc_topics_k}{vector of \emph{counts}, one for each document, of words assigned to topic \eqn{k}}
+\item{doc_topics_k}{vector of \emph{counts}, one for each document, of words
+assigned to topic \eqn{k}}
 
-\item{term_doc_k}{matrix of counts, where element \eqn{i,j} is the number of words of type \eqn{i} in document (or document-group) \eqn{j} is assigned to topic \eqn{k}}
+\item{term_doc_k}{matrix of counts, where element \eqn{i,j} is the number of
+words of type \eqn{i} in document (or document-group) \eqn{j} is assigned
+to topic \eqn{k}}
 }
 \value{
 a vector of scores, one for each row of \code{term_doc_k}
 }
 \description{
-The actual computation of IMI (instantaneous mutual information) values for \code{\link{imi_topic}} is done by
-this routine. If you are calling \code{imi_topic} repeatedly
-for a given topic, you can gain some speed by pre-calculating the
-inputs and supplying them directly to this function.
+The actual computation of IMI (instantaneous mutual information) values for
+\code{\link{imi_topic}} is done by this routine. If you are calling
+\code{imi_topic} repeatedly for a given topic, you can gain some speed by
+pre-calculating the inputs and supplying them directly to this function.
 }
 \references{
-I have referred to a helpful note by David Mimno here: \url{https://lists.cs.princeton.edu/pipermail/topic-models/2012-March/001779.html}.
+I have referred to a helpful note by David Mimno here:
+  \url{https://lists.cs.princeton.edu/pipermail/topic-models/2012-March/001779.html}.
 }
 \seealso{
-\code{\link{imi_topic}} which calls this; see under "Details" there for more detail on IMI
+\code{\link{imi_topic}} which calls this; see under "Details" there
+  for more detail on IMI
 }
 

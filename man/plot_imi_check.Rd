@@ -7,7 +7,8 @@
 plot_imi_check(m, k, groups = NULL, n_reps = 20, ...)
 }
 \arguments{
-\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}}
+\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via
+\code{\link{load_sampling_state}}}
 
 \item{k}{topic number (only one topic at a time)}
 
@@ -15,16 +16,20 @@ plot_imi_check(m, k, groups = NULL, n_reps = 20, ...)
 
 \item{n_reps}{number of simulations}
 
-\item{...}{passed on to \code{\link{top_words}}: use to specify number of top words and/or weighting function}
+\item{...}{passed on to \code{\link{top_words}}: use to specify number of top
+words and/or weighting function}
 }
 \value{
 \code{ggplot2} plot object
 }
 \description{
-As a diagnostic visualization, this function displays the IMI scores of the top-weighted words in a topic, together with simulated values, on a scale set by the distribution of simulated values. Extreme deviations of the actual IMI scores indicate departures from the multinomial assumption of the model.
+As a diagnostic visualization, this function displays the IMI scores of the
+top-weighted words in a topic, together with simulated values, on a scale set
+by the distribution of simulated values. Extreme deviations of the actual IMI
+scores indicate departures from the multinomial assumption of the model.
 }
 \seealso{
-\code{\link{imi_topic}}, \code{\link{imi_check}}
-\code{\link{plot_imi_check}}
+\code{\link{imi_topic}}, \code{\link{imi_check}} 
+  \code{\link{plot_imi_check}}
 }
 

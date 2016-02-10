@@ -7,11 +7,13 @@
 mi_simulate(m, k, groups = NULL, n_reps = 20)
 }
 \arguments{
-\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}}
+\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via
+\code{\link{load_sampling_state}}}
 
 \item{k}{topic number (calculations are only done for one topic at a time)}
 
-\item{groups}{optional grouping factor for documents. If supplied, the IMI values will be for words over groups rather than over individual documents}
+\item{groups}{optional grouping factor for documents. If supplied, the IMI
+values will be for words over groups rather than over individual documents}
 
 \item{n_reps}{number of simulations}
 }
@@ -19,7 +21,9 @@ mi_simulate(m, k, groups = NULL, n_reps = 20)
 a vector of MI scores for the simulations
 }
 \description{
-Given a topic, this function resamples its distribution over words and documents from the posterior. These simulations are the basis for the posterior check in \code{\link{mi_check}} (q.v.).
+Given a topic, this function resamples its distribution over words and
+documents from the posterior. These simulations are the basis for the
+posterior check in \code{\link{mi_check}} (q.v.).
 }
 \seealso{
 \code{\link{mi_check}}, \code{\link{imi_simulate}}

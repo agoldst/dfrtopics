@@ -7,21 +7,27 @@
 imi_simulate(m, k, words, groups = NULL, n_reps = 20)
 }
 \arguments{
-\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}}
+\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via
+\code{\link{load_sampling_state}}}
 
 \item{k}{topic number (calculations are only done for one topic at a time)}
 
 \item{words}{vector of words to calculate IMI values for}
 
-\item{groups}{optional grouping factor for documents. If supplied, the IMI values will be for words over groups rather than over individual documents}
+\item{groups}{optional grouping factor for documents. If supplied, the IMI
+values will be for words over groups rather than over individual documents}
 
 \item{n_reps}{number of simulations}
 }
 \value{
-a matrix of simulated IMI values, with one row for each element of \code{words} and one column for each simulation
+a matrix of simulated IMI values, with one row for each element of
+  \code{words} and one column for each simulation
 }
 \description{
-Given a topic and particular words, this function calculates IMI scores for those words based on a simulated term-document matrix (conditioned on the topic). These simulations are the basis for the posterior check in \code{\link{imi_check}} (q.v.).
+Given a topic and particular words, this function calculates IMI scores for
+those words based on a simulated term-document matrix (conditioned on the
+topic). These simulations are the basis for the posterior check in
+\code{\link{imi_check}} (q.v.).
 }
 \seealso{
 \code{\link{imi_check}}

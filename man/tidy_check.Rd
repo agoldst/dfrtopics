@@ -10,10 +10,14 @@ tidy_check(x)
 \item{x}{result of \code{\link{imi_check}} or \code{\link{mi_check}}}
 }
 \value{
-data frame with columns corresponding to the checking unit (word or topic), the discrepancy (IMI or MI), the rescaled discrepancy (deviance), and an indicator, \code{values}, of whether the value is simulated or actual
+data frame with columns corresponding to the checking unit (word or
+  topic), the discrepancy (IMI or MI), the rescaled discrepancy (deviance),
+  and an indicator, \code{type}, of whether the value is simulated or actual
 }
 \description{
-This is a little utility function for bringing the results of \code{\link{imi_check}} and \code{\link{mi_check}} into a tidy data-frame form.
+This is a little utility function for bringing the results of
+\code{\link{imi_check}} and \code{\link{mi_check}} into a tidy data-frame
+form.
 }
 \seealso{
 \code{\link{mi_check}}, \code{\link{imi_check}}

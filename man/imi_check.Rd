@@ -7,31 +7,58 @@
 imi_check(m, k, words, groups = NULL, n_reps = 20)
 }
 \arguments{
-\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}}
+\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via
+\code{\link{load_sampling_state}}}
 
 \item{k}{topic number (calculations are only done for one topic at a time)}
 
 \item{words}{vector of words to calculate IMI values for}
 
-\item{groups}{optional grouping factor for documents. If supplied, the IMI values will be for words over groups rather than over individual documents}
+\item{groups}{optional grouping factor for documents. If supplied, the IMI
+values will be for words over groups rather than over individual documents}
 
 \item{n_reps}{number of simulations}
 }
 \value{
-a data frame with \code{word}, \code{imi}, and \code{deviance} columns. The latter is the IMI standardized by the mean and standard deviation of the simulated values. The matrix of simulated values (one row per word) is available as the \code{"simulated"} attribute of the returned data frame.
+a data frame with \code{word}, \code{imi}, and \code{deviance}
+  columns. The latter is the IMI standardized by the mean and standard
+  deviation of the simulated values. The matrix of simulated values (one row
+  per word) is available as the \code{"simulated"} attribute of the returned
+  data frame.
 }
 \description{
-This function provides a way to check the fit of the topic model at the individual words-in-topics level by comparing the obtained instantaneous mutual information for those words to scores derived from simulations from the posterior. Large deviations from simulated values may indicate a poorer fit. In particular, large negative deviations indicate words which are more uniformly distributed across documents that the model expects (e.g., boilerplate text appearing in every document), and large positive deviations indicate words which are more sharply localized than the model expects.
+This function provides a way to check the fit of the topic model at the
+individual words-in-topics level by comparing the obtained instantaneous
+mutual information for those words to scores derived from simulations from
+the posterior. Large deviations from simulated values may indicate a poorer
+fit. In particular, large negative deviations indicate words which are more
+uniformly distributed across documents that the model expects (e.g.,
+boilerplate text appearing in every document), and large positive deviations
+indicate words which are more sharply localized than the model expects.
 }
 \details{
-For a given topic \eqn{k}, a simulation draws a new term-document matrix from the posterior for \eqn{d}. Since a topic is simply a multinomial distribution over the words, for a given document \eqn{d} we simply draw the same number of samples from this multinomial as there were words allocated to topic \eqn{k} in \eqn{d} in the model we are checking. Under the assumptions of the model, this is how the distribution \eqn{p(w, d|k)} arises. With this simulated topic-specific term-document matrix in hand, we recalculate the IMI scores for the given \code{words}. The process is replicated to obtain a reference distribution to compare the values from \code{\link{imi_topic}} to.
+For a given topic \eqn{k}, a simulation draws a new term-document matrix from
+the posterior for \eqn{d}. Since a topic is simply a multinomial distribution
+over the words, for a given document \eqn{d} we simply draw the same number
+of samples from this multinomial as there were words allocated to topic
+\eqn{k} in \eqn{d} in the model we are checking. Under the assumptions of the
+model, this is how the distribution \eqn{p(w, d|k)} arises. With this
+simulated topic-specific term-document matrix in hand, we recalculate the IMI
+scores for the given \code{words}. The process is replicated to obtain a
+reference distribution to compare the values from \code{\link{imi_topic}} to.
 
-A reasonable way to make the comparison is to standardize the "actual" IMI values by the mean and standard deviation of the simulated values. Mimno and Blei (2011) call this the "deviance" measure, recommending over \eqn{p} values because the latter are likely to vanish.
+A reasonable way to make the comparison is to standardize the "actual" IMI
+values by the mean and standard deviation of the simulated values. Mimno and
+Blei (2011) call this the "deviance" measure, recommending over \eqn{p}
+values because the latter are likely to vanish.
 }
 \references{
-Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models. \emph{Empirical Methods in Natural Language Processing}. \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
+Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models.
+  \emph{Empirical Methods in Natural Language Processing}.
+  \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
 }
 \seealso{
-\code{\link{imi_simulate}} for just the simulation results, \code{\link{mi_check}}, \code{\link{imi_topic}}
+\code{\link{imi_simulate}} for just the simulation results,
+  \code{\link{mi_check}}, \code{\link{imi_topic}}
 }
 

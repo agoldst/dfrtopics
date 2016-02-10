@@ -7,49 +7,77 @@
 imi_topic(m, k, words = vocabulary(m), groups = NULL)
 }
 \arguments{
-\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}}
+\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via
+\code{\link{load_sampling_state}}}
 
 \item{k}{topic number (calculations are only done for one topic at a time)}
 
 \item{words}{vector of words to calculate IMI values for.}
 
-\item{groups}{optional grouping factor with one element for each document. If not NULL, IMIs are calculated over document groups rather than documents.}
+\item{groups}{optional grouping factor with one element for each document. If
+not NULL, IMIs are calculated over document groups rather than documents.}
 }
 \value{
 a vector of scores, in the same order as \code{w}
 }
 \description{
-Calculates the instantaneous mutual information (IMI) for words and documents within a given topic. This measures the degree to which words assigned to that topic are independently distributed over documents. With a specified document-grouping \code{groups}, this instead measures the degree to which words are distributed independently over those groups of documents.
+Calculates the instantaneous mutual information (IMI) for words and documents
+within a given topic. This measures the degree to which words assigned to
+that topic are independently distributed over documents. With a specified
+document-grouping \code{groups}, this instead measures the degree to which
+words are distributed independently over those groups of documents.
 }
 \details{
-In ordinary LDA, the distribution of words over topics is independent of documents: that is, in the model's assignment of words to topics, knowing which document a word is in shouldn't tell you anything about more about that word than knowing its topic. In practice, this independence assumption is always violated by the estimated topics. For a given topic \eqn{k}, the IMI measures a given word's contribution to this violation as
+In ordinary LDA, the distribution of words over topics is independent of
+documents: that is, in the model's assignment of words to topics, knowing
+which document a word is in shouldn't tell you anything about more about that
+word than knowing its topic. In practice, this independence assumption is
+always violated by the estimated topics. For a given topic \eqn{k}, the IMI
+measures a given word's contribution to this violation as
 
-\deqn{
-H(D|K=k) - H(D|W=w, K=k)
-}
-where \eqn{H} denotes the entropy, that is,
+\deqn{ H(D|K=k) - H(D|W=w, K=k) } where \eqn{H} denotes the entropy; i.e.,
+the IMI is calculated as
 
-\deqn{
--\sum_d p(d|k) \log p(d|k) + \sum_d p(d|w, k) \log p(d|w, k)
-}
+\deqn{ -\sum_d p(d|k) \log p(d|k) + \sum_d p(d|w, k) \log p(d|w, k) }
 
-The probabilities are simply found from the counts of word tokens within documents \eqn{d} assigned to topic \eqn{k}, as these are recorded in the final Gibbs sampling state.
+The probabilities are simply found from the counts of word tokens within
+documents \eqn{d} assigned to topic \eqn{k}, as these are recorded in the
+final Gibbs sampling state.
 
 The overall independence violation for topic \eqn{k} is the expectation of 
 this quantity over words in that topic,
 
-\deqn{
-\sum_w p(w|k) (H(D|k) - H(D|w, k)) 
-}
+\deqn{ \sum_w p(w|k) (H(D|k) - H(D|w, k)) }
 
 For obtaining the sum, see \code{\link{mi_topic}}.
 
-If a grouping factor \code{groups} is given, the IMI is instead taken not over documents but over groups of documents For example, suppose that the documents are articles drawn from three different periodicals; we might measure the degree to which knowing which periodical the document comes from tells us about which words have been assigned to the topic. Sampled word counts are simply summed over the document groups and then the calculation proceeds with groups in place of documents \eqn{d} in the formulas above.
+If a grouping factor \code{groups} is given, the IMI is instead taken not
+over documents but over groups of documents For example, suppose that the
+documents are articles drawn from three different periodicals; we might
+measure the degree to which knowing which periodical the document comes from
+tells us about which words have been assigned to the topic. Sampled word
+counts are simply summed over the document groups and then the calculation
+proceeds with groups in place of documents \eqn{d} in the formulas above.
+}
+\examples{
+\dontrun{
+# obtain imi scores for a topic's top words
+library(dplyr)
+k <- 15
+top_words(m, n=10) \%>\%
+    filter(topic == k) \%>\%
+    mutate(imi=imi_topic(m, k, word))
+}
+
+
 }
 \references{
-Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models. \emph{Empirical Methods in Natural Language Processing}. \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
+Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models.
+  \emph{Empirical Methods in Natural Language Processing}.
+  \url{http://www.cs.columbia.edu/~blei/papers/MimnoBlei2011.pdf}.
 }
 \seealso{
-\code{\link{mi_topic}}, \code{\link{calc_imi_topic}} for the calculation
+\code{\link{mi_topic}}, \code{\link{calc_imi_topic}} for the
+  calculation
 }
 

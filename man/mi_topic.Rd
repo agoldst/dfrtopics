@@ -7,44 +7,49 @@
 mi_topic(m, k, groups = NULL)
 }
 \arguments{
-\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}}
+\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via
+\code{\link{load_sampling_state}}}
 
 \item{k}{topic number (calculations are only done for one topic at a time)}
 
-\item{groups}{optional grouping factor for documents. If omitted, the MI over documents is calculated.}
+\item{groups}{optional grouping factor for documents. If omitted, the MI over
+documents is calculated.}
 }
 \value{
 a single value, giving the estimated mutual information.
 }
 \description{
-Calculates the mutual information of words and documents within a given topic. This measures the degree to which the estimated distribution over words within the topic violates the assumption that it is independent of the distribution of words over documents.
+Calculates the mutual information of words and documents within a given
+topic. This measures the degree to which the estimated distribution over
+words within the topic violates the assumption that it is independent of the
+distribution of words over documents.
 }
 \details{
 The mutual information is given by
 
-\deqn{
-MI(W, D|K=k) = \sum_{w, d} p(w, d|k) \log\frac{p(w, d|k)}{p(w|k) p(d|k)}
-}
+\deqn{ MI(W, D|K=k) = \sum_{w, d} p(w, d|k) \log\frac{p(w, d|k)}{p(w|k)
+p(d|k)} }
 
 In the limit of true independence, the fraction in the log is one and the MI 
 is zero. In general, we can rewrite the sum as
 
-\deqn{
-\sum_d p(d|k) \sum_w p(w|d, k) \log\frac{p(w|d, k)}{p(w|k)}
-}
+\deqn{ \sum_d p(d|k) \sum_w p(w|d, k) \log\frac{p(w|d, k)}{p(w|k)} }
 
-which is \eqn{E_D(KL(W|d, W)}, the expected divergence of the conditional distribution from the marginal distribution. It can be shown with some algebra that
+which is \eqn{E_D(KL(W|d, W)}, the expected divergence of the conditional
+distribution from the marginal distribution. It can be shown with some
+algebra that
 
-\deqn{
-MI(W, D|k) = \sum_{w} p(w|k) IMI(w|k)
-}
+\deqn{ MI(W, D|k) = \sum_{w} p(w|k) IMI(w|k) }
 
-where the IMI is defined as specified in the Details for \code{\link{imi_topic}}. This is the formula used for calculation here.
+where the IMI is defined as specified in the Details for
+\code{\link{imi_topic}}. This is the formula used for calculation here.
 
 We can replace \eqn{D} with a grouping over documents and the formulas carry 
-over without further change, now expressing the mutual information of those groupings and words within the topic.
+over without further change, now expressing the mutual information of those
+groupings and words within the topic.
 }
 \seealso{
-\code{\link{imi_topic}}, \code{\link{imi_check}}, \code{\link{mi_check}}
+\code{\link{imi_topic}}, \code{\link{imi_check}},
+  \code{\link{mi_check}}
 }
 

@@ -7,7 +7,8 @@
 plot_mi_check(m, k, groups = NULL, n_reps = 20)
 }
 \arguments{
-\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via \code{\link{load_sampling_state}}}
+\item{m}{\code{mallet_model} object \emph{with sampling state loaded} via
+\code{\link{load_sampling_state}}}
 
 \item{k}{topic number (only one topic at a time)}
 
@@ -19,9 +20,15 @@ plot_mi_check(m, k, groups = NULL, n_reps = 20)
 \code{ggplot2} plot object
 }
 \description{
-As a diagnostic visualization, this function displays the MI score of a topic in comparison with the distribution of simulated values, on a scale normalized to the latter. Extreme deviations of the actual MI score indicates a departure from the multinomial assumption of the model. Exploring these deviations over various document groupings may help to reveal the driving factor of those deviations (e.g. variation over time).
+As a diagnostic visualization, this function displays the MI score of a topic
+in comparison with the distribution of simulated values, on a scale
+normalized to the latter. Extreme deviations of the actual MI score indicates
+a departure from the multinomial assumption of the model. Exploring these
+deviations over various document groupings may help to reveal the driving
+factor of those deviations (e.g. variation over time).
 }
 \seealso{
-\code{\link{mi_topic}}, \code{\link{mi_check}}, \code{\link{plot_imi_check}}
+\code{\link{mi_topic}}, \code{\link{mi_check}},
+  \code{\link{plot_imi_check}}
 }
 
