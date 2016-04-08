@@ -46,6 +46,7 @@ technical notes at \url{http://github.com/agoldst/dfr-browser}.
 
 This package includes a copy of the dfr-browser files necessary to run the 
 browser. By default, this routine only exports data files. To also copy 
+over the dfr-browser source (javascript, HTML, and CSS), pass 
 \code{supporting_files=T}.
 
 If you are working with non-JSTOR documents, the one file that will reflect
@@ -75,7 +76,13 @@ aims to allow you more flexibility about what gets exported.
 \dontrun{
 m <- model_dfr_documents("citations.CSV", "wordcounts",
     "stoplist.txt", n_topics=40)
-export_browser_data(m, out_dir="data")
+
+# export all files needed for browser program
+export_browser_data(m, out_dir="browser", supporting_files=T)
+
+# or: overwrite model data only for an already-existing browser
+export_browser_data(m, out_dir="browser/data",
+    supporting_files=F, overwrite=T)
 }
 
 }
