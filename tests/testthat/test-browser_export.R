@@ -110,7 +110,7 @@ test_that("metadata munging acts as expected", {
     md <- read.csv(unz(file.path(out_dir, "meta.csv.zip"), "meta.csv"),
                    header=F, as.is=T)
     expect_equal(ncol(md), ncol(metadata(m)))
-    expect_equal(metadata(m),
+    expect_equal(as.data.frame(metadata(m)),
                  md[ , c(1, 9, 2:8, 10:13)] %>%
                         mutate(V7=as.Date(V7),
                                V11=factor(V11)),
@@ -127,7 +127,7 @@ test_that("metadata munging acts as expected", {
     )
     md_out <- read.csv(unz(file.path(out_dir, "meta.csv.zip"), "meta.csv"),
                        header=F, as.is=T)
-    expect_equal(metadata(m),
+    expect_equal(as.data.frame(metadata(m)),
                  md_out %>%
                     mutate(V7=as.Date(V7),
                            V10=factor(V10)),
@@ -149,19 +149,19 @@ test_that("non-zipped export produces files", {
     clear_files(out_files_non_zip)
 })
 
-test_that("dfb download works too", {
+test_that("dfb copy works too", {
 
     expect_message(
         export_browser_data(m, out_dir=out_dir, zipped=T,
-                            download_dfb=T,
+                            supporting_files=T,
                             n_scaled_words=100),
-        "Downloading"
+        "Copying"
     )
     dfb_files <- file.path(out_dir,
-                           c("bin", "css", "fonts",
+                           c("bin", "css", "fonts", "img",
                              "js", "lib", "index.html", "LICENSE",
                              "data"))
-    expect_files(dfb_files, "dfb-download: ")
+    expect_files(dfb_files, "dfb support: ")
     expect_files(file.path(out_dir, "data", c(
         "dt.json.zip",
         "info.json",
@@ -173,7 +173,7 @@ test_that("dfb download works too", {
 
     expect_error(
         export_browser_data(m, out_dir=out_dir, zipped=T,
-                            download_dfb=T,
+                            supporting_files=T,
                             n_scaled_words=100)
     )
 
@@ -182,10 +182,10 @@ test_that("dfb download works too", {
     clear_files(file.path(out_dir, "data", "tw.json"))
     clear_files(file.path(out_dir, "index.html"))
     export_browser_data(m, out_dir=out_dir, zipped=T,
-                        download_dfb=T, overwrite=T,
+                        supporting_files=T, overwrite=T,
                         n_scaled_words=100)
 
-    expect_files(dfb_files, "dfb-download overwrite: ")
+    expect_files(dfb_files, "dfb support overwrite: ")
     expect_files(file.path(out_dir, "data", c(
         "dt.json.zip",
         "info.json",
