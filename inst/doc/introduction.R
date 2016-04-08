@@ -140,7 +140,7 @@ sort(scale(d$topics$corpus_dist))[1:3]
 #  topic_report(m, "plots")
 
 ## ----eval=F--------------------------------------------------------------
-#  export_browser_data(m, "browser", download_dfb=T)
+#  export_browser_data(m, "browser", supporting_files=T)
 
 ## ------------------------------------------------------------------------
 w <- "poem"

@@ -348,17 +348,17 @@ The `topic_report` function generates a folder full of these plots for all the t
 topic_report(m, "plots")
 ```
 
-For more detailed browsing, the package can export a model into the format used by my [dfr-browser](http://agoldst.github.io/dfr-browser). This is a JavaScript-based web-browser application which can be used to explore the model in an interactive way. To download the necessary files and export data:
+For more detailed browsing, the package can export a model into the format used by my [dfr-browser](http://agoldst.github.io/dfr-browser). This is a JavaScript-based web-browser application which can be used to explore the model in an interactive way. To export the data and all necessary supporting files:
 
 ```{r eval=F}
-export_browser_data(m, "browser", download_dfb=T)
+export_browser_data(m, "browser", supporting_files=T)
 ```
 
 Then, in the shell, run
 
     bin/server
 
-from the `browser` directory and visit `http://localhost:8888` in your web browser.^[To skip the download and export only data files, set `download_dfb=F`.]
+from the `browser` directory and visit `http://localhost:8888` in your web browser.^[To export only data files, if you already have a copy of the dfr-browser JavaScript/HTML/CSS, set `supporting_files=F`.]
 
 ## A more elaborate visualization: a word's topic assignments
 
