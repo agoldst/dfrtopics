@@ -5,13 +5,13 @@
 \title{Output data files for dfr-browser}
 \usage{
 export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
-  n_scaled_words = 1000, download_dfb = FALSE, overwrite = FALSE)
+  n_scaled_words = 1000, supporting_files = FALSE, overwrite = FALSE)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or 
 \code{\link{load_mallet_model}}}
 
-\item{out_dir}{directory for output. If \code{download_dfb} is TRUE, the 
+\item{out_dir}{directory for output. If \code{supporting_files} is TRUE, the 
 exported data files will go in a \code{"data"} directory under 
 \code{out_dir}.}
 
@@ -22,9 +22,10 @@ exported data files will go in a \code{"data"} directory under
 \item{n_scaled_words}{how many word types to use in scaled coordinates 
 calculation?}
 
-\item{download_dfb}{if TRUE (FALSE is default), all the files needed to run 
-the browser and the exported data placed appropriately. From a shell in 
-\code{out_dir}, run \code{bin/server} to launch a local web server.}
+\item{supporting_files}{if TRUE (FALSE is default), all the files
+needed to run the browser are copied to \code{out_dir}, with the
+exported data placed appropriately. From a shell in \code{out_dir},
+run \code{bin/server} to launch a local web server.}
 
 \item{overwrite}{if TRUE, this will clobber existing files}
 }
@@ -42,6 +43,10 @@ wish, zip the files using another program).
 
 A detailed description of the output files can be found in the dfr-browser
 technical notes at \url{http://github.com/agoldst/dfr-browser}.
+
+This package includes a copy of the dfr-browser files necessary to run the 
+browser. By default, this routine only exports data files. To also copy 
+\code{supporting_files=T}.
 
 If you are working with non-JSTOR documents, the one file that will reflect
 this is the exported metadata. dfr-browser expects seven metadata columns:

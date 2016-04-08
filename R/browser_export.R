@@ -44,6 +44,11 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=FALSE,
 #' 
 #' A detailed description of the output files can be found in the dfr-browser
 #' technical notes at \url{http://github.com/agoldst/dfr-browser}.
+#'
+#' This package includes a copy of the dfr-browser files necessary to run the 
+#' browser. By default, this routine only exports data files. To also copy 
+#" over the dfr-browser source (javascript, HTML, and CSS), pass 
+#' \code{supporting_files=T}.
 #' 
 #' If you are working with non-JSTOR documents, the one file that will reflect
 #' this is the exported metadata. dfr-browser expects seven metadata columns:
@@ -70,16 +75,17 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=FALSE,
 #' 
 #' @param m \code{mallet_model} object from \code{\link{train_model}} or 
 #'   \code{\link{load_mallet_model}}
-#' @param out_dir directory for output. If \code{download_dfb} is TRUE, the 
+#' @param out_dir directory for output. If \code{supporting_files} is TRUE, the 
 #'   exported data files will go in a \code{"data"} directory under 
 #'   \code{out_dir}.
 #' @param zipped should the larger data files be zipped?
 #' @param n_top_words how many top words per topic to save?
 #' @param n_scaled_words how many word types to use in scaled coordinates 
 #'   calculation?
-#' @param download_dfb if TRUE (FALSE is default), all the files needed to run 
-#'   the browser and the exported data placed appropriately. From a shell in 
-#'   \code{out_dir}, run \code{bin/server} to launch a local web server.
+#' @param supporting_files if TRUE (FALSE is default), all the files
+#'   needed to run the browser are copied to \code{out_dir}, with the
+#'   exported data placed appropriately. From a shell in \code{out_dir},
+#'   run \code{bin/server} to launch a local web server.  
 #' @param overwrite if TRUE, this will clobber existing files
 #'   
 #' @examples
@@ -97,7 +103,7 @@ write_zip <- function (writer, file_base, file_ext=".json", no_zip=FALSE,
 export_browser_data <- function (m, out_dir, zipped=TRUE,
                                  n_top_words=50,
                                  n_scaled_words=1000,
-                                 download_dfb=FALSE,
+                                 supporting_files=FALSE,
                                  overwrite=FALSE) {
     if (!requireNamespace("jsonlite", quietly=TRUE)) {
         stop("jsonlite package required for browser export. Install from CRAN.")
@@ -111,29 +117,8 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
         dir.create(out_dir)
     }
 
-    if (download_dfb) {
-        if (!requireNamespace("httr", quietly=TRUE)) {
-            stop("httr package required for download. Install from CRAN.")
-        }
-        message("Downloading dfr-browser files from github to ", out_dir)
-        r <- httr::GET(
-            "https://github.com/agoldst/dfr-browser/archive/master.zip")
-        httr::stop_for_status(r)
-        z <- tempfile()
-        writeBin(httr::content(r, "raw"), z)
-        dfb_keep <- c(
-            "bin/", "css/", "fonts/", "js/", "lib/", "index.html", "LICENSE"
-        )
-        dfb_files <- unzip(z, list=TRUE)$Name
-        dfb_files <- dfb_files[
-            stringr::str_detect(dfb_files, paste(dfb_keep, collapse="|"))
-        ]
-        tmp <- tempfile()
-        dir.create(tmp)
-        unzip(z, files=dfb_files, exdir=tmp)
-        unlink(z)
-
-        dfb_files <- list.files(file.path(tmp, "dfr-browser-master"))
+    if (supporting_files) { 
+        dfb_files <- list.files(file.path(path.package("dfrtopics"), "dfb"))
 
         if (!overwrite) {
             for (f in file.path(out_dir, list.files(dfb_files,
@@ -146,10 +131,10 @@ Set overwrite=TRUE to overwrite existing files."
             }
         }
 
-        file.copy(file.path(tmp, "dfr-browser-master", dfb_files),
+        message("Copying dfr-browser supporting files...")
+        file.copy(file.path(path.package("dfrtopics"), "dfb", dfb_files),
                   out_dir,
                   recursive=TRUE, overwrite=overwrite)
-        unlink(tmp, recursive=TRUE)
 
         # the server script doesn't download with execute permission, so:
         server <- file.path(out_dir, "bin", "server")
