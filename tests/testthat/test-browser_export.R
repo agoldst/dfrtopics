@@ -149,6 +149,22 @@ test_that("non-zipped export produces files", {
     clear_files(out_files_non_zip)
 })
 
+test_that("info parameter gets properly stored", {
+    info_j <- list(
+        title="Hoo boy",
+        meta_info="<h2>YO</h2>",
+        VIS=list(overview_words=15, resize_refresh_delay=50)
+    )
+    export_browser_data(m, out_dir=out_dir, zipped=T,
+                        supporting_files=F,
+                        n_scaled_words=100,
+                        info=info_j)
+    expect_files(out_files, "export with specified info")
+    expect_equal(jsonlite::fromJSON(file.path(out_dir, "info.json")),
+                 info_j)
+    clear_files(out_files)
+})
+
 test_that("dfb copy works too", {
 
     expect_message(
@@ -203,4 +219,48 @@ test_that("dfb copy works too", {
                  info="check that no files are left over")
 
     clear_files(out_dir)
-}) 
+})
+
+test_that("dfr_browser does multifile export", {
+    dfr_browser(m, out_dir=out_dir, internalize=F, browse=F,
+                n_scaled_words=100)
+    dfb_files <- file.path(out_dir,
+                           c("bin", "css", "fonts", "img",
+                             "js", "lib", "index.html", "LICENSE",
+                             "data"))
+    expect_files(dfb_files, "dfb support: ")
+    expect_files(file.path(out_dir, "data", c(
+        "dt.json.zip",
+        "info.json",
+        "meta.csv.zip",
+        "topic_scaled.csv",
+        "tw.json")))
+    clear_files(out_dir)
+})
+
+test_that("dfr_browser does internalized export", {
+    dfr_browser(m, out_dir=out_dir, n_scaled_words=100, internalize=T,
+                browse=F)
+    expect_true(all(!file.exists(out_files)))
+    idx <- file.path(out_dir, "index.html")
+    expect_files(idx)
+    idx_html <- readLines(idx)
+    for (d in c("dt", "info", "meta", "topic_scaled", "tw")) {
+        expect_match(idx_html, paste0('id="m__DATA__', d), all=F)
+    }
+    clear_files(out_dir, recursive=T)
+})
+
+
+test_that("dfr_browser would launch browser on the right file", {
+    brow <- getOption("browser")
+    options(browser=function (x) message("browser: ", x))
+
+    expect_message(dfr_browser(m, out_dir=out_dir, n_scaled_words=100),
+        paste0("browser: file://", file.path(out_dir, "index.html")))
+
+    clear_files(out_dir, recursive=T) 
+    options(browser=brow)
+})
+
+

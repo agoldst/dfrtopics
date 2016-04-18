@@ -5,7 +5,8 @@
 \title{Output data files for dfr-browser}
 \usage{
 export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
-  n_scaled_words = 1000, supporting_files = FALSE, overwrite = FALSE)
+  n_scaled_words = 1000, supporting_files = FALSE, overwrite = FALSE,
+  internalize = FALSE, info = NULL)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or 
@@ -28,11 +29,19 @@ exported data placed appropriately. From a shell in \code{out_dir},
 run \code{bin/server} to launch a local web server.}
 
 \item{overwrite}{if TRUE, this will clobber existing files}
+
+\item{internalize}{if TRUE, write data directly into the browser's 
+\code{index.html} source instead of into a series of separate files.}
+
+\item{info}{a list of dfr-browser parameters. Converted to JSON with 
+\code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted, 
+default values are used.}
 }
 \description{
 Transform and save modeling results in a format suitable for use by 
 \href{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser 
-based model browser.
+based model browser. For a quick export and immediate viewing, see also 
+\code{\link{dfr_browser}}.
 }
 \details{
 This routine reports on its progress. By default, it saves zipped versions of
@@ -47,7 +56,10 @@ technical notes at \url{http://github.com/agoldst/dfr-browser}.
 This package includes a copy of the dfr-browser files necessary to run the 
 browser. By default, this routine only exports data files. To also copy 
 over the dfr-browser source (javascript, HTML, and CSS), pass 
-\code{supporting_files=T}.
+\code{supporting_files=T}. To insert the data directly into the main 
+\code{index.html} file, also passed \code{internalize=T}. I recommend this 
+last option for local viewing only, not for web hosting; in the latter case, 
+separate data files will allow for asynchronous loading.
 
 If you are working with non-JSTOR documents, the one file that will reflect
 this is the exported metadata. dfr-browser expects seven metadata columns:
@@ -87,7 +99,7 @@ export_browser_data(m, out_dir="browser/data",
 
 }
 \seealso{
-\code{\link{model_dfr_documents}}, \code{\link{train_model}}, 
-  \code{\link{topic_scaled_2d}}
+\code{\link{dfr_browser}}, \code{\link{model_dfr_documents}},
+  \code{\link{train_model}}, \code{\link{topic_scaled_2d}}
 }
 
