@@ -21,7 +21,7 @@ I have been profligate with dependencies. Note that if you use RStudio, getting 
 
 ## Browsing the model interactively
 
-Now in alpha release: another project of mine, [dfr-browser](http://agoldst.github.io/dfr-browser), which makes topic models of DfR data into a javascript-based interactive browser. To export results from this model as a browser, use the package function `export_browser_data` (see the function documentation for more detail).
+Now in alpha release: another project of mine, [dfr-browser](http://agoldst.github.io/dfr-browser), which makes topic models of DfR data into a javascript-based interactive browser. To export results from this model as a browser, use the package function `dfr_browser` (see the function documentation for more detail).
 
 ## A note on licensing
 
@@ -34,7 +34,7 @@ The tests are based on a sample set of data from DfR. I do not currently have pe
 ## Version history
 
 v0.2.3
- : 4/19/16. An adjusted dfr-browser export via `dfr_browser()` for one-line interactive browsing. `wordcounts_instances` introduced to help express "no, MALLET, no more tokenizing!"
+ : 4/19/16. An adjusted dfr-browser export via `dfr_browser()` for one-line interactive browsing. `export_browser_data` is still avaiable for more control. `wordcounts_instances` introduced to help express "no, MALLET, no more tokenizing!"
 
 v0.2.2
  : 2/10/16. New (beta) feature: functions for the mutual information of words and documents within topics, and for using this in a posterior predictive check of the model fit: `imi_topic`, `mi_topic`, `imi_check`, `mi_check`. Introduces a dependency on RcppEigen.
