@@ -22,4 +22,28 @@ do not handle quotations within quotations correctly and make no effort to
 scrub the cruft found in some journals' metadata on JSTOR.  Author fields,
 whether designating one author or multiple, are left as is.
 }
+\examples{
+
+md <- dplyr::data_frame(
+    id="10.2307/432680",
+    doi="10.2307/432680",
+    title="Sidney's \\"Arcadia\\" and \\"The Tryall of Chevalry\\"",
+    author='C. R. Baskervill',
+    journaltitle="Modern Philology",
+    volume=10,
+    issue=2,
+    pubdate=as.Date("1912-10-01"),
+    pagerange="pp. 197-201",
+    publisher="The University of Chicago Press",
+    type="fla",
+    reviewed.work=NA,
+    abstract=NA)
+cite_articles(md)
+
+\dontrun{
+# Given a model m with stored document metadata, cite a document by id:
+cite_articles(metadata(m)[doc_ids(m) == "10.2307/432680", ])
+}
+
+}
 

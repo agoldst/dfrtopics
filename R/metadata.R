@@ -196,11 +196,11 @@ dfr_id_url <- function(id, jstor_direct=TRUE) {
 #' @return a character vector of citations
 #'   
 #' @examples
-#' 
+#'
 #' md <- dplyr::data_frame(
 #'     id="10.2307/432680",
 #'     doi="10.2307/432680",
-#'     title='Sidney\'s "Arcadia" and "The Tryall of Chevalry"',
+#'     title="Sidney's \"Arcadia\" and \"The Tryall of Chevalry\"",
 #'     author='C. R. Baskervill',
 #'     journaltitle="Modern Philology",
 #'     volume=10,
