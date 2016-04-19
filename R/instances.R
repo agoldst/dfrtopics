@@ -2,13 +2,23 @@
 
 #' Create MALLET instances from a document frame
 #'
-#' Given a frame like that returned by \code{\link{wordcounts_texts}},
-#' create a MALLET \code{InstanceList} object. A simple wrapper for
-#' \code{link[mallet]{mallet.import}}.
+#' Given a data frame of document IDs and texts (one per doc), such as
+#' that returned by \code{\link{wordcounts_texts}}, create a MALLET
+#' \code{InstanceList} object. This function is a simple wrapper for
+#' \code{\link[mallet]{mallet.import}}. N.B. MALLET does tokenization,
+#' stopword removal, and casefolding on these texts, but if you have
+#' used \code{\link{wordcounts_texts}}, you may have already done
+#' those tasks yourself. To ensure MALLET does no further stoplisting,
+#' pass \code{stoplist_file=NULL} (the default). To ensure MALLET does
+#' no extra tokenization, pass \code{token.regex="\\S+"} (whitespace
+#' tokenization---\emph{not} the default). To prevent MALLET from
+#' casefolding, pass \code{preserve.case=T}. Or, equivalently, use the
+#' function \code{\link{wordcounts_instances}} instead.  
 #'
-#' The \code{InstanceList} object is the form in which MALLET understands a
-#' corpus. These are the objects passed on to the model-training routines. If
-#' saved to disk the same corpus may be used with command-line MALLET.
+#' The \code{InstanceList} object is the form in which MALLET
+#' understands a corpus. These are the objects passed on to the
+#' model-training routines. If saved to disk the same corpus may be used
+#' with command-line MALLET.  
 #'
 #' If java gives out-of-memory errors, try increasing the Java heap size to a
 #' large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")}
@@ -21,7 +31,7 @@
 #' @param ... passed on to \code{\link[mallet]{mallet.import}}. A possibly
 #'   important parameter to adjust is \code{token.regex}.
 #' @return an rJava reference to a MALLET \code{InstanceList}
-#' @seealso \code{\link{train_model}} \code{\link{write_instances}}
+#' @seealso \code{\link{train_model}}, \code{\link{write_instances}}
 #'
 #' @export
 #'
@@ -43,6 +53,39 @@ make_instances <- function (docs, stoplist_file=NULL, ...) {
     }
 
     insts
+}
+
+#' Create MALLET instances from a word-counts data frame
+#'
+#' Given a data frame representing documents as feature counts, create a MALLET 
+#' \code{InstanceList} object which can then be passed on to 
+#' \code{\link{train_model}} or saved to disk for later use with 
+#' \code{\link{write_instances}}. This function is a small convenience wrapper 
+#' for \code{\link{make_instances}} that ensures no further stopword removal, 
+#' tokenization, or casefolding is done.
+#'
+#' If your tokens themselves contain whitespace, change the \code{sep} parameter
+#' and adjust the \code{token_regex} accordingly.
+#'
+#' @param counts data frame with \code{id}, \code{word}, \code{weight} columns
+#' @param shuffle randomize word order before passing on to MALLET? (See 
+#'   \code{\link{wordcounts_texts}}
+#' @param sep separator to use between words
+#' @param token_regex regular expression matching a token. Ordinarily, this
+#'   should correspond to \code{sep} (hence the default, whitespace 
+#'   tokenization), since no further tokenization should be done.
+#' @param preserve_case if FALSE, all words are lowercased by MALLET
+#' @return an rJava reference to a MALLET \code{InstanceList}
+#'
+#' @seealso \code{\link{make_instances}} which this wraps, 
+#'   \code{\link{train_model}}, \code{\link{write_instances}}
+#' @export 
+wordcounts_instances <- function (counts, shuffle=FALSE,
+                                  sep=" ", token_regex="\\S+",
+                                  preserve_case=TRUE) {
+    txts <- wordcounts_texts(counts, shuffle=shuffle, sep=sep)
+    make_instances(txts, stoplist_file=NULL,
+                   token.regexp=token_regex, preserve.case=preserve_case)
 }
 
 #' Save a mallet InstanceList object to a file

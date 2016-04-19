@@ -20,20 +20,30 @@ important parameter to adjust is \code{token.regex}.}
 an rJava reference to a MALLET \code{InstanceList}
 }
 \description{
-Given a frame like that returned by \code{\link{wordcounts_texts}},
-create a MALLET \code{InstanceList} object. A simple wrapper for
-\code{link[mallet]{mallet.import}}.
+Given a data frame of document IDs and texts (one per doc), such as
+that returned by \code{\link{wordcounts_texts}}, create a MALLET
+\code{InstanceList} object. This function is a simple wrapper for
+\code{\link[mallet]{mallet.import}}. N.B. MALLET does tokenization,
+stopword removal, and casefolding on these texts, but if you have
+used \code{\link{wordcounts_texts}}, you may have already done
+those tasks yourself. To ensure MALLET does no further stoplisting,
+pass \code{stoplist_file=NULL} (the default). To ensure MALLET does
+no extra tokenization, pass \code{token.regex="\\S+"} (whitespace
+tokenization---\emph{not} the default). To prevent MALLET from
+casefolding, pass \code{preserve.case=T}. Or, equivalently, use the
+function \code{\link{wordcounts_instances}} instead.
 }
 \details{
-The \code{InstanceList} object is the form in which MALLET understands a
-corpus. These are the objects passed on to the model-training routines. If
-saved to disk the same corpus may be used with command-line MALLET.
+The \code{InstanceList} object is the form in which MALLET
+understands a corpus. These are the objects passed on to the
+model-training routines. If saved to disk the same corpus may be used
+with command-line MALLET.
 
 If java gives out-of-memory errors, try increasing the Java heap size to a
 large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")}
 \emph{before} loading this package (or rJava).
 }
 \seealso{
-\code{\link{train_model}} \code{\link{write_instances}}
+\code{\link{train_model}}, \code{\link{write_instances}}
 }
 

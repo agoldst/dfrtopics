@@ -78,5 +78,23 @@ test_that("Instances are made from DfR data successfully", {
     vocab2 <- setdiff(unique(counts$word), stopwords)
 
     expect_that(sort(vocab), equals(sort(vocab2)))
-
 })
+
+test_that("wordcounts_instances behaves correctly", {
+    fake_counts <- data_frame(
+        id=rep(as.character(1:2), each=3),
+        word=c("a", "a,b", "q's", "A", "b", "fnord"),
+        weight=rep(3:1, 2)
+    )
+
+    il <- wordcounts_instances(fake_counts)
+
+    expect_equal(il$size(), n_distinct(fake_counts$id))
+    expect_equal(sort(fake_counts$word), sort(instances_vocabulary(il)))
+    expect_equal(instance_text(il$get(0L)),
+                 "a a a a,b a,b q's")
+    expect_equal(instance_text(il$get(1L)),
+                 "A A A b b fnord")
+})
+
+
