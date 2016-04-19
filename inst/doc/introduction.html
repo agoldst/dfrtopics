@@ -12,7 +12,7 @@
 
 <meta name="author" content="Andrew Goldstone" />
 
-<meta name="date" content="2016-04-08" />
+<meta name="date" content="2016-04-19" />
 
 <title>Introduction to dfrtopics</title>
 
@@ -72,7 +72,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title">Introduction to dfrtopics</h1>
 <h4 class="author"><em>Andrew Goldstone</em></h4>
-<h4 class="date"><em>2016-04-08</em></h4>
+<h4 class="date"><em>2016-04-19</em></h4>
 
 </div>
 
@@ -421,11 +421,12 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 <p>In this case the plot will not so much reveal trends as it will indicate which particular years have items highly concentrated in one topic or another. The identical vertical scales may appear an annoyance, but this is in fact a useful way of seeing that one topic captures a great deal of the corpus and is probably not particularly meaningful: <em>22 first time made part seems says far later</em>.<a href="#fn9" class="footnoteRef" id="fnref9"><sup>9</sup></a> We can of course filter <code>topic_series(m)</code> to drop this topic from our display.</p>
 <p>The <code>topic_report</code> function generates a folder full of these plots for all the topics in the model.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">topic_report</span>(m, <span class="st">&quot;plots&quot;</span>)</code></pre></div>
-<p>For more detailed browsing, the package can export a model into the format used by my <a href="http://agoldst.github.io/dfr-browser">dfr-browser</a>. This is a JavaScript-based web-browser application which can be used to explore the model in an interactive way. To export the data and all necessary supporting files:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">export_browser_data</span>(m, <span class="st">&quot;browser&quot;</span>, <span class="dt">supporting_files=</span>T)</code></pre></div>
-<p>Then, in the shell, run</p>
-<pre><code>bin/server</code></pre>
-<p>from the <code>browser</code> directory and visit <code>http://localhost:8888</code> in your web browser.<a href="#fn10" class="footnoteRef" id="fnref10"><sup>10</sup></a></p>
+<p>For more detailed browsing, the package can export a model visualization using my <a href="http://agoldst.github.io/dfr-browser">dfr-browser</a>. This is a JavaScript-based web-browser application which can be used to explore the model in an interactive way. The function call</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dfr_browser</span>(m)</code></pre></div>
+<p>will create the necessary files in a temporary folder and then open the dfr-browser in your web browser. To export to a non-temporary location for later viewing or further customization, pass a folder name: <code>dfr_browser(m, &quot;browser&quot;)</code>. To export a browser with the data stored in a series of separate files that can be loaded asynchronously, use <code>dfr_browser(m, &quot;browser&quot;, internalize=F)</code>. Then, in the shell, run</p>
+<pre><code>cd browser
+bin/server</code></pre>
+<p>and visit <code>http://localhost:8888</code> in your web browser. This last option is best if the visualization is meant for the web.<a href="#fn10" class="footnoteRef" id="fnref10"><sup>10</sup></a></p>
 </div>
 <div id="a-more-elaborate-visualization-a-words-topic-assignments" class="section level2">
 <h2>A more elaborate visualization: a word’s topic assignments</h2>
@@ -441,7 +442,7 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sampling_state</span>(m)</code></pre></div>
 <pre><code>## An object of class &quot;big.matrix&quot;
 ## Slot &quot;address&quot;:
-## &lt;pointer: 0x1335f9310&gt;</code></pre>
+## &lt;pointer: 0x139148540&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dim</span>(<span class="kw">sampling_state</span>(m))</code></pre></div>
 <pre><code>## [1] 693350      4</code></pre>
 <p>What we now want is to examine the topic-document matrix <em>conditional on</em> the word poem. This is easy to do with the <code>mwhich</code> function from <code>bigmemory</code>, but as a convenience this package provides a function for this particular application (as well as the the term-document matrices conditioned on a topic, <code>tdm_topic</code>):</p>
@@ -481,8 +482,8 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 <div id="other-package-features" class="section level2">
 <h2>Other package features</h2>
 <p>Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET’s other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (<code>instance_Matrix</code>–the capital M because the result is a sparse <code>Matrix</code> object). I provide <code>read_diagnostics</code> and <code>write_diagnostics</code> methods to access MALLET’s own set of model diagnostics.</p>
-<p>Finally, I have included some functions for MALLET’s “topic inference” functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is <code>infer_topics</code>, which returns a model object <code>m</code> whose document-topic matrix is available as <code>doc_topics(m)</code>.</p>
-<hr />
+<p>I have included some functions for MALLET’s “topic inference” functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is <code>infer_topics</code>, which returns a model object <code>m</code> whose document-topic matrix is available as <code>doc_topics(m)</code>.</p>
+<p>The package also contains an <em>experimental</em> implementation of a posterior predictive check of the model fit which may help to diagnose the quality of individual topics and of the overall model. The check is described in the help files for <code>imi_check</code> and <code>mi_check</code>. I make no guarantee that the implementation is correct (and would welcome diagnoses or verifications).</p>
 </div>
 </div>
 <div class="footnotes">
@@ -496,7 +497,7 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 <li id="fn6"><p>A more formal way to do this, however, requires more elaborate modeling. See, in particular, the <a href="http://cran.r-project.org/web/packages/stm/">stm</a> package for the Structured Topic Model.<a href="#fnref6">↩</a></p></li>
 <li id="fn7"><p>These are simple arithmetical operations, of course, and you may ask why we do not stick to the dplyr idiom all the way through. But converting a full document-topic or topic-word matrix to a data frame—as dplyr would require—can be a cumbersome operation. It makes more sense to stay with the matrices until the final aggregates have been created.<a href="#fnref7">↩</a></p></li>
 <li id="fn8"><p>This requires the full topic-word matrix be loaded, though you can speed up the calculation by changing the value of the <code>n_words</code> parameter.<a href="#fnref8">↩</a></p></li>
-<li id="fn9"><p>For algorithmic diagnostics of topic quality, try examining MALLET’s topic diagnostics. In this case, the revealing quantity is the topic’s distance from the overall corpus (by K-L divergence).</p>
+<li id="fn9"><p>For algorithmic diagnostics of topic quality, try examining MALLET’s <a href="http://mallet.cs.umass.edu/diagnostics.php">topic diagnostics</a>. In this case, the revealing quantity is the topic’s distance from the overall corpus (by K-L divergence).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">d &lt;-<span class="st"> </span><span class="kw">read_diagnostics</span>(<span class="kw">file.path</span>(<span class="st">&quot;modeling_results&quot;</span>, <span class="st">&quot;diagnostics.xml&quot;</span>))
 <span class="kw">which.min</span>(d$topics$corpus_dist)</code></pre></div>
 <pre><code>## [1] 22</code></pre>
@@ -504,7 +505,7 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 <span class="kw">sort</span>(<span class="kw">scale</span>(d$topics$corpus_dist))[<span class="dv">1</span>:<span class="dv">3</span>]</code></pre></div>
 <pre><code>## [1] -2.237928 -1.165971 -1.084532</code></pre>
 <p>Topic 22 is much closer to the corpus (by K-L divergence) than the other topics. (The MALLET “coherence” measure is not useful in this case.)<a href="#fnref9">↩</a></p></li>
-<li id="fn10"><p>To export only data files, if you already have a copy of the dfr-browser JavaScript/HTML/CSS, set <code>supporting_files=F</code>.<a href="#fnref10">↩</a></p></li>
+<li id="fn10"><p>If you already have a copy of the dfr-browser JavaScript/HTML/CSS, you can also export only data files, using the <code>export_browser_data</code> function. Note that <code>dfr_browser</code> sets <code>internalize=T</code> by default, whereas <code>export_browser_data</code> sets <code>internalize=F</code>.<a href="#fnref10">↩</a></p></li>
 </ol>
 </div>
 

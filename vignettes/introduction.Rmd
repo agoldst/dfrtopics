@@ -331,7 +331,7 @@ topic_series(m) %>%
 
 In this case the plot will not so much reveal trends as it will indicate which particular years have items highly concentrated in one topic or another. The identical vertical scales may appear an annoyance, but this is in fact a useful way of seeing that one topic captures a great deal of the corpus and is probably not particularly meaningful: *`r topic_labels(m)[22]`*.[^sem-coh]   We can of course filter `topic_series(m)` to drop this topic from our display.
 
-[^sem-coh]: For algorithmic diagnostics of topic quality, try examining MALLET's topic diagnostics. In this case, the revealing quantity is the topic's distance from the overall corpus (by K-L divergence).
+[^sem-coh]: For algorithmic diagnostics of topic quality, try examining MALLET's [topic diagnostics](http://mallet.cs.umass.edu/diagnostics.php). In this case, the revealing quantity is the topic's distance from the overall corpus (by K-L divergence).
 
     ```{r}
     d <- read_diagnostics(file.path("modeling_results", "diagnostics.xml"))
@@ -348,17 +348,20 @@ The `topic_report` function generates a folder full of these plots for all the t
 topic_report(m, "plots")
 ```
 
-For more detailed browsing, the package can export a model into the format used by my [dfr-browser](http://agoldst.github.io/dfr-browser). This is a JavaScript-based web-browser application which can be used to explore the model in an interactive way. To export the data and all necessary supporting files:
+For more detailed browsing, the package can export a model visualization using my [dfr-browser](http://agoldst.github.io/dfr-browser). This is a JavaScript-based web-browser application which can be used to explore the model in an interactive way. The function call
 
 ```{r eval=F}
-export_browser_data(m, "browser", supporting_files=T)
+dfr_browser(m)
 ```
 
-Then, in the shell, run
+will create the necessary files in a temporary folder and then open the dfr-browser in your web browser. To export to a non-temporary location for later viewing or further customization, pass a folder name: `dfr_browser(m, "browser")`. To export a browser with the data stored in a series of separate files that can be loaded asynchronously, use `dfr_browser(m, "browser", internalize=F)`. Then, in the shell, run
 
+    cd browser
     bin/server
 
-from the `browser` directory and visit `http://localhost:8888` in your web browser.^[To export only data files, if you already have a copy of the dfr-browser JavaScript/HTML/CSS, set `supporting_files=F`.]
+and visit `http://localhost:8888` in your web browser. This last option is best if the visualization is meant for the web.[^browserdata]
+
+[^browserdata]: If you already have a copy of the dfr-browser JavaScript/HTML/CSS, you can also export only data files, using the `export_browser_data` function. Note that `dfr_browser` sets `internalize=T` by default, whereas `export_browser_data` sets `internalize=F`.
 
 ## A more elaborate visualization: a word's topic assignments
 
@@ -453,8 +456,7 @@ From this plot we can see the way *`r w`* moves among topics assigned to differe
 
 Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET's other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (`instance_Matrix`--the capital M because the result is a sparse `Matrix` object). I provide `read_diagnostics` and `write_diagnostics` methods to access MALLET's own set of model diagnostics.
 
-Finally, I have included some functions for MALLET's "topic inference" functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is `infer_topics`, which returns a model object `m` whose document-topic matrix is available as `doc_topics(m)`.
+I have included some functions for MALLET's "topic inference" functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is `infer_topics`, which returns a model object `m` whose document-topic matrix is available as `doc_topics(m)`.
 
-
--------------------
+The package also contains an *experimental* implementation of a posterior predictive check of the model fit which may help to diagnose the quality of individual topics and of the overall model. The check is described in the help files for `imi_check` and `mi_check`. I make no guarantee that the implementation is correct (and would welcome diagnoses or verifications).
 
