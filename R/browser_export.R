@@ -15,7 +15,7 @@ write_dfb_file <- function (txt, f, zip=TRUE,
             stop("Couldn't read index.html for writing internalized data.")
         }
         if (!overwrite) {
-            message("For internalized data, overwrite must be TRUE.")
+            stop("For internalized data, overwrite must be TRUE.")
         }
 
         src <- readLines(index)
@@ -26,7 +26,7 @@ write_dfb_file <- function (txt, f, zip=TRUE,
         # use jsonlite to escape the string, then stuff in script element
         txt <- paste0(
             '<script type="application/json" id="m__DATA__',
-            gsub("\\..*$", "", basename(f)), 
+            gsub("\\..*$", "", basename(f)),
             '">',
             jsonlite::toJSON(paste(txt, collapse="\n"), auto_unbox=TRUE),
             '</script>'
@@ -75,29 +75,29 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 }
 
 #' Output data files for dfr-browser
-#' 
-#' Transform and save modeling results in a format suitable for use by 
-#' \href{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser 
-#' based model browser. For a quick export and immediate viewing, see also 
+#'
+#' Transform and save modeling results in a format suitable for use by
+#' \href{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser
+#' based model browser. For a quick export and immediate viewing, see also
 #' \code{\link{dfr_browser}}.
-#' 
+#'
 #' This routine reports on its progress. By default, it saves zipped versions of
-#' the document-topics matrix and metadata files; dfr-browser supports 
-#' client-side unzipping. This function compresses files using R's 
-#' \code{\link{zip}} command. If that fails, set \code{zipped=F} (and, if you 
+#' the document-topics matrix and metadata files; dfr-browser supports
+#' client-side unzipping. This function compresses files using R's
+#' \code{\link{zip}} command. If that fails, set \code{zipped=F} (and, if you
 #' wish, zip the files using another program).
-#' 
+#'
 #' A detailed description of the output files can be found in the dfr-browser
 #' technical notes at \url{http://github.com/agoldst/dfr-browser}.
 #'
-#' This package includes a copy of the dfr-browser files necessary to run the 
-#' browser. By default, this routine only exports data files. To also copy 
-#' over the dfr-browser source (javascript, HTML, and CSS), pass 
-#' \code{supporting_files=T}. To insert the data directly into the main 
-#' \code{index.html} file, also passed \code{internalize=T}. I recommend this 
-#' last option for local viewing only, not for web hosting; in the latter case, 
-#' separate data files will allow for asynchronous loading.  
-#' 
+#' This package includes a copy of the dfr-browser files necessary to run the
+#' browser. By default, this routine only exports data files. To also copy
+#' over the dfr-browser source (javascript, HTML, and CSS), pass
+#' \code{supporting_files=T}. To insert the data directly into the main
+#' \code{index.html} file, also passed \code{internalize=T}. I recommend this
+#' last option for local viewing only, not for web hosting; in the latter case,
+#' separate data files will allow for asynchronous loading.
+#'
 #' If you are working with non-JSTOR documents, the one file that will reflect
 #' this is the exported metadata. dfr-browser expects seven metadata columns:
 #' \code{id,title,author,journaltitle,volume,issue,pubdate,pagerange}. This
@@ -111,7 +111,7 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' \href{http://tools.ietf.org/html/rfc4180}{RFC 4180}.). If your metadata does
 #' not match these expectations, you may have to write out the metadata yourself
 #' and/or customize dfr-browser to get satisfactory results.
-#' 
+#'
 #' Note that you can adjust the metadata held on the model object by assigning
 #' to \code{metadata(m)} before exporting the browser data. In particular, if
 #' you have many documents, you may wish to conserve space by eliminating
@@ -119,30 +119,30 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' \code{metadata(m)$publisher <- NULL}. Earlier versions of dfrtopics tried to
 #' eliminate such columns automatically, but this more conservative approach
 #' aims to allow you more flexibility about what gets exported.
-#' 
-#' 
-#' @param m \code{mallet_model} object from \code{\link{train_model}} or 
+#'
+#'
+#' @param m \code{mallet_model} object from \code{\link{train_model}} or
 #'   \code{\link{load_mallet_model}}
-#' @param out_dir directory for output. If \code{supporting_files} is TRUE, the 
-#'   exported data files will go in a \code{"data"} directory under 
+#' @param out_dir directory for output. If \code{supporting_files} is TRUE, the
+#'   exported data files will go in a \code{"data"} directory under
 #'   \code{out_dir}.
 #' @param zipped should the larger data files be zipped?
 #' @param n_top_words how many top words per topic to save?
-#' @param n_scaled_words how many word types to use in scaled coordinates 
+#' @param n_scaled_words how many word types to use in scaled coordinates
 #'   calculation?
 #' @param supporting_files if TRUE (FALSE is default), all the files
 #'   needed to run the browser are copied to \code{out_dir}, with the
 #'   exported data placed appropriately. From a shell in \code{out_dir},
-#'   run \code{bin/server} to launch a local web server.  
+#'   run \code{bin/server} to launch a local web server.
 #' @param overwrite if TRUE, this will clobber existing files
-#' @param internalize if TRUE, write data directly into the browser's 
+#' @param internalize if TRUE, write data directly into the browser's
 #' \code{index.html} source instead of into a series of separate files.
-#' @param info a list of dfr-browser parameters. Converted to JSON with 
-#'   \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted, 
+#' @param info a list of dfr-browser parameters. Converted to JSON with
+#'   \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
 #'   default values are used.
-#'   
+#'
 #' @examples
-#' 
+#'
 #' \dontrun{
 #' m <- model_dfr_documents("citations.CSV", "wordcounts",
 #'     "stoplist.txt", n_topics=40)
@@ -154,10 +154,10 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' export_browser_data(m, out_dir="browser/data",
 #'     supporting_files=F, overwrite=T)
 #' }
-#' 
+#'
 #' @seealso \code{\link{dfr_browser}}, \code{\link{model_dfr_documents}},
 #'   \code{\link{train_model}}, \code{\link{topic_scaled_2d}}
-#'   
+#'
 #' @export
 export_browser_data <- function (m, out_dir, zipped=TRUE,
                                  n_top_words=50,
@@ -179,7 +179,6 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
     } else {
         index <- NULL
     }
-
 
     if (file.exists(out_dir)) {
         if (!file.info(out_dir)$isdir) {
@@ -235,7 +234,7 @@ Set overwrite=TRUE to overwrite existing files."
 
         write_dfb_file(jsonlite::toJSON(tw, dataframe="columns"),
             paste0(file.path(out_dir, "tw"), ".json"), zip=FALSE,
-            overwrite=overwrite, index=index
+            overwrite=overwrite || internalize, index=index
         )
     } else {
         warning("Topic top words unavailable; unable to write tw.json")
@@ -249,7 +248,7 @@ Set overwrite=TRUE to overwrite existing files."
 
         write_dfb_file(jsonlite::toJSON(list(i=dtm@i, p=dtm@p, x=dtm@x)),
             paste0(file.path(out_dir, "dt"), ".json"), zip=zipped,
-            overwrite=overwrite, index=index
+            overwrite=overwrite || internalize, index=index
         )
     } else {
         warning("Document topics unavailable; unable to write dt.json.zip")
@@ -282,7 +281,7 @@ display may not work as expected. See ?export_browser_data for details."
         )
         write_dfb_file(md_txt,
             paste0(file.path(out_dir, "meta"), ".csv"), zip=zipped,
-            overwrite=overwrite, index=index)
+            overwrite=overwrite || internalize, index=index)
     } else {
         warning(
 "Metadata frame unavailable, so document metadata has not been written."
@@ -297,7 +296,7 @@ display may not work as expected. See ?export_browser_data for details."
                         col.names=FALSE)
             ),
             paste0(file.path(out_dir, "topic_scaled"), ".csv"), zip=FALSE,
-            overwrite=overwrite, index=index
+            overwrite=overwrite || internalize, index=index
         )
     } else {
         warning(
@@ -313,38 +312,51 @@ display may not work as expected. See ?export_browser_data for details."
         if (!write_info) message(info_file, " ok")
     }
     if (write_info) {
-        if (is.null(info)) { 
+        if (is.null(info)) {
             # default stub info
             info <- list(
-                title="",
-                meta_info="<h2><\\/h2>",
+                title="Model Browser",
+                meta_info="<h2></h2>",
                 VIS=list(overview_words=15)
             )
         }
         info <- jsonlite::toJSON(info)
 
         write_dfb_file(info, info_file, zip=FALSE,
-            overwrite=overwrite,
-            index=index)
+            overwrite=overwrite || internalize, index=index)
     }
 }
 
 #' Create and launch a model browser
 #'
-#' Export model data and all supporting files needed to browse a model 
+#' Export model data and all supporting files needed to browse a model
 #' interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser}.
 #'
-#' There are two ways to store the model data in the exported files. Either the data can be part of the source for the web page (\code{internalize=TRUE}) or it can be filed in separate files (\code{internalize=FALSE}). The former is more convenient for local browsing, since a web browser can simply be pointed to the file on disk. For web hosting, however, the latter is better, because dfr-browser can load data asynchronously rather than all at once, resulting in a more responsive initial page view for web visitors.
+#' There are two ways to store the model data in the exported files. Either the
+#' data can be part of the source for the web page (\code{internalize=TRUE}) or
+#' it can be filed in separate files (\code{internalize=FALSE}). The former is
+#' more convenient for local browsing, since a web browser can simply be
+#' pointed to the file on disk (this is what \code{browse=TRUE} does). For web
+#' hosting, however, the latter is better, because dfr-browser can load data
+#' asynchronously rather than all at once, resulting in a more responsive
+#' initial page view for web visitors.
 #'
-#' @param m \code{mallet_model} object from \code{\link{train_model}} or 
+#' For more control over the export, including the option to export data files
+#' only, if for example you have modified the HTML/CSS/JS of an existing
+#' dfr-browser, use \code{\link{export_browser_data}}.
+#'
+#' @param m \code{mallet_model} object from \code{\link{train_model}} or
 #'   \code{\link{load_mallet_model}}
-#' @param out_dir directory for output. By default, files are saved to a temporary directory
+#' @param out_dir directory for output. By default, files are saved to a
+#'   temporary directory
 #' @param browse if TRUE, launch web browser after export for viewing
-#' @param internalize if TRUE, model data is in the browser home page rather than separate files. See Details.
-#' @param ... passed on to \code{\link{export_browser_data}}
+#' @param internalize if TRUE, model data is in the browser home page rather
+#'   than separate files. See Details.
+#' @param ... passed on to \code{\link{export_browser_data}}, q.v.
+#'   (especially \code{overwrite}, \code{n_scaled_words}, and \code{info})
 #'
-#' @seealso \code{\link{export_browser_data}} which does the work of exporting 
-#'   files, \code{\link{model_dfr_documents}}, \code{\link{train_model}}, 
+#' @seealso \code{\link{export_browser_data}} which does the work of exporting
+#'   files, \code{\link{model_dfr_documents}}, \code{\link{train_model}},
 #'   \code{\link{topic_scaled_2d}}
 #'
 #' @examples
@@ -357,14 +369,15 @@ display may not work as expected. See ?export_browser_data for details."
 #' }
 #'
 #' @export
-dfr_browser <- function(m, out_dir=file.path(tempdir(), "dfr-browser"),
+dfr_browser <- function(m, out_dir=tempfile("dfr-browser"),
         internalize=TRUE, browse=TRUE, ...) {
+
     export_browser_data(m, out_dir, supporting_files=TRUE,
-                        internalize=internalize, ...)
+        internalize=internalize, ...)
     if (browse) {
         if (!internalize) {
             warning(
-"If internalize=FALSE, browsing from a file will mostly not work. Launch a 
+"If internalize=FALSE, browsing from a file will mostly not work. Launch a
 web server instead."
             )
         }

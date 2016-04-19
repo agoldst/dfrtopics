@@ -4,27 +4,41 @@
 \alias{dfr_browser}
 \title{Create and launch a model browser}
 \usage{
-dfr_browser(m, out_dir = file.path(tempdir(), "dfr-browser"),
-  internalize = TRUE, browse = TRUE, ...)
+dfr_browser(m, out_dir = tempfile("dfr-browser"), internalize = TRUE,
+  browse = TRUE, ...)
 }
 \arguments{
-\item{m}{\code{mallet_model} object from \code{\link{train_model}} or 
+\item{m}{\code{mallet_model} object from \code{\link{train_model}} or
 \code{\link{load_mallet_model}}}
 
-\item{out_dir}{directory for output. By default, files are saved to a temporary directory}
+\item{out_dir}{directory for output. By default, files are saved to a
+temporary directory}
 
-\item{internalize}{if TRUE, model data is in the browser home page rather than separate files. See Details.}
+\item{internalize}{if TRUE, model data is in the browser home page rather
+than separate files. See Details.}
 
 \item{browse}{if TRUE, launch web browser after export for viewing}
 
-\item{...}{passed on to \code{\link{export_browser_data}}}
+\item{...}{passed on to \code{\link{export_browser_data}}, q.v.
+(especially \code{overwrite}, \code{n_scaled_words}, and \code{info})}
 }
 \description{
-Export model data and all supporting files needed to browse a model 
+Export model data and all supporting files needed to browse a model
 interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser}.
 }
 \details{
-There are two ways to store the model data in the exported files. Either the data can be part of the source for the web page (\code{internalize=TRUE}) or it can be filed in separate files (\code{internalize=FALSE}). The former is more convenient for local browsing, since a web browser can simply be pointed to the file on disk. For web hosting, however, the latter is better, because dfr-browser can load data asynchronously rather than all at once, resulting in a more responsive initial page view for web visitors.
+There are two ways to store the model data in the exported files. Either the
+data can be part of the source for the web page (\code{internalize=TRUE}) or
+it can be filed in separate files (\code{internalize=FALSE}). The former is
+more convenient for local browsing, since a web browser can simply be
+pointed to the file on disk (this is what \code{browse=TRUE} does). For web
+hosting, however, the latter is better, because dfr-browser can load data
+asynchronously rather than all at once, resulting in a more responsive
+initial page view for web visitors.
+
+For more control over the export, including the option to export data files
+only, if for example you have modified the HTML/CSS/JS of an existing
+dfr-browser, use \code{\link{export_browser_data}}.
 }
 \examples{
 
@@ -37,8 +51,8 @@ dfr_browser(m)
 
 }
 \seealso{
-\code{\link{export_browser_data}} which does the work of exporting 
-  files, \code{\link{model_dfr_documents}}, \code{\link{train_model}}, 
+\code{\link{export_browser_data}} which does the work of exporting
+  files, \code{\link{model_dfr_documents}}, \code{\link{train_model}},
   \code{\link{topic_scaled_2d}}
 }
 

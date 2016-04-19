@@ -9,18 +9,18 @@ export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
   internalize = FALSE, info = NULL)
 }
 \arguments{
-\item{m}{\code{mallet_model} object from \code{\link{train_model}} or 
+\item{m}{\code{mallet_model} object from \code{\link{train_model}} or
 \code{\link{load_mallet_model}}}
 
-\item{out_dir}{directory for output. If \code{supporting_files} is TRUE, the 
-exported data files will go in a \code{"data"} directory under 
+\item{out_dir}{directory for output. If \code{supporting_files} is TRUE, the
+exported data files will go in a \code{"data"} directory under
 \code{out_dir}.}
 
 \item{zipped}{should the larger data files be zipped?}
 
 \item{n_top_words}{how many top words per topic to save?}
 
-\item{n_scaled_words}{how many word types to use in scaled coordinates 
+\item{n_scaled_words}{how many word types to use in scaled coordinates
 calculation?}
 
 \item{supporting_files}{if TRUE (FALSE is default), all the files
@@ -30,35 +30,35 @@ run \code{bin/server} to launch a local web server.}
 
 \item{overwrite}{if TRUE, this will clobber existing files}
 
-\item{internalize}{if TRUE, write data directly into the browser's 
+\item{internalize}{if TRUE, write data directly into the browser's
 \code{index.html} source instead of into a series of separate files.}
 
-\item{info}{a list of dfr-browser parameters. Converted to JSON with 
-\code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted, 
+\item{info}{a list of dfr-browser parameters. Converted to JSON with
+\code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
 default values are used.}
 }
 \description{
-Transform and save modeling results in a format suitable for use by 
-\href{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser 
-based model browser. For a quick export and immediate viewing, see also 
+Transform and save modeling results in a format suitable for use by
+\href{http://agoldst.github.io/dfr-browser}{dfr-browser}, the web-browser
+based model browser. For a quick export and immediate viewing, see also
 \code{\link{dfr_browser}}.
 }
 \details{
 This routine reports on its progress. By default, it saves zipped versions of
-the document-topics matrix and metadata files; dfr-browser supports 
-client-side unzipping. This function compresses files using R's 
-\code{\link{zip}} command. If that fails, set \code{zipped=F} (and, if you 
+the document-topics matrix and metadata files; dfr-browser supports
+client-side unzipping. This function compresses files using R's
+\code{\link{zip}} command. If that fails, set \code{zipped=F} (and, if you
 wish, zip the files using another program).
 
 A detailed description of the output files can be found in the dfr-browser
 technical notes at \url{http://github.com/agoldst/dfr-browser}.
 
-This package includes a copy of the dfr-browser files necessary to run the 
-browser. By default, this routine only exports data files. To also copy 
-over the dfr-browser source (javascript, HTML, and CSS), pass 
-\code{supporting_files=T}. To insert the data directly into the main 
-\code{index.html} file, also passed \code{internalize=T}. I recommend this 
-last option for local viewing only, not for web hosting; in the latter case, 
+This package includes a copy of the dfr-browser files necessary to run the
+browser. By default, this routine only exports data files. To also copy
+over the dfr-browser source (javascript, HTML, and CSS), pass
+\code{supporting_files=T}. To insert the data directly into the main
+\code{index.html} file, also passed \code{internalize=T}. I recommend this
+last option for local viewing only, not for web hosting; in the latter case,
 separate data files will allow for asynchronous loading.
 
 If you are working with non-JSTOR documents, the one file that will reflect
