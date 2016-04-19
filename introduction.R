@@ -62,10 +62,7 @@ counts <- counts %>%
 #      mutate(word=wordStem(word)) # English stemmer
 
 ## ------------------------------------------------------------------------
-docs <- wordcounts_texts(counts)
-
-## ------------------------------------------------------------------------
-ilist <- make_instances(docs)
+ilist <- wordcounts_instances(counts)
 
 ## ----message=F-----------------------------------------------------------
 m <- train_model(ilist, n_topics=40,

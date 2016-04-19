@@ -160,7 +160,7 @@ counts %&gt;%
 <span class="st">    </span><span class="kw">group_by</span>(word) %&gt;%
 <span class="st">    </span><span class="kw">filter</span>(<span class="kw">sum</span>(weight) &gt;<span class="st"> </span><span class="dv">3</span>)</code></pre></div>
 <p>This is a no-op in this case: such features were all ranked below 20000.</p></li>
-<li><p>DfR wordcounts are already casefolded, but you may wish to transform the features further, by, for example, stripping accents, normalizing orthography, or stemming. These are straightforward operations with <code>dplyr</code>, and no functions are provided for this. As an example, however, here is how you might apply a popular stemmer:</p>
+<li><p>DfR wordcounts are already case-folded (all lowercase), but you may wish to transform the features further, by, for example, stripping accents, normalizing orthography, or stemming. These are straightforward operations with <code>dplyr</code>, and no functions are provided for this. As an example, however, here is how you might apply a popular stemmer:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># not run for this vignette's example</span>
 <span class="kw">library</span>(<span class="st">&quot;SnowballC&quot;</span>)
 counts &lt;-<span class="st"> </span>counts %&gt;%
@@ -170,12 +170,10 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 </div>
 <div id="preparing-the-mallet-input-data-format" class="section level2">
 <h2>Preparing the MALLET input data format</h2>
-<p>MALLET cannot accept our <code>counts</code> data frame from R as is. Instead, it wants a data frame with one row per <em>document</em>, which it will then tokenize once again. This is silly, but easily handled:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">docs &lt;-<span class="st"> </span><span class="kw">wordcounts_texts</span>(counts)</code></pre></div>
-<p>If we have full texts, rather than word counts, we can directly create <code>docs</code> by reading in files at this stage.</p>
-<p>To create the MALLET-ready input, which is called an InstanceList, we use:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ilist &lt;-<span class="st"> </span><span class="kw">make_instances</span>(docs)</code></pre></div>
-<p>MALLET can also do its own stopword removal, if we supply a <code>stoplist_file</code> argument to <code>make_instances</code>. But there’s no need for that redundant step in this case. This InstanceList can be saved to disk with the <code>write_instances</code> function; I usually run the corpus-construction step separately from modeling, since I typically make many models of the same corpus. (And this lets us get all the intermediate forms of the corpus text out of memory.)</p>
+<p>MALLET cannot accept our <code>counts</code> data frame from R as is. Instead, it requires a data frame with one row per <em>document</em>, which it will then tokenize once again. MALLET can also remove stop words and case-fold (make everything lowercase). We have already done stop word removal. And in the case of data from DfR, the tokenization and case-folding has been done for us. To deal with this case and create the MALLET-ready input, which is called an InstanceList, we use:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ilist &lt;-<span class="st"> </span><span class="kw">wordcounts_instances</span>(counts)</code></pre></div>
+<p>For more control over this process, it is also possible to do this in two stages. The conversion from <code>counts</code> back to (disordered, stopword-removed) texts is done by the function <code>wordcounts_texts</code>. Any data frame with one document per row can be turned into an InstanceList with <code>make_instances</code>, which can also make use of MALLET’s tokenization and stopword-removal features if you wish. <code>wordcounts_instances</code> just calls these two functions in succession, but its default parameters are adjusted for cases like DfR data. Even if you are operating on full texts, you may well wish to tokenize and casefold using different methods than MALLET offers, and then use <code>wordcounts_instances</code>. If not, you can pass full texts directly to <code>make_instances</code>.</p>
+<p>An InstanceList can be saved to disk with the <code>write_instances</code> function; I usually run the corpus-construction step separately from modeling, since I typically make many models of the same corpus. (And this lets us get all the intermediate forms of the corpus text out of memory.)</p>
 </div>
 </div>
 <div id="training-a-topic-model" class="section level1">
@@ -442,7 +440,7 @@ bin/server</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sampling_state</span>(m)</code></pre></div>
 <pre><code>## An object of class &quot;big.matrix&quot;
 ## Slot &quot;address&quot;:
-## &lt;pointer: 0x139148540&gt;</code></pre>
+## &lt;pointer: 0x13f5c39c0&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dim</span>(<span class="kw">sampling_state</span>(m))</code></pre></div>
 <pre><code>## [1] 693350      4</code></pre>
 <p>What we now want is to examine the topic-document matrix <em>conditional on</em> the word poem. This is easy to do with the <code>mwhich</code> function from <code>bigmemory</code>, but as a convenience this package provides a function for this particular application (as well as the the term-document matrices conditioned on a topic, <code>tdm_topic</code>):</p>

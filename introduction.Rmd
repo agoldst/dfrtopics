@@ -134,7 +134,7 @@ The counts are not quite ready to be passed on to MALLET. It's important to be a
 
     This is a no-op in this case: such features were all ranked below 20000.
 
-3. DfR wordcounts are already casefolded, but you may wish to transform the features further, by, for example, stripping accents, normalizing orthography, or stemming. These are straightforward operations with `dplyr`, and no functions are provided for this. As an example, however, here is how you might apply a popular stemmer:
+3. DfR wordcounts are already case-folded (all lowercase), but you may wish to transform the features further, by, for example, stripping accents, normalizing orthography, or stemming. These are straightforward operations with `dplyr`, and no functions are provided for this. As an example, however, here is how you might apply a popular stemmer:
 
     ```{r eval=F}
     # not run for this vignette's example
@@ -147,23 +147,16 @@ The counts are not quite ready to be passed on to MALLET. It's important to be a
 
 ## Preparing the MALLET input data format
 
-MALLET cannot accept our `counts` data frame from R as is. Instead, it wants a data frame with one row per *document*, which it will then tokenize once again. This is silly, but easily handled:
+MALLET cannot accept our `counts` data frame from R as is. Instead, it requires a data frame with one row per *document*, which it will then tokenize once again. MALLET can also remove stop words and case-fold (make everything lowercase). We have already done stop word removal. And in the case of data from DfR, the tokenization and case-folding has been done for us. To deal with this case and create the MALLET-ready input, which is called an InstanceList, we use:
 
 ```{r}
-docs <- wordcounts_texts(counts)
+ilist <- wordcounts_instances(counts)
 ```
 
-If we have full texts, rather than word counts, we can directly create `docs` by reading in files at this stage.
+For more control over this process, it is also possible to do this in two stages. The conversion from  `counts` back to (disordered, stopword-removed) texts is done by the function `wordcounts_texts`. Any data frame with one document per row can be turned into an InstanceList with `make_instances`, which can also make use of MALLET's tokenization and stopword-removal features if you wish. `wordcounts_instances` just calls these two functions in succession, but its default parameters are adjusted for cases like DfR data. 
+Even if you are operating on full texts, you may well wish to tokenize and casefold using different methods than MALLET offers, and then use `wordcounts_instances`. If not, you can pass full texts directly to `make_instances`.
 
-To create the MALLET-ready input, which is called an InstanceList, we use:
-
-```{r}
-ilist <- make_instances(docs)
-```
-
-MALLET can also do its own stopword removal, if we supply a `stoplist_file`
-argument to `make_instances`. But there's no need for that redundant step in
-this case. This InstanceList can be saved to disk with the `write_instances`
+An InstanceList can be saved to disk with the `write_instances`
 function; I usually run the corpus-construction step separately from modeling,
 since I typically make many models of the same corpus. (And this lets us get
 all the intermediate forms of the corpus text out of memory.)
