@@ -24,7 +24,7 @@
 #'
 #' @seealso \code{\link{align_topics}}
 #'
-#' @export 
+#' @export
 model_distances <- function (ms, n_words, g=JS_divergence) {
 
     n <- length(ms)
@@ -130,9 +130,9 @@ unnest_model_distances <- function (dst) {
 #' @param dst result from \code{\link{model_distances}} (q.v.)
 #' @param threshold maximum dissimilarity allowed between cluster members
 #'
-#' @return a \code{\link{topic_alignment}}, which is simply a data frame
-#'   with three columns: \code{model}, \code{topic}, and \code{cluster},
-#'   the cluster assignment. Cluster distances are not returned.
+#' @return a data frame with three columns: \code{model}, \code{topic},
+#'   and \code{cluster}, the cluster assignment, designated by an arbitrary
+#'   number counted up from 1. Cluster distances are not returned.
 #'
 #' @seealso \code{\link{model_distances}}
 #'
@@ -147,17 +147,14 @@ derive one from a list of models.")
     # TODO don't really need to enforce same K for all models
     K <- nrow(dst[[1]][[1]])
     M <- length(dst) + 1
-    
+
     cl <- naive_cluster(unnest_model_distances(dst),
                         M, K, threshold)
 
-    structure(
-        list(
-            model=rep(1:M, each=K),
-            topic=rep(1:K, times=M),
-            cluster=cl + 1 # naive_cluster numbers clusters from 0
-        ),
-        class="topic_alignment"
+    data.frame(
+        model=rep(1:M, each=K),
+        topic=rep(1:K, times=M),
+        cluster=cl + 1 # naive_cluster numbers clusters from 0
     )
 }
 
