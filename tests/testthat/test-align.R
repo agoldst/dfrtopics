@@ -78,6 +78,29 @@ test_that("unnesting distances is correct", {
     expect_equal(dfrtopics:::unnest_model_distances(dummy), 1:12)
 })
 
+test_that("we can take distances between non-overlapping models", {
+    m_voc <- list.files(file.path(data_dir, "wordcounts"),
+                        full.names=T)[61:120] %>% 
+        read_wordcounts() %>%
+        wordcounts_remove_rare(200) %>%
+        wordcounts_texts() %>%
+        make_instances(stoplist_file) %>%
+        train_model(n_topics=K, n_iters=200,
+            threads=1,
+            alpha_sum=5,
+            beta=0.01,
+            n_hyper_iters=20,
+            n_burn_in=20,
+            n_max_iters=10,
+            metadata=meta
+        )
+
+    dd <- model_distances(list(ms[[1]], ms[[2]], m_voc), 20)
+    expect_true(all(is.finite(
+        dfrtopics:::unnest_model_distances(dd)
+    )))
+})
+
 test_that("clustering two models with high threshold fully aligns them", {
     dd <- model_distances(ms[1:2], 20)
     cl <- align_topics(dd, 10000000)
