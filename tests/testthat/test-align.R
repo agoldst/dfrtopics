@@ -81,8 +81,8 @@ test_that("unnesting distances is correct", {
 test_that("clustering two models with high threshold fully aligns them", {
     dd <- model_distances(ms[1:2], 20)
     cl <- align_topics(dd, 10000000)
-    expect_equal(sort(cl$cluster[cl$model == 1]), 1:K)
-    expect_equal(sort(cl$cluster[cl$model == 2]), 1:K)
+    expect_equal(sort(cl[1, ]), 1:K)
+    expect_equal(sort(cl[2, ]), 1:K)
 
 })
 
@@ -90,15 +90,14 @@ test_that("in clustering two models, the closest pair is indeed grouped", {
     dd <- model_distances(ms[1:2], 20)
     cl <- align_topics(dd, 10000000)
     closest <- which(dd[[1]][[1]] == min(dd[[1]][[1]]), arr.ind=TRUE)
-    expect_equal(cl$cluster[cl$model == 1 & cl$topic == closest[2]],
-        cl$cluster[cl$model == 2 & cl$topic == closest[1]])
+    expect_equal(cl[1, closest[2]], cl[2, closest[1]])
 })
 
 test_that("clustering meets up-to-one constraint", {
     cl <- align_topics(dst)
-    expect_equal(length(cl$cluster), M * K)
-    expect_true(all(1 <= cl$cluster & cl$cluster <= M * K))
-    ck <- as.data.frame(cl) %>%
+    expect_equal(dim(cl), c(M, K))
+    expect_true(all(1 <= cl & cl <= M * K))
+    ck <- gather_matrix(cl, col_names=c("model", "topic", "cluster")) %>%
         group_by(cluster) %>%
         summarize(no_dupes=anyDuplicated(model) == 0)
     expect_true(all(ck$no_dupes))

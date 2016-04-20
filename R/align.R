@@ -136,9 +136,10 @@ unnest_model_distances <- function (dst) {
 #'   may ultimately join a cluster. More aggressive thresholding is
 #'   recommended, in order to expose isolated topics.
 #'
-#' @return a data frame with three columns: \code{model}, \code{topic},
-#'   and \code{cluster}, the cluster assignment, designated by an arbitrary
-#'   number counted up from 1. Cluster distances are not returned.
+#' @return a matrix of cluster assignments, where the \eqn{i,j} element is the
+#'   cluster number of topic \eqn{j} in model \eqn{i}. Cluster distances are
+#'   not returned. \code{\link{gather_matrix}} may be useful for getting
+#'   the result into conveniently explorable form.
 #'
 #' @seealso \code{\link{model_distances}}
 #'
@@ -151,7 +152,7 @@ unnest_model_distances <- function (dst) {
 #' \dontrun{
 #' # assume m1, m2, m3 are models
 #' dists <- model_distances(list(m1, m2, m3), n_words=40)
-#' clusters <- align_topics(dists, threshold=0.5)
+#' align_topics(dists, threshold=0.5)
 #' }
 #'
 #' @export
@@ -172,11 +173,8 @@ derive one from a list of models.")
 
     cl <- naive_cluster(dst_flat, M, K, threshold)
 
-    data.frame(
-        model=rep(1:M, each=K),
-        topic=rep(1:K, times=M),
-        cluster=cl + 1 # naive_cluster numbers clusters from 0
-    )
+    # naive_cluster numbers clusters from 0
+    matrix(cl + 1, nrow=M, byrow=T)
 }
 
 
