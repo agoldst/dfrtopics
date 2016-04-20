@@ -38,9 +38,9 @@ IntegerVector naive_cluster(NumericVector D, int M, int K,
 
         // brute force: we'll just write down which index in D
         // corresponds to which pair of topics. D is assumed to go rowwise
-        // along a block-lower-triangular matrix whose (I, J) block is the
+        // along a block-upper-triangular matrix whose (I, J) block is the
         // K x K matrix of distances between topics in models I and J. And
-        // blocks are omitted.
+        // zero blocks are omitted:
         // 1.1:2.1 1.1:2.2 ... 1.1:M.K
         // 1.2:2.1 1.1:2.1 ... 1.2:M.K
         // ...
@@ -49,7 +49,10 @@ IntegerVector naive_cluster(NumericVector D, int M, int K,
         // (M - 1).1:M.1 ... (M - 1):M.K
         // where a.b:c.d = distance from topic a in model b to topic c in
         // model d.
-        for (int j = i / K + K; j < M * K; ++j) {
+        for (int j = (1 + i / K) * K; j < M * K; ++j) {
+            if (d >= dst.size()) {
+                stop("Something's wrong: initialization counted past D");
+            }
             dst[d].d = D[d]; // copying D like space is cheap or something
             dst[d].i = i; // a.b coded as (a - 1) * K + (b - 1)
             dst[d].j = j;
@@ -83,6 +86,7 @@ IntegerVector naive_cluster(NumericVector D, int M, int K,
 #endif
         r1 = result[d->i];
         r2 = result[d->j];
+
         std::set<int> &c1 = clusters[r1];
         std::set<int> &c2 = clusters[r2];
 
