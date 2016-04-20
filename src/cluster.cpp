@@ -1,60 +1,78 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-// [[Rcpp::plugins(cpp11)]]
+// used to keep track when we sort our distances
+struct pair_dist {
+    double d;
+    int i;
+    int j;
+};
+
+// custom comparator for sorting pair-distances
+// (C++11 would let us use a lambda instead, but...)
+struct pair_dist_cmp {
+    bool operator() (pair_dist a, pair_dist b) {
+        return a.d < b.d;
+    }
+};
+
 // [[Rcpp::export]]
-IntegerVector naive_cluster(NumericVector D, int nm, int K,
-        double threshold=0.0) {
-    IntegerVector result(nm * K);
-    IntegerVector d(D.size());
-    IntegerVector ii(D.size()), jj(D.size());
+IntegerVector naive_cluster(NumericVector D, int M, int K,
+        double threshold=1.0) {
+    IntegerVector result(M * K);
+    std::vector<pair_dist> dst(D.size());
     std::map<int, std::set<int> > clusters;
+
+    if (M * (M - 1) / 2 * K * K != D.size()) {
+        stop("The length of D is not consistent with M and K");
+    }
     
     // initialization
     std::iota(result.begin(), result.end(), 0);
-    for (int i = 0; i < K * nm; ++i) { 
+    for (int i = 0; i < K * M; ++i) { 
         clusters[i].insert(i);
     }
     
-    int ij = 0; // runs along D
-    for (int i = 0; i < (nm - 1) * K; ++i) {
+    int d = 0; // runs along D
+    for (int i = 0; i < (M - 1) * K; ++i) {
 
         // brute force: we'll just write down which index in D
         // corresponds to which pair of topics. D is assumed to go rowwise
-        // along
-        // 1.1:2.1 1.1:2.2 ... 1.1:nm.K 
-        // 1.2:2.1 1.1:2.1 ... 1.2:nm.K
+        // along a block-lower-triangular matrix whose (I, J) block is the
+        // K x K matrix of distances between topics in models I and J. And
+        // blocks are omitted.
+        // 1.1:2.1 1.1:2.2 ... 1.1:M.K 
+        // 1.2:2.1 1.1:2.1 ... 1.2:M.K
         // ...
         // 2.1:3.1 ...
         // ...
-        // (nm - 1).1:nm.1 ... (nm - 1):nm.K
-        // where a.b:c.d is the distance from topic a in model b to topic c in 
+        // (M - 1).1:M.1 ... (M - 1):M.K
+        // where a.b:c.d = distance from topic a in model b to topic c in 
         // model d.
-        for (int j = i / K + K; j < nm * K; ++j) {
-            ii[ij] = i;
-            jj[ij] = j;
-            d[ij] = ij;
-            ij += 1;
+        for (int j = i / K + K; j < M * K; ++j) {
+            dst[d].d = D[d]; // copying D like space is cheap or something
+            dst[d].i = i; // a.b coded as (a - 1) * K + (b - 1)
+            dst[d].j = j;
+            d += 1;
         }
     }
     
-    std::sort(d.begin(), d.end(), [&](int a, int b) {
-        return D[a] < D[b];
-    });
+    pair_dist_cmp pdc;
+    std::sort(dst.begin(), dst.end(), pdc);
 
     int k1, k2, r1, r2;
     std::set<int> c1, c2, sect;
     bool allow;
-    for (IntegerVector::iterator i = d.begin(); i != d.end(); ++i) {
-        if (D[*i] < threshold) { // then we're done
+    for (std::vector<pair_dist>::iterator d = dst.begin();
+            d != dst.end(); ++d) {
+        if (d->d > threshold) { // then we're done
             break;
         }
-        // decode i into a position in the sequence of all topics 
-        k1 = ii[*i];
-        k2 = jj[*i];
-        // guarantee k1 < k2
-        if (k1 > k2) {
-            std::swap(k1, k2);
+        // topic pair's positions in the sequence of all topics 
+        k1 = d->i;
+        k2 = d->j;  // guaranteed to be > k1
+        if (k1 >= k2) {
+            stop("Something's wrong: k1 >= k2");
         }
         Rcout << "Consider: " << k1 << " " << k2;
         r1 = result[k1];
@@ -82,7 +100,7 @@ IntegerVector naive_cluster(NumericVector D, int nm, int K,
             c1.insert(*t);
             result[*t] = r1;
         }
-        clusters.erase(r2);
+        clusters.erase(r2); // also deletes the associated set object
     }
 
     return result;
