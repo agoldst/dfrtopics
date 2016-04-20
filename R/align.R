@@ -138,10 +138,11 @@ unnest_model_distances <- function (dst) {
 #'
 #' @return a matrix of cluster assignments, where the \eqn{i,j} element is the
 #'   cluster number of topic \eqn{j} in model \eqn{i}. Cluster distances are
-#'   not returned. \code{\link{gather_matrix}} may be useful for getting
-#'   the result into conveniently explorable form.
+#'   not returned. \code{\link{alignment_frame}}, or, more generally,
+#'   \code{\link{gather_matrix}} may be useful for getting the result into
+#'   conveniently explorable form.
 #'
-#' @seealso \code{\link{model_distances}}
+#' @seealso \code{\link{model_distances}}, \code{\link{alignment_frame}}
 #'
 #' @references Chuang, J, et al. 2015. "TopicCheck: Interactive
 #' Alignment for Assessing Topic Model Stability." NAACL HLT.
@@ -187,7 +188,7 @@ derive one from a list of models.")
 #'
 #' @param clusters from \code{\link{align_topics}}
 #' @param dst from \code{\link{model_distances}}
-#' @param ms list of models as supplised to \code{\link{model_distances}}
+#' @param ms list of models as supplied to \code{\link{model_distances}}
 #'
 #' @return a data frame
 #'

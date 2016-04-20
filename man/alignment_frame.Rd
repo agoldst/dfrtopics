@@ -11,7 +11,7 @@ alignment_frame(clusters, dst, ms)
 
 \item{dst}{from \code{\link{model_distances}}}
 
-\item{ms}{list of models as supplised to \code{\link{model_distances}}}
+\item{ms}{list of models as supplied to \code{\link{model_distances}}}
 }
 \value{
 a data frame

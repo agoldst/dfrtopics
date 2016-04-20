@@ -17,8 +17,9 @@ recommended, in order to expose isolated topics.}
 \value{
 a matrix of cluster assignments, where the \eqn{i,j} element is the
   cluster number of topic \eqn{j} in model \eqn{i}. Cluster distances are
-  not returned. \code{\link{gather_matrix}} may be useful for getting
-  the result into conveniently explorable form.
+  not returned. \code{\link{alignment_frame}}, or, more generally,
+  \code{\link{gather_matrix}} may be useful for getting the result into
+  conveniently explorable form.
 }
 \description{
 Given information about the dissimilarities among topics across
@@ -51,6 +52,6 @@ Alignment for Assessing Topic Model Stability." NAACL HLT.
 \url{http://scholar.princeton.edu/bstewart/publications/topiccheck-interactive-alignment-assessing-topic-model-stability}.
 }
 \seealso{
-\code{\link{model_distances}}
+\code{\link{model_distances}}, \code{\link{alignment_frame}}
 }
 
