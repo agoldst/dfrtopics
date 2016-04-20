@@ -6,6 +6,20 @@
 
 using namespace Rcpp;
 
+// naive_cluster
+IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold);
+RcppExport SEXP dfrtopics_naive_cluster(SEXP DSEXP, SEXP MSEXP, SEXP KSEXP, SEXP thresholdSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericVector >::type D(DSEXP);
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
+    __result = Rcpp::wrap(naive_cluster(D, M, K, threshold));
+    return __result;
+END_RCPP
+}
 // calc_row_entropies
 NumericVector calc_row_entropies(const Eigen::MappedSparseMatrix<double> m);
 RcppExport SEXP dfrtopics_calc_row_entropies(SEXP mSEXP) {

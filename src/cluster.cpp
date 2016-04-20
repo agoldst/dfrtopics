@@ -60,7 +60,7 @@ IntegerVector naive_cluster(NumericVector D, int M, int K,
     pair_dist_cmp pdc;
     std::sort(dst.begin(), dst.end(), pdc);
 
-    int k1, k2, r1, r2;
+    int r1, r2;
     std::set<int> c1, c2, sect;
     bool allow;
     for (std::vector<pair_dist>::iterator d = dst.begin();
@@ -69,14 +69,14 @@ IntegerVector naive_cluster(NumericVector D, int M, int K,
             break;
         }
         // topic pair's positions in the sequence of all topics 
-        k1 = d->i;
-        k2 = d->j;  // guaranteed to be > k1
-        if (k1 >= k2) {
-            stop("Something's wrong: k1 >= k2");
+        d->i = d->i;
+        d->j = d->j;  // guaranteed to be > d->i
+        if (d->i >= d->j) {
+            stop("Something's wrong: d->i >= d->j");
         }
-        Rcout << "Consider: " << k1 << " " << k2;
-        r1 = result[k1];
-        r2 = result[k2];
+        Rcout << "Consider: " << d->i << " " << d->j;
+        r1 = result[d->i];
+        r2 = result[d->j];
         c1 = clusters[r1];
         c2 = clusters[r2];
 
@@ -88,7 +88,8 @@ IntegerVector naive_cluster(NumericVector D, int M, int K,
         } 
         for (std::set<int>::iterator t = c2.begin();
                     t != c2.end() && allow; ++t) {
-            allow = (sect.count(*t / K) == 0); // same model: cluster disallowed
+            // if same model: cluster disallowed
+            allow = (sect.count(*t / K) == 0);
         }
         if (!allow) {
             Rcout << "...disallowed." << std::endl;
