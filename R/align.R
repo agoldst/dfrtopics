@@ -179,16 +179,28 @@ derive one from a list of models.")
     matrix(cl + 1, nrow=M, byrow=T)
 }
 
-
-
-summary.topic_alignment <- function (x, cluster_size) {
-    x$sizes <- table(x$cluster)[x$cluster]
-    mask <- x$sizes >= cluster_size
-    result <- data.frame(model=x$model[mask],
-                         topic=x$topic[mask],
-                         cluster=x$cluster[mask],
-                         size=x$sizes[mask])
+#' Organize alignment results for inspection
+#'
+#' Once you've clustered topics with \code{\link{align_topics}}, this function
+#' summarizes the results as a data frame grouping topic labels by cluster.
+#' Many other ways of investigating a clustering are of course possible.
+#'
+#' @param clusters from \code{\link{align_topics}}
+#' @param dst from \code{\link{model_distances}}
+#' @param ms list of models as supplised to \code{\link{model_distances}}
+#'
+#' @return a data frame
+#'
+#' @export
+alignment_frame <- function (clusters, dst, ms) {
+    result <- gather_matrix(clusters, col_names=c("model", "topic", "cluster"))
     result <- group_by_(result, ~ cluster)
-    stop("incomplete")
+    result <- mutate_(result, size=~ length(cluster))
+    result <- ungroup(result)
+    result <- group_by_(result, ~ model)
+    mut <- lazyeval::interp(~ topic_labels(x[[model[1]]])[topic], x=ms)
+    result <- mutate_(result, label=mut)
+    result <- ungroup(result)
+    result <- arrange_(result, ~ desc(size), ~ cluster, ~ model, ~ topic)
+    select_(result, ~ cluster, ~ model, ~ topic, ~ label)
 }
-
