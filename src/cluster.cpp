@@ -61,7 +61,7 @@ IntegerVector naive_cluster(NumericVector D, int M, int K,
     std::sort(dst.begin(), dst.end(), pdc);
 
     int r1, r2;
-    std::set<int> c1, c2, sect;
+    std::set<int> sect;
     bool allow;
     for (std::vector<pair_dist>::iterator d = dst.begin();
             d != dst.end(); ++d) {
@@ -74,21 +74,34 @@ IntegerVector naive_cluster(NumericVector D, int M, int K,
         if (d->i >= d->j) {
             stop("Something's wrong: d->i >= d->j");
         }
-        Rcout << "Consider: " << d->i << " " << d->j;
+        Rcout << "Consider: " << d->i << " (" << d->i / K << " ";
+        Rcout << d->i % K << ") ";
+        Rcout << d->j << " (" << d->j / K << " ";
+        Rcout << d->j % K << ")";
+
         r1 = result[d->i];
         r2 = result[d->j];
-        c1 = clusters[r1];
-        c2 = clusters[r2];
+        std::set<int> &c1 = clusters[r1];
+        std::set<int> &c2 = clusters[r2];
 
+        if (c1.size() == M || c2.size() == M) {
+            // if either cluster is full, merge is impossible
+            Rcout << "...cluster full." << std::endl;
+            continue;
+        }
         // Check whether the two clusters share topics from the same model
         sect.clear();
         allow = true;
+        Rcout << " c1:";
         for (std::set<int>::iterator t = c1.begin(); t != c1.end(); ++t) {
+            Rcout <<  " " << *t / K;
             sect.insert(*t / K);
         } 
+        Rcout << " c2:";
         for (std::set<int>::iterator t = c2.begin();
                     t != c2.end() && allow; ++t) {
             // if same model: cluster disallowed
+            Rcout << " " << *t / K;
             allow = (sect.count(*t / K) == 0);
         }
         if (!allow) {
