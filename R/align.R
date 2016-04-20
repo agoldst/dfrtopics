@@ -117,18 +117,24 @@ unnest_model_distances <- function (dst) {
 
 #' Align topics across models
 #'
-#' This function attempts to produce groups of topics from each model
-#' that are close to one another. In particular, it greedily seeks the
-#' single-link clustering in which no two topics from the same model
-#' are found in the same cluster ("up-to-one mapping"). The idea is
-#' from (Chuang et al., 2015). The implementation is my own (slow,
-#' unverified) one.
+#' Given information about the dissimilarities among topics across
+#' a set of models, this function attempts to identify groups of
+#' similar topics from each model. In particular, it greedily seeks
+#' the single-link clustering in which no two topics from the same
+#' model are found in the same cluster ("up-to-one mapping"). The idea
+#' is from (Chuang et al., 2015). The implementation is my own (slow,
+#' unverified) one. To prepare topic dissimilarities to supply to this
+#' function, use \code{\link{model_distances}}.
 #'
 #' Alignment is currently implemented only for models having the same
 #' number of topics.
 #'
 #' @param dst result from \code{\link{model_distances}} (q.v.)
-#' @param threshold maximum dissimilarity allowed between cluster members
+#'
+#' @param threshold maximum dissimilarity allowed between cluster members. By
+#'   default, the threshold is set so that any two topics from different models
+#'   may ultimately join a cluster. More aggressive thresholding is
+#'   recommended, in order to expose isolated topics.
 #'
 #' @return a data frame with three columns: \code{model}, \code{topic},
 #'   and \code{cluster}, the cluster assignment, designated by an arbitrary
@@ -136,10 +142,20 @@ unnest_model_distances <- function (dst) {
 #'
 #' @seealso \code{\link{model_distances}}
 #'
-#' @references Chuang, J, et al. 2015. "TopicCheck: Interactive Alignment for Assessing Topic Model Stability." NAACL HLT. \url{http://scholar.princeton.edu/bstewart/publications/topiccheck-interactive-alignment-assessing-topic-model-stability}.
+#' @references Chuang, J, et al. 2015. "TopicCheck: Interactive
+#' Alignment for Assessing Topic Model Stability." NAACL HLT.
+#' \url{http://scholar.princeton.edu/bstewart/publications/topiccheck-interactive-alignment-assessing-topic-model-stability}.
+#'
+#' @examples
+#'
+#' \dontrun{
+#' # assume m1, m2, m3 are models
+#' dists <- model_distances(list(m1, m2, m3), n_words=40)
+#' clusters <- align_topics(dists, threshold=0.5)
+#' }
 #'
 #' @export
-align_topics <- function (dst, threshold=1) {
+align_topics <- function (dst, threshold) {
     if(!inherits(dst, "model_distances")) {
         stop("dst must be a model_distances object. Use model_distances() to
 derive one from a list of models.")
@@ -148,8 +164,13 @@ derive one from a list of models.")
     K <- nrow(dst[[1]][[1]])
     M <- length(dst) + 1
 
-    cl <- naive_cluster(unnest_model_distances(dst),
-                        M, K, threshold)
+    dst_flat <- unnest_model_distances(dst)
+
+    if (missing(threshold)) {
+        threshold <- max(dst_flat) + 1
+    }
+
+    cl <- naive_cluster(dst_flat, M, K, threshold)
 
     data.frame(
         model=rep(1:M, each=K),

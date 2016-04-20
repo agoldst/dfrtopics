@@ -17,8 +17,7 @@ struct pair_dist_cmp {
 };
 
 // [[Rcpp::export]]
-IntegerVector naive_cluster(NumericVector D, int M, int K,
-        double threshold=1.0) {
+IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold) {
     IntegerVector result(M * K);
     std::vector<pair_dist> dst(D.size());
     std::map<int, std::set<int> > clusters;

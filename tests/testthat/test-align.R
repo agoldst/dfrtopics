@@ -42,7 +42,7 @@ ms <- replicate(M, train_model(
 dst <- model_distances(ms, V)
 
 test_that("naive_cluster does the right thing with trivial data", {
-    expect_equal(dfrtopics:::naive_cluster(c(1, 100, 100, 1), 2, 2),
+    expect_equal(dfrtopics:::naive_cluster(c(1, 100, 100, 1), 2, 2, 1),
                  c(0, 1, 0, 1))
     # setting a big threshold should make no difference
     expect_equal(dfrtopics:::naive_cluster(c(1, 100, 100, 1), 2, 2, 1000),
