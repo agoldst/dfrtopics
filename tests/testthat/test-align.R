@@ -27,7 +27,7 @@ ms <- replicate(M, train_model(
         insts,
         n_topics=K,
         n_iters=200,
-        threads=1, 
+        threads=1,
         alpha_sum=5,
         beta=0.01,
         n_hyper_iters=20,
@@ -103,6 +103,17 @@ test_that("clustering meets up-to-one constraint", {
     expect_true(all(ck$no_dupes))
 })
 
+test_that("clustering with default infinite threshold leaves no isolates", {
+    cl <- align_topics(dst)
+    # it can leave some non-full clusters, because of the greedy algorithm
+    # and the mapping constraint
+    expect_true(!(1 %in% tabulate(cl)))
+})
 
+test_that("clustering with low threshold leaves some isolates", {
+    thresh <- quantile(dst[[1]][[1]], 0.25)
+    cl <- align_topics(dst, thresh)
+    expect_true(length(unique(cl)) > K)
+})
 
 

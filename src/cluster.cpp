@@ -1,6 +1,8 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+// #define __NAIVE_CLUSTER_LOG__
+
 // used to keep track when we sort our distances
 struct pair_dist {
     double d;
@@ -73,9 +75,6 @@ IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold) {
         // topic pair's positions in the sequence of all topics
         d->i = d->i;
         d->j = d->j;  // guaranteed to be > d->i
-        if (d->i >= d->j) {
-            stop("Something's wrong: d->i >= d->j");
-        }
 
 #ifdef __NAIVE_CLUSTER_LOG__
         Rcout << "Consider: " << d->i << " (" << d->i / K << " ";
@@ -83,9 +82,18 @@ IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold) {
         Rcout << d->j << " (" << d->j / K << " ";
         Rcout << d->j % K << ")";
 #endif
+        // get current cluster assignments
         r1 = result[d->i];
         r2 = result[d->j];
-
+        if (r1 == r2) {
+#ifdef __NAIVE_CLUSTER_LOG__
+            Rcout << "...already merged." << std::endl;
+#endif
+            continue; // they're already merged
+        }
+        if (r1 > r2) {
+            std::swap(r1, r2);  // guarantee r1 < r2
+        }
         std::set<int> &c1 = clusters[r1];
         std::set<int> &c2 = clusters[r2];
 
@@ -100,7 +108,7 @@ IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold) {
         sect.clear();
         allow = true;
 #ifdef __NAIVE_CLUSTER_LOG__
-        Rcout << " c1:";
+        Rcout << " c1 " << "(" << r1 << "):";
 #endif
         for (std::set<int>::iterator t = c1.begin(); t != c1.end(); ++t) {
 #ifdef __NAIVE_CLUSTER_LOG__
@@ -109,7 +117,7 @@ IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold) {
             sect.insert(*t / K);
         }
 #ifdef __NAIVE_CLUSTER_LOG__
-        Rcout << " c2:";
+        Rcout << " c2:" << "(" << r2 << "):";
 #endif
         for (std::set<int>::iterator t = c2.begin();
                     t != c2.end() && allow; ++t) {

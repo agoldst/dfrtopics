@@ -15,9 +15,10 @@ may ultimately join a cluster. More aggressive thresholding is
 recommended, in order to expose isolated topics.}
 }
 \value{
-a data frame with three columns: \code{model}, \code{topic},
-  and \code{cluster}, the cluster assignment, designated by an arbitrary
-  number counted up from 1. Cluster distances are not returned.
+a matrix of cluster assignments, where the \eqn{i,j} element is the
+  cluster number of topic \eqn{j} in model \eqn{i}. Cluster distances are
+  not returned. \code{\link{gather_matrix}} may be useful for getting
+  the result into conveniently explorable form.
 }
 \description{
 Given information about the dissimilarities among topics across
@@ -39,6 +40,8 @@ number of topics.
 # assume m1, m2, m3 are models
 dists <- model_distances(list(m1, m2, m3), n_words=40)
 clusters <- align_topics(dists, threshold=0.5)
+# data frame readout
+gather_matrix(clusters, col_names=c("model", "topic", "cluster"))
 }
 
 }

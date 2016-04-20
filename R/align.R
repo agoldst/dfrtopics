@@ -152,7 +152,9 @@ unnest_model_distances <- function (dst) {
 #' \dontrun{
 #' # assume m1, m2, m3 are models
 #' dists <- model_distances(list(m1, m2, m3), n_words=40)
-#' align_topics(dists, threshold=0.5)
+#' clusters <- align_topics(dists, threshold=0.5)
+#' # data frame readout
+#' gather_matrix(clusters, col_names=c("model", "topic", "cluster"))
 #' }
 #'
 #' @export
