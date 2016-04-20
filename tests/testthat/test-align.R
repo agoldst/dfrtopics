@@ -53,20 +53,21 @@ test_that("model_distances returns something of the right form", {
     expect_is(dst, "model_distances")
     expect_equal(length(dst), M)
     expect_equal(sapply(dst, length, seq(M - 1, 1)))
-    dst_flat <- do.call(c, lapply(dst, do.call, what=c))
-    expect_equal(lapply(dst_flat, dim), rep(list(c(K, K)), M * (M - 1)))
+    expect_equal(lapply(do.call(c, dst), dim),
+        rep(list(c(K, K)), M * (M - 1) / 2))
 
     # calculate 1.1:M.K
     jsd <- JS_divergence(
         tw_smooth_normalize(ms[[1]])(topic_words(ms[[1]]))[1, ],
-        tw_smooth_normalize(ms[[M]])(topic_words(ms[[M]]))[K, ],
+        tw_smooth_normalize(ms[[M]])(topic_words(ms[[M]]))[K, ]
     )
     # which should be retrieved as follows
     expect_equal(dst[[1]][[M - 1]][K, 1], jsd)
     # or as follows
     expect_equal(dst[1, M, 1, K], jsd)
     # or as follows
-    expect_equal(dst_flat[K^2 * (M - 1) + K], jsd)
+    dst_flat <- do.call(c, lapply(dst, do.call, what=c))
+    expect_equal(dst_flat[K^2 * (M - 2) + K], jsd)
 })
 
 test_that("unnesting distances is correct", {
