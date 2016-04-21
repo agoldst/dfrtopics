@@ -195,13 +195,14 @@ derive one from a list of models.")
 #' @export
 alignment_frame <- function (clusters, dst, ms) {
     result <- gather_matrix(clusters, col_names=c("model", "topic", "cluster"))
-    result <- group_by_(result, ~ cluster)
-    result <- mutate_(result, size=~ length(cluster))
-    result <- ungroup(result)
-    result <- group_by_(result, ~ model)
+    result <- dplyr::group_by_(result, ~ cluster)
+    result <- dplyr::mutate_(result, size=~ length(cluster))
+    result <- dplyr::ungroup(result)
+    result <- dplyr::group_by_(result, ~ model)
     mut <- lazyeval::interp(~ topic_labels(x[[model[1]]])[topic], x=ms)
-    result <- mutate_(result, label=mut)
-    result <- ungroup(result)
-    result <- arrange_(result, ~ desc(size), ~ cluster, ~ model, ~ topic)
-    select_(result, ~ cluster, ~ model, ~ topic, ~ label)
+    result <- dplyr::mutate_(result, label=mut)
+    result <- dplyr::ungroup(result)
+    result <- dplyr::arrange_(result,
+        ~ dplyr::desc(size), ~ cluster, ~ model, ~ topic)
+    dplyr::select_(result, ~ cluster, ~ model, ~ topic, ~ label)
 }
