@@ -42,11 +42,13 @@ ms <- replicate(M, train_model(
 dst <- model_distances(ms, V)
 
 test_that("naive_cluster does the right thing with trivial data", {
-    expect_equal(dfrtopics:::naive_cluster(c(1, 100, 100, 1), 2, 2, 1),
-                 c(0, 1, 0, 1))
+    expect_equal(
+        dfrtopics:::naive_cluster(c(1, 100, 100, 1), 2, 2, 1)$clusters,
+        c(0, 1, 0, 1))
     # setting a big threshold should make no difference
-    expect_equal(dfrtopics:::naive_cluster(c(1, 100, 100, 1), 2, 2, 1000),
-                 c(0, 1, 0, 1))
+    expect_equal(
+        dfrtopics:::naive_cluster(c(1, 100, 100, 1), 2, 2, 1000)$clusters,
+        c(0, 1, 0, 1))
 })
 
 test_that("model_distances returns something of the right form", {
@@ -137,12 +139,14 @@ test_that("clustering with low threshold leaves some isolates", {
     thresh <- quantile(dst[[1]][[1]], 0.25)
     cl <- align_topics(dst, thresh)
     expect_true(length(unique(cl)) > K)
+    expect_true(all(attr(cl, "distances") < thresh))
 })
 
 test_that("alignment_frame gives an expected result", {
     cl <- align_topics(dst)
     frm <- alignment_frame(cl, dst, ms)
-    expect_equal(colnames(frm), c("cluster", "model", "topic", "label"))
+    expect_equal(colnames(frm),
+        c("cluster", "model", "topic", "label", "d"))
     expect_equal(nrow(frm), K * M)
 })
 
@@ -162,11 +166,11 @@ test_that("an obvious clustering is found", {
     expect_equal(cl, matrix(c(
         1, 2,
         2, 1,
-        1, 2), byrow=2, nrow=3))
+        1, 2), byrow=2, nrow=3), check.attributes=F)
 })
 
 test_that("a trivial clustering is found", {
     dtriv <- model_distances(ms[c(1, 1, 1)], V)
     cl <- align_topics(dtriv)
-    expect_equal(cl, cl[c(1, 1, 1), ])
+    expect_equal(cl, cl[c(1, 1, 1), ], check.attributes=F)
 })

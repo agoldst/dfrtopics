@@ -14,7 +14,7 @@ alignment_frame(clusters, dst, ms)
 \item{ms}{list of models as supplied to \code{\link{model_distances}}}
 }
 \value{
-a data frame
+a data frame. \code{d} is the distance between clusters at merge.
 }
 \description{
 Once you've clustered topics with \code{\link{align_topics}}, this function

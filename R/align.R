@@ -137,8 +137,7 @@ unnest_model_distances <- function (dst) {
 #'   recommended, in order to expose isolated topics.
 #'
 #' @return a matrix of cluster assignments, where the \eqn{i,j} element is the
-#'   cluster number of topic \eqn{j} in model \eqn{i}. Cluster distances are
-#'   not returned. \code{\link{alignment_frame}}, or, more generally,
+#'   cluster number of topic \eqn{j} in model \eqn{i}. This matrix also receives a \code{distances} attribute which gives the distance at which the given element was merged into its cluster. Because single-link clustering (if I've even implemented it correctly) is subject to "chaining," this is not necessarily an indication of the quality of a cluster, but it may give some hints.
 #'   \code{\link{gather_matrix}} may be useful for getting the result into
 #'   conveniently explorable form.
 #'
@@ -176,8 +175,11 @@ derive one from a list of models.")
 
     cl <- naive_cluster(dst_flat, M, K, threshold)
 
-    # naive_cluster numbers clusters from 0
-    matrix(cl + 1, nrow=M, byrow=T)
+    structure(
+        # naive_cluster numbers clusters from 0
+        matrix(cl$clusters + 1, nrow=M, byrow=T),
+        distances=matrix(cl$distances, nrow=M, byrow=T)
+    )
 }
 
 #' Organize alignment results for inspection
@@ -190,11 +192,12 @@ derive one from a list of models.")
 #' @param dst from \code{\link{model_distances}}
 #' @param ms list of models as supplied to \code{\link{model_distances}}
 #'
-#' @return a data frame
+#' @return a data frame. \code{d} is the distance between clusters at merge.
 #'
 #' @export
 alignment_frame <- function (clusters, dst, ms) {
     result <- gather_matrix(clusters, col_names=c("model", "topic", "cluster"))
+    result$d <- as.numeric(t(attr(clusters, "distances")))
     result <- dplyr::group_by_(result, ~ cluster)
     result <- dplyr::mutate_(result, size=~ length(cluster))
     result <- dplyr::ungroup(result)
@@ -204,5 +207,5 @@ alignment_frame <- function (clusters, dst, ms) {
     result <- dplyr::ungroup(result)
     result <- dplyr::arrange_(result,
         ~ dplyr::desc(size), ~ cluster, ~ model, ~ topic)
-    dplyr::select_(result, ~ cluster, ~ model, ~ topic, ~ label)
+    dplyr::select_(result, ~ cluster, ~ model, ~ topic, ~ label, ~ d)
 }

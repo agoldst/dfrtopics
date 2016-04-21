@@ -19,8 +19,9 @@ struct pair_dist_cmp {
 };
 
 // [[Rcpp::export]]
-IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold) {
+List naive_cluster(NumericVector D, int M, int K, double threshold) {
     IntegerVector result(M * K);
+    NumericVector result_distances(M * K);
     std::vector<pair_dist> dst(D.size());
     std::map<int, std::set<int> > clusters;
 
@@ -142,9 +143,13 @@ IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold) {
         for (std::set<int>::iterator t = c2.begin(); t != c2.end(); ++t) {
             c1.insert(*t);
             result[*t] = r1;
+            result_distances[*t] = d->d;
         }
         clusters.erase(r2); // also deletes the associated set object
     }
 
-    return result;
+    return List::create(
+        _["clusters"] = result,
+        _["distances"] = result_distances
+    );
 }

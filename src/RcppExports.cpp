@@ -7,7 +7,7 @@
 using namespace Rcpp;
 
 // naive_cluster
-IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold);
+List naive_cluster(NumericVector D, int M, int K, double threshold);
 RcppExport SEXP dfrtopics_naive_cluster(SEXP DSEXP, SEXP MSEXP, SEXP KSEXP, SEXP thresholdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
