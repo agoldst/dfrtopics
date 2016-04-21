@@ -34,31 +34,32 @@ IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold) {
         clusters[i].insert(i);
     }
 
+    // brute force (1): we'll just write down which index in D
+    // corresponds to which pair of topics, copying over D like space
+    // is cheap or something. D is assumed to go block-by-block row-wise
+    // along a block-upper-triangular matrix whose (I, J) block is the
+    // K x K matrix of distances between topics in models I and J.
+    // Within each block D runs rowwise along the block.
+    // Zero blocks are omitted.
+    // We code topic k in model m by its index in `result`, m * K + k.
     int d = 0; // runs along D
-    for (int i = 0; i < (M - 1) * K; ++i) {
-
-        // brute force: we'll just write down which index in D
-        // corresponds to which pair of topics. D is assumed to go rowwise
-        // along a block-upper-triangular matrix whose (I, J) block is the
-        // K x K matrix of distances between topics in models I and J. And
-        // zero blocks are omitted:
-        // 1.1:2.1 1.1:2.2 ... 1.1:M.K
-        // 1.2:2.1 1.1:2.1 ... 1.2:M.K
-        // ...
-        // 2.1:3.1 ...
-        // ...
-        // (M - 1).1:M.1 ... (M - 1):M.K
-        // where a.b:c.d = distance from topic a in model b to topic c in
-        // model d.
-        for (int j = (1 + i / K) * K; j < M * K; ++j) {
-            if (d >= dst.size()) {
-                stop("Something's wrong: initialization counted past D");
+    for (int m1 = 0; m1 < M - 1; ++m1) {
+        for (int m2 = m1 + 1; m2 < M; ++m2) {
+            for (int k1 = 0; k1 < K; ++k1) {
+                for (int k2 = 0; k2 < K; ++k2) {
+                    if (d >= dst.size()) {
+                        stop("Something's wrong: counted past D");
+                    }
+                    dst[d].d = D[d];
+                    dst[d].i = m1 * K + k1;
+                    dst[d].j = m2 * K + k2;
+                    d += 1;
+                }
             }
-            dst[d].d = D[d]; // copying D like space is cheap or something
-            dst[d].i = i; // a.b coded as (a - 1) * K + (b - 1)
-            dst[d].j = j;
-            d += 1;
         }
+    }
+    if (d != D.size()) {
+        stop("Something's wrong: didn't finish counting D.");
     }
 
     pair_dist_cmp pdc;
@@ -80,7 +81,8 @@ IntegerVector naive_cluster(NumericVector D, int M, int K, double threshold) {
         Rcout << "Consider: " << d->i << " (" << d->i / K << " ";
         Rcout << d->i % K << ") ";
         Rcout << d->j << " (" << d->j / K << " ";
-        Rcout << d->j % K << ")";
+        Rcout << d->j % K << ") [";
+        Rcout << d->d << "]";
 #endif
         // get current cluster assignments
         r1 = result[d->i];

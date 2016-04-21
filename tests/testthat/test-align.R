@@ -145,3 +145,28 @@ test_that("alignment_frame gives an expected result", {
     expect_equal(colnames(frm), c("cluster", "model", "topic", "label"))
     expect_equal(nrow(frm), K * M)
 })
+
+test_that("an obvious clustering is found", {
+    faked <- structure(
+        list( # triangle inequality, shmiangle inequality
+            list(
+                matrix(c(100, 1,  # remember these are transposed
+                         1, 100), nrow=2),
+                matrix(c(1, 100,
+                         1, 100), nrow=2)),
+             list(
+                matrix(c(100, 1,
+                         1, 100), nrow=2))),
+        class="model_distances")
+    cl <- align_topics(faked)
+    expect_equal(cl, matrix(c(
+        1, 2,
+        2, 1,
+        1, 2), byrow=2, nrow=3))
+})
+
+test_that("a trivial clustering is found", {
+    dtriv <- model_distances(ms[c(1, 1, 1)], V)
+    cl <- align_topics(dtriv)
+    expect_equal(cl, cl[c(1, 1, 1), ])
+})
