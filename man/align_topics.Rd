@@ -16,9 +16,14 @@ recommended, in order to expose isolated topics.}
 }
 \value{
 a matrix of cluster assignments, where the \eqn{i,j} element is the
-  cluster number of topic \eqn{j} in model \eqn{i}. This matrix also receives a \code{distances} attribute which gives the distance at which the given element was merged into its cluster. Because single-link clustering (if I've even implemented it correctly) is subject to "chaining," this is not necessarily an indication of the quality of a cluster, but it may give some hints.
-  \code{\link{gather_matrix}} may be useful for getting the result into
-  conveniently explorable form.
+  cluster number of topic \eqn{j} in model \eqn{i}. This matrix also
+  receives a \code{distances} attribute which gives the distance at which
+  the given element was merged into its cluster. Because single-link
+  clustering (if I've even implemented it correctly) is subject to
+  "chaining," this is not necessarily an indication of the quality of a
+  cluster, but it may give some hints. To explore the result,
+  \code{\link{alignment_frame}} or simply \code{\link{gather_matrix}} may be
+  useful.
 }
 \description{
 Given information about the dissimilarities among topics across

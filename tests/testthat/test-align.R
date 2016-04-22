@@ -64,18 +64,15 @@ test_that("model_distances returns something of the right form", {
         tw_smooth_normalize(ms[[M]])(topic_words(ms[[M]]))[K, ]
     )
     # which should be retrieved as follows
-    expect_equal(dst[[1]][[M - 1]][K, 1], jsd)
+    expect_equal(dst[[1]][[M - 1]][1, K], jsd)
     # or as follows
     expect_equal(dst[1, M, 1, K], jsd)
-    # or as follows
-    dst_flat <- do.call(c, lapply(dst, do.call, what=c))
-    expect_equal(dst_flat[K^2 * (M - 2) + K], jsd)
 })
 
 test_that("unnesting distances is correct", {
     dummy <- list(
-        list(matrix(1:4, nrow=2), matrix(5:8, nrow=2)),
-        list(matrix(9:12, nrow=2))
+        list(matrix(1:4, nrow=2, byrow=T), matrix(5:8, nrow=2, byrow=T)),
+        list(matrix(9:12, nrow=2, byrow=T))
     )
     expect_equal(dfrtopics:::unnest_model_distances(dummy), 1:12)
 })
@@ -115,7 +112,7 @@ test_that("in clustering two models, the closest pair is indeed grouped", {
     dd <- model_distances(ms[1:2], 20)
     cl <- align_topics(dd, 10000000)
     closest <- which(dd[[1]][[1]] == min(dd[[1]][[1]]), arr.ind=TRUE)
-    expect_equal(cl[1, closest[2]], cl[2, closest[1]])
+    expect_equal(cl[1, closest[1]], cl[2, closest[2]])
 })
 
 test_that("clustering meets up-to-one constraint", {

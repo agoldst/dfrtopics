@@ -10,16 +10,21 @@
 #'
 #' @param n_words number of top words from each topic to consider
 #'
-#' @param g dissimilarity function taking two equal-length vectors and
-#' returning a number. By default, the Jensen-Shannon divergence is used
-#' (\code{\link{JS_divergence}}).
+#' @param g dissimilarity function taking two topic-word matrices and
+#' returning the matrix of dissimilarities between rows, \eqn{d_{ij} =
+#' g(\theta_i, \theta_j)}. By default, the Jensen-Shannon divergence
+#' is used (\code{\link{JS_divergence}}). Or you might try the cosine
+#' distance (\code{\link{cosine_distance}}). If you have
+#' a function \code{f} of two vectors, you can lift it to matrix rows, at
+#' a speed penalty, as \code{function (X, Y) apply(Y, 1, function (y)
+#' apply(X, 1, f, y))} (N.B. the transpose is necessary).
 #'
 #' @return a \code{model_distances} object, which is simply a list
 #' of lists of matrices representing the upper block-triangle of
 #' distances. Specifically, if \code{x} is the result of the function,
 #' the dissimilarity between topic \code{i} from model \code{m1} and
-#' topic \code{j} from model \code{m2} is found at \code{x[[m1]][[m2 -
-#' m1]][j, i]}. For convenience, this can be expressed as \code{x[m1,
+#' topic \code{j} from model \code{m2 > m1} is found at \code{x[[m1]][[m2 -
+#' m1]][i, j]}. For convenience, this can be expressed as \code{x[m1,
 #' m2, i, j]}.
 #'
 #' @seealso \code{\link{align_topics}}
@@ -71,10 +76,8 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
             ) + hyperparameters(ms[[j]])$beta
             y <- normalize_rows(y)
 
-            # N.B. the resulting matrix is g_ji (transposed)
-            result[[i]][[j - i]] <- apply(x, 1, function (topic) {
-                apply(y, 1, g, topic)
-            })
+            # the resulting matrix is g_ij
+            result[[i]][[j - i]] <- g(x, y)
         }
     }
 
@@ -92,15 +95,11 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
     if (m1 == m2) {
         stop("Model indices must differ")
     }
-    if (m1 > m2) {
-        tmp <- m1
-        m1 <- m2
-        m2 <- tmp
-        tmp <- i
-        i <- j
-        j <- tmp
+    if (m1 < m2) {
+        x[[m1]][[m2 - m1]][i, j]
+    } else {
+        x[[m2]][[m1 - m2]][j, i]
     }
-    x[[m1]][[m2 - m1]][j, i]
 }
 
 # utility function: flatten a model_distances into a vector ordered as expected by naive_cluster
@@ -108,8 +107,8 @@ unnest_model_distances <- function (dst) {
     do.call(c,
         lapply(dst,
             function (d) {
-                # unroll by columns, undoing the transpose in model_distances
-                do.call(c, lapply(d, as.numeric))
+                # unrolling by columns, so transpose
+                do.call(c, lapply(d, function (x) as.numeric(t(x))))
            }
         )
     )
@@ -137,9 +136,14 @@ unnest_model_distances <- function (dst) {
 #'   recommended, in order to expose isolated topics.
 #'
 #' @return a matrix of cluster assignments, where the \eqn{i,j} element is the
-#'   cluster number of topic \eqn{j} in model \eqn{i}. This matrix also receives a \code{distances} attribute which gives the distance at which the given element was merged into its cluster. Because single-link clustering (if I've even implemented it correctly) is subject to "chaining," this is not necessarily an indication of the quality of a cluster, but it may give some hints.
-#'   \code{\link{gather_matrix}} may be useful for getting the result into
-#'   conveniently explorable form.
+#'   cluster number of topic \eqn{j} in model \eqn{i}. This matrix also
+#'   receives a \code{distances} attribute which gives the distance at which
+#'   the given element was merged into its cluster. Because single-link
+#'   clustering (if I've even implemented it correctly) is subject to
+#'   "chaining," this is not necessarily an indication of the quality of a
+#'   cluster, but it may give some hints. To explore the result,
+#'   \code{\link{alignment_frame}} or simply \code{\link{gather_matrix}} may be
+#'   useful.
 #'
 #' @seealso \code{\link{model_distances}}, \code{\link{alignment_frame}}
 #'
