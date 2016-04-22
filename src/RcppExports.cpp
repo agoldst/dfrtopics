@@ -42,15 +42,27 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-// JS_divergence
-double JS_divergence(NumericVector P, NumericVector Q);
-RcppExport SEXP dfrtopics_JS_divergence(SEXP PSEXP, SEXP QSEXP) {
+// jsdiv_v
+double jsdiv_v(NumericVector P, NumericVector Q);
+RcppExport SEXP dfrtopics_jsdiv_v(SEXP PSEXP, SEXP QSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< NumericVector >::type P(PSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type Q(QSEXP);
-    __result = Rcpp::wrap(JS_divergence(P, Q));
+    __result = Rcpp::wrap(jsdiv_v(P, Q));
+    return __result;
+END_RCPP
+}
+// jsdiv_m
+NumericMatrix jsdiv_m(NumericMatrix x, NumericMatrix y);
+RcppExport SEXP dfrtopics_jsdiv_m(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type y(ySEXP);
+    __result = Rcpp::wrap(jsdiv_m(x, y));
     return __result;
 END_RCPP
 }

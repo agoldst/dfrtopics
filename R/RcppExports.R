@@ -23,22 +23,12 @@ entropy <- function(x) {
     .Call('dfrtopics_entropy', PACKAGE = 'dfrtopics', x)
 }
 
-#' Jensen-Shannon divergence between two vectors
-#'
-#' This function computes the Jensen-Shannon divergence between two vectors,
-#' understood as distributions over the index.
-#'
-#' @param P,Q vectors representing the distributions. Must be of same length.
-#'
-#' @return \deqn{\sum_j \frac{1}{2}P(j) log\left(\frac{2P(j)}{P(j) +
-#' Q(j)}\right) + \frac{1}{2}Q(j) log\left(\frac{2P(j)}{P(j) +
-#' Q(j)}\right)}
-#'
-#' @seealso \code{\link{topic_divergences}}, \code{\link{row_dists}}
-#'
-#' @export
-JS_divergence <- function(P, Q) {
-    .Call('dfrtopics_JS_divergence', PACKAGE = 'dfrtopics', P, Q)
+jsdiv_v <- function(P, Q) {
+    .Call('dfrtopics_jsdiv_v', PACKAGE = 'dfrtopics', P, Q)
+}
+
+jsdiv_m <- function(x, y) {
+    .Call('dfrtopics_jsdiv_m', PACKAGE = 'dfrtopics', x, y)
 }
 
 draw_multinom <- function(nn, probs) {
