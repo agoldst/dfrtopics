@@ -60,20 +60,20 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
                 x[ , match(
                     vocs[[i]][c(shared_i, which(unshared_i))],
                     v_i)
-                ],
+                ] + hyperparameters(ms[[i]])$beta,
                 matrix(0, nrow(x), sum(unshared_j))
-            ) + hyperparameters(ms[[i]])$beta
+            )
             x <- normalize_rows(x)
 
             y <- tws[[j]]
             y <- cbind(
-                y[ , shared_j],
+                y[ , shared_j] + hyperparameters(ms[[j]])$beta,
                 matrix(0, nrow(y), sum(unshared_i)),
                 y[ , match(
                     vocs[[j]][unshared_j],
                     v_j)
-                ]
-            ) + hyperparameters(ms[[j]])$beta
+                ] + hyperparameters(ms[[j]])$beta
+            )
             y <- normalize_rows(y)
 
             # the resulting matrix is g_ij
