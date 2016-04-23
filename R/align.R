@@ -41,7 +41,6 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
         vocs[[i]] <- unique(vocabulary(m)[ij[ , 2]])
     }
 
-
     result <- vector("list", n - 1)
     for (i in seq(1, n - 1)) {
         result[[i]] <- vector("list", n - i)
