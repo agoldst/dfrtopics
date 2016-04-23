@@ -128,9 +128,9 @@ test_that("clustering meets up-to-one constraint", {
 test_that("clustering numbers are a sequence with no holes", {
     # otherwise we've failed to consistently reassign
     # merging cluster numbers to the lower index
-    # randomly cluster four models
-    dd <- model_distances(sample(ms, round(M / 2)), 20)
-    cl <- align_topics(dst)
+    # randomly cluster some models
+    dd <- model_distances(sample(ms, M - 1), 20)
+    cl <- align_topics(dd)
     expect_equal(sort(unique(as.numeric(cl))), 1:max(cl))
 })
 
