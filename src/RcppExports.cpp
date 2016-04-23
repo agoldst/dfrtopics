@@ -20,6 +20,18 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// naive_cluster_width
+std::vector<double> naive_cluster_width(IntegerMatrix cl, NumericVector D);
+RcppExport SEXP dfrtopics_naive_cluster_width(SEXP clSEXP, SEXP DSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type cl(clSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type D(DSEXP);
+    __result = Rcpp::wrap(naive_cluster_width(cl, D));
+    return __result;
+END_RCPP
+}
 // calc_row_entropies
 NumericVector calc_row_entropies(const Eigen::MappedSparseMatrix<double> m);
 RcppExport SEXP dfrtopics_calc_row_entropies(SEXP mSEXP) {

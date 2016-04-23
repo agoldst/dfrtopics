@@ -180,3 +180,20 @@ test_that("a trivial clustering is found", {
     cl <- align_topics(dtriv)
     expect_equal(cl, cl[c(1, 1, 1), ], check.attributes=F)
 })
+
+test_that("cluster widths are right", {
+    cl <- align_topics(dst)
+    wd1 <- cluster_widths(cl, dst)
+    # find widths by (even more) brute force
+    n_clust <- max(cl)
+    wd2 <- sapply(1:n_clust, function (clst) {
+        members <- which(cl == clst, arr.ind=T)
+        mem_pairs <- combn(nrow(members), 2)
+        max(apply(mem_pairs, 2, function (p)
+            dst[members[p[1], 1], members[p[2], 1],
+                members[p[1], 2], members[p[2], 2]
+            ]
+        ))
+    })
+    expect_equal(wd1, wd2)
+})

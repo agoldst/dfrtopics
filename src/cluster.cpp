@@ -153,3 +153,41 @@ List naive_cluster(NumericVector D, int M, int K, double threshold) {
         _["distances"] = result_distances
     );
 }
+
+// Find maximum pairwise distance within clusters from a naive_cluster result
+// cl the result from align_models (i.e. cl[i, j] is ONE-BASED cluster number)
+// D element distances, specified as for naive_cluster
+// [[Rcpp::export]]
+std::vector<double> naive_cluster_width(IntegerMatrix cl, NumericVector D) {
+    int M = cl.nrow(), K = cl.ncol();
+    int n_clusters = 0;
+    std::vector<double> result(M * K);
+
+    int d = 0; // runs along D
+    int cl1, cl2; // ONE-BASED cluster numbers from cl
+    for (int m1 = 0; m1 < M - 1; ++m1) {
+        for (int m2 = m1 + 1; m2 < M; ++m2) {
+            for (int k1 = 0; k1 < K; ++k1) { 
+                cl1 = cl(m1, k1); 
+                n_clusters = std::max(cl1, n_clusters); 
+                for (int k2 = 0; k2 < K; ++k2) {
+                    if (d >= D.size()) {
+                        stop("Something's wrong: counted past D");
+                    }
+                    cl2 = cl(m2, k2); 
+                    if (cl1 == cl2) {
+                        result[cl1 - 1] = std::max(result[cl1 - 1], D[d]);
+                    }
+                    n_clusters = std::max(cl2, n_clusters); 
+                    d += 1;
+                }
+            }
+        }
+    }
+    if (d != D.size()) {
+        stop("Something's wrong: didn't finish counting D.");
+    }
+
+    result.resize(n_clusters);
+    return result;
+}

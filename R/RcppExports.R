@@ -5,6 +5,10 @@ naive_cluster <- function(D, M, K, threshold) {
     .Call('dfrtopics_naive_cluster', PACKAGE = 'dfrtopics', D, M, K, threshold)
 }
 
+naive_cluster_width <- function(cl, D) {
+    .Call('dfrtopics_naive_cluster_width', PACKAGE = 'dfrtopics', cl, D)
+}
+
 calc_row_entropies <- function(m) {
     .Call('dfrtopics_calc_row_entropies', PACKAGE = 'dfrtopics', m)
 }

@@ -210,3 +210,17 @@ alignment_frame <- function (clusters, ms) {
         ~ dplyr::desc(size), ~ cluster, ~ model, ~ topic)
     dplyr::select_(result, ~ cluster, ~ model, ~ topic, ~ label, ~ d)
 }
+
+#' Aligned-topic cluster widths
+#'
+#' Finds the maximum pairwise distance within each cluster. These "widths" may
+#' help to diagnose cluster quality.
+#'
+#' @param clusters result from \code{\link{align_topics}}
+#'
+#' @param dst result from \code{\link{model_distances}}
+#'
+#' @export
+cluster_widths <- function (clusters, dst) {
+    naive_cluster_width(clusters, unnest_model_distances(dst))
+}
