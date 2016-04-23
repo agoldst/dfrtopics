@@ -4,17 +4,15 @@
 \alias{alignment_frame}
 \title{Organize alignment results for inspection}
 \usage{
-alignment_frame(clusters, dst, ms)
+alignment_frame(clusters, ms)
 }
 \arguments{
 \item{clusters}{from \code{\link{align_topics}}}
 
-\item{dst}{from \code{\link{model_distances}}}
-
-\item{ms}{list of models as supplied to \code{\link{model_distances}}}
+\item{ms}{list of models supplied to \code{\link{model_distances}}}
 }
 \value{
-a data frame. \code{d} is the distance between clusters at merge.
+A data frame. \code{d} is the distance between clusters at merge.
 }
 \description{
 Once you've clustered topics with \code{\link{align_topics}}, this function

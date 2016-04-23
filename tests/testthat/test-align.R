@@ -141,7 +141,7 @@ test_that("clustering with low threshold leaves some isolates", {
 
 test_that("alignment_frame gives an expected result", {
     cl <- align_topics(dst)
-    frm <- alignment_frame(cl, dst, ms)
+    frm <- alignment_frame(cl, ms)
     expect_equal(colnames(frm),
         c("cluster", "model", "topic", "label", "d"))
     expect_equal(nrow(frm), K * M)

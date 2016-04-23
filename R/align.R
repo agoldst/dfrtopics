@@ -31,7 +31,6 @@
 #'
 #' @export
 model_distances <- function (ms, n_words, g=JS_divergence) {
-
     n <- length(ms)
     tws <- lapply(ms, topic_words)
 
@@ -193,13 +192,12 @@ derive one from a list of models.")
 #' Many other ways of investigating a clustering are of course possible.
 #'
 #' @param clusters from \code{\link{align_topics}}
-#' @param dst from \code{\link{model_distances}}
-#' @param ms list of models as supplied to \code{\link{model_distances}}
+#' @param ms list of models supplied to \code{\link{model_distances}}
 #'
-#' @return a data frame. \code{d} is the distance between clusters at merge.
+#' @return A data frame. \code{d} is the distance between clusters at merge.
 #'
 #' @export
-alignment_frame <- function (clusters, dst, ms) {
+alignment_frame <- function (clusters, ms) {
     result <- gather_matrix(clusters, col_names=c("model", "topic", "cluster"))
     result$d <- as.numeric(t(attr(clusters, "distances")))
     result <- dplyr::group_by_(result, ~ cluster)
