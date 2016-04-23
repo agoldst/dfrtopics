@@ -9,7 +9,7 @@ align_topics(dst, threshold)
 \arguments{
 \item{dst}{result from \code{\link{model_distances}} (q.v.)}
 
-\item{threshold}{maximum dissimilarity allowed between cluster members. By
+\item{threshold}{maximum dissimilarity allowed between merging clusters. By
 default, the threshold is set so that any two topics from different models
 may ultimately join a cluster. More aggressive thresholding is
 recommended, in order to expose isolated topics.}
@@ -32,8 +32,8 @@ similar topics from each model. In particular, it greedily seeks
 the single-link clustering in which no two topics from the same
 model are found in the same cluster ("up-to-one mapping"). The idea
 is from (Chuang et al., 2015). The implementation is my own (slow,
-unverified) one. To prepare topic dissimilarities to supply to this
-function, use \code{\link{model_distances}}.
+unverified, \emph{experimental}) one. To prepare topic dissimilarities to
+supply to this function, use \code{\link{model_distances}}.
 }
 \details{
 Alignment is currently implemented only for models having the same
