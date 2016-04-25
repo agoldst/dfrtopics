@@ -14,18 +14,19 @@
 #' returning the matrix of dissimilarities between rows, \eqn{d_{ij} =
 #' g(\theta_i, \theta_j)}. By default, the Jensen-Shannon divergence
 #' is used (\code{\link{JS_divergence}}). Or you might try the cosine
-#' distance (\code{\link{cosine_distance}}). If you have
-#' a function \code{f} of two vectors, you can lift it to matrix rows, at
-#' a speed penalty, as \code{function (X, Y) apply(Y, 1, function (y)
-#' apply(X, 1, f, y))} (N.B. the transpose is necessary).
+#' distance (\code{\link{cosine_distance}}). If you have a function
+#' \code{f} of two vectors, you can lift it to matrix rows, at a speed
+#' penalty, as \code{function (X, Y) apply(Y, 1, function (y) apply(X,
+#' 1, f, y))} (N.B. the transpose is necessary).
 #'
-#' @return a \code{model_distances} object, which is simply a list
-#' of lists of matrices representing the upper block-triangle of
-#' distances. Specifically, if \code{x} is the result of the function,
-#' the dissimilarity between topic \code{i} from model \code{m1} and
-#' topic \code{j} from model \code{m2 > m1} is found at \code{x[[m1]][[m2 -
-#' m1]][i, j]}. For convenience, this can be expressed as \code{x[m1,
-#' m2, i, j]}.
+#' @return a \code{model_distances} object, which is a list
+#' including elements \code{d}, a list of lists of matrices representing the
+#' upper block-triangle of distances, and {ms, n_words, g} storing
+#' the arguments. If \code{x} is the result of the
+#' function, the dissimilarity between topic \code{i} from model
+#' \code{m1} and topic \code{j} from model \code{m2 > m1} is found at
+#' \code{x$d[[m1]][[m2 - m1]][i, j]}. For convenience, this can be
+#' expressed as \code{x[m1, m2, i, j]}.
 #'
 #' @seealso \code{\link{align_topics}}
 #'
@@ -79,7 +80,13 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
         }
     }
 
-    structure(result,
+    structure(
+        list(
+            d=result,
+            ms=ms,
+            n_words=n_words,
+            g=g
+        ),
         class="model_distances"
     )
 }
@@ -94,16 +101,16 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
         stop("Model indices must differ")
     }
     if (m1 < m2) {
-        x[[m1]][[m2 - m1]][i, j]
+        x$d[[m1]][[m2 - m1]][i, j]
     } else {
-        x[[m2]][[m1 - m2]][j, i]
+        x$d[[m2]][[m1 - m2]][j, i]
     }
 }
 
 # utility function: flatten a model_distances into a vector ordered as expected by naive_cluster
 unnest_model_distances <- function (dst) {
     do.call(c,
-        lapply(dst,
+        lapply(dst$d,
             function (d) {
                 # unrolling by columns, so transpose
                 do.call(c, lapply(d, function (x) as.numeric(t(x))))
@@ -133,15 +140,18 @@ unnest_model_distances <- function (dst) {
 #'   may ultimately join a cluster. More aggressive thresholding is
 #'   recommended, in order to expose isolated topics.
 #'
-#' @return a matrix of cluster assignments, where the \eqn{i,j} element is the
-#'   cluster number of topic \eqn{j} in model \eqn{i}. This matrix also
-#'   receives a \code{distances} attribute which gives the distance at which
+#' @return a \code{topic_alignment} object, which is a list of: \describe{
+#' \item{\code{clusters}}{integer matrix whose \eqn{i,j} element is the
+#'   cluster number of topic \eqn{j} in model \eqn{i}}
+#' \item{\code{distances}}{matrix giving the distance at which
 #'   the given element was merged into its cluster. Because single-link
 #'   clustering (if I've even implemented it correctly) is subject to
 #'   "chaining," this is not necessarily an indication of the quality of a
-#'   cluster, but it may give some hints. To explore the result,
-#'   \code{\link{alignment_frame}} or simply \code{\link{gather_matrix}} may be
-#'   useful.
+#'   cluster, but it may give some hints.}
+#' \item{\code{model_distances}}{The supplied \code{model_distances}}
+#' \item{\code{threshold}}{The threshold used}
+#' }
+#' To explore the result, \code{\link{alignment_frame}} may be useful.
 #'
 #' @seealso \code{\link{model_distances}}, \code{\link{alignment_frame}}
 #'
@@ -156,7 +166,7 @@ unnest_model_distances <- function (dst) {
 #' dists <- model_distances(list(m1, m2, m3), n_words=40)
 #' clusters <- align_topics(dists, threshold=0.5)
 #' # data frame readout
-#' gather_matrix(clusters, col_names=c("model", "topic", "cluster"))
+#' alignment_frame(clusters)
 #' }
 #'
 #' @export
@@ -166,8 +176,8 @@ align_topics <- function (dst, threshold) {
 derive one from a list of models.")
     }
     # TODO don't really need to enforce same K for all models
-    K <- nrow(dst[[1]][[1]])
-    M <- length(dst) + 1
+    K <- nrow(dst$d[[1]][[1]])
+    M <- length(dst$d) + 1
 
     dst_flat <- unnest_model_distances(dst)
 
@@ -176,12 +186,24 @@ derive one from a list of models.")
     }
 
     cl <- naive_cluster(dst_flat, M, K, threshold)
-
     structure(
-        # naive_cluster numbers clusters from 0
-        matrix(cl$clusters + 1, nrow=M, byrow=T),
-        distances=matrix(cl$distances, nrow=M, byrow=T)
+        list(
+            # naive_cluster numbers clusters from 0
+             clusters=matrix(cl$clusters + 1, nrow=M, byrow=T),
+             distances=matrix(cl$distances, nrow=M, byrow=T),
+             model_distances=dst,
+             threshold=threshold
+        ),
+        class="topic_alignment"
     )
+}
+
+#' @rdname align_topics
+#' @export
+print.topic_alignment <- function (x) {
+    cat("A topic clustering from align_topics\n")
+    cat("Cluster assignments:")
+    print(x$clusters)
 }
 
 #' Organize alignment results for inspection
@@ -196,14 +218,16 @@ derive one from a list of models.")
 #' @return A data frame. \code{d} is the distance between clusters at merge.
 #'
 #' @export
-alignment_frame <- function (clusters, ms) {
-    result <- gather_matrix(clusters, col_names=c("model", "topic", "cluster"))
-    result$d <- as.numeric(t(attr(clusters, "distances")))
+alignment_frame <- function (clusters) {
+    result <- gather_matrix(clusters$clusters,
+                            col_names=c("model", "topic", "cluster"))
+    result$d <- as.numeric(t(clusters$distances))
     result <- dplyr::group_by_(result, ~ cluster)
     result <- dplyr::mutate_(result, size=~ length(cluster))
     result <- dplyr::ungroup(result)
     result <- dplyr::group_by_(result, ~ model)
-    mut <- lazyeval::interp(~ topic_labels(x[[model[1]]])[topic], x=ms)
+    mut <- lazyeval::interp(~ topic_labels(x[[model[1]]])[topic],
+        x=clusters$model_distances$ms)
     result <- dplyr::mutate_(result, label=mut)
     result <- dplyr::ungroup(result)
     result <- dplyr::arrange_(result,
@@ -216,11 +240,17 @@ alignment_frame <- function (clusters, ms) {
 #' Finds the maximum pairwise distance within each cluster. These "widths" may
 #' help to diagnose cluster quality.
 #'
-#' @param clusters result from \code{\link{align_topics}}
+#' @param x result from \code{\link{align_topics}}
 #'
-#' @param dst result from \code{\link{model_distances}}
+#' @seealso \code{\link{align_topics}}, \code{\link{alignment_frame}}
 #'
 #' @export
-cluster_widths <- function (clusters, dst) {
-    naive_cluster_width(clusters, unnest_model_distances(dst))
+widths <- function (x) UseMethod("widths")
+
+#' @export
+widths.topic_alignment <- function (x) {
+    naive_cluster_width(x$clusters,
+        unnest_model_distances(x$model_distances)
+    )
 }
+

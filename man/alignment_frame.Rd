@@ -4,7 +4,7 @@
 \alias{alignment_frame}
 \title{Organize alignment results for inspection}
 \usage{
-alignment_frame(clusters, ms)
+alignment_frame(clusters)
 }
 \arguments{
 \item{clusters}{from \code{\link{align_topics}}}

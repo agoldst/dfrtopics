@@ -53,9 +53,9 @@ test_that("naive_cluster does the right thing with trivial data", {
 
 test_that("model_distances returns something of the right form", {
     expect_is(dst, "model_distances")
-    expect_equal(length(dst), M - 1)
-    expect_equal(sapply(dst, length), seq(M - 1, 1))
-    expect_equal(lapply(do.call(c, dst), dim),
+    expect_equal(length(dst$d), M - 1)
+    expect_equal(sapply(dst$d, length), seq(M - 1, 1))
+    expect_equal(lapply(do.call(c, dst$d), dim),
         rep(list(c(K, K)), M * (M - 1) / 2))
 
     # calculate 1.1:M.K
@@ -64,16 +64,16 @@ test_that("model_distances returns something of the right form", {
         tw_smooth_normalize(ms[[M]])(topic_words(ms[[M]]))[K, ]
     )
     # which should be retrieved as follows
-    expect_equal(dst[[1]][[M - 1]][1, K], jsd)
+    expect_equal(dst$d[[1]][[M - 1]][1, K], jsd)
     # or as follows
     expect_equal(dst[1, M, 1, K], jsd)
 })
 
 test_that("unnesting distances is correct", {
-    dummy <- list(
+    dummy <- list(d=list(
         list(matrix(1:4, nrow=2, byrow=T), matrix(5:8, nrow=2, byrow=T)),
         list(matrix(9:12, nrow=2, byrow=T))
-    )
+    ))
     expect_equal(dfrtopics:::unnest_model_distances(dummy), 1:12)
 })
 
@@ -103,20 +103,20 @@ test_that("we can take distances between non-overlapping models", {
 test_that("clustering two models with high threshold fully aligns them", {
     dd <- model_distances(ms[1:2], 20)
     cl <- align_topics(dd, 10000000)
-    expect_equal(sort(cl[1, ]), 1:K)
-    expect_equal(sort(cl[2, ]), 1:K)
+    expect_equal(sort(cl$clusters[1, ]), 1:K)
+    expect_equal(sort(cl$clusters[2, ]), 1:K)
 
 })
 
 test_that("in clustering two models, the closest pair is indeed grouped", {
     dd <- model_distances(ms[1:2], 20)
     cl <- align_topics(dd, 10000000)
-    closest <- which(dd[[1]][[1]] == min(dd[[1]][[1]]), arr.ind=TRUE)
-    expect_equal(cl[1, closest[1]], cl[2, closest[2]])
+    closest <- which(dd$d[[1]][[1]] == min(dd$d[[1]][[1]]), arr.ind=TRUE)
+    expect_equal(cl$clusters[1, closest[1]], cl$clusters[2, closest[2]])
 })
 
 test_that("clustering meets up-to-one constraint", {
-    cl <- align_topics(dst)
+    cl <- align_topics(dst)$clusters
     expect_equal(dim(cl), c(M, K))
     expect_true(all(1 <= cl & cl <= M * K))
     ck <- gather_matrix(cl, col_names=c("model", "topic", "cluster")) %>%
@@ -130,27 +130,27 @@ test_that("clustering numbers are a sequence with no holes", {
     # merging cluster numbers to the lower index
     # randomly cluster some models
     dd <- model_distances(sample(ms, M - 1), 20)
-    cl <- align_topics(dd)
+    cl <- align_topics(dd)$clusters
     expect_equal(sort(unique(as.numeric(cl))), 1:max(cl))
 })
 
 test_that("clustering with default infinite threshold leaves no isolates", {
-    cl <- align_topics(dst)
+    cl <- align_topics(dst)$clusters
     # it can leave some non-full clusters, because of the greedy algorithm
     # and the mapping constraint
     expect_true(!(1 %in% tabulate(cl)))
 })
 
 test_that("clustering with low threshold leaves some isolates", {
-    thresh <- quantile(dst[[1]][[1]], 0.25)
-    cl <- align_topics(dst, thresh)
+    thresh <- quantile(dst$d[[1]][[1]], 0.25)
+    cl <- align_topics(dst, thresh)$clusters
     expect_true(length(unique(cl)) > K)
     expect_true(all(attr(cl, "distances") < thresh))
 })
 
 test_that("alignment_frame gives an expected result", {
     cl <- align_topics(dst)
-    frm <- alignment_frame(cl, ms)
+    frm <- alignment_frame(cl)
     expect_equal(colnames(frm),
         c("cluster", "model", "topic", "label", "d"))
     expect_equal(nrow(frm), K * M)
@@ -158,7 +158,7 @@ test_that("alignment_frame gives an expected result", {
 
 test_that("an obvious clustering is found", {
     faked <- structure(
-        list( # triangle inequality, shmiangle inequality
+        list(d=list( # triangle inequality, shmiangle inequality
             list(
                 matrix(c(100, 1,  # remember these are transposed
                          1, 100), nrow=2),
@@ -166,34 +166,37 @@ test_that("an obvious clustering is found", {
                          1, 100), nrow=2)),
              list(
                 matrix(c(100, 1,
-                         1, 100), nrow=2))),
+                         1, 100), nrow=2)))),
         class="model_distances")
     cl <- align_topics(faked)
-    expect_equal(cl, matrix(c(
+    expect_equal(cl$clusters, matrix(c(
         1, 2,
         2, 1,
-        1, 2), byrow=2, nrow=3), check.attributes=F)
+        1, 2), byrow=2, nrow=3))
 })
 
 test_that("a trivial clustering is found", {
     dtriv <- model_distances(ms[c(1, 1, 1)], V)
-    cl <- align_topics(dtriv)
+    cl <- align_topics(dtriv)$clusters
     expect_equal(cl, cl[c(1, 1, 1), ], check.attributes=F)
 })
 
 test_that("cluster widths are right", {
     cl <- align_topics(dst)
-    wd1 <- cluster_widths(cl, dst)
+    wd1 <- widths(cl)
     # find widths by (even more) brute force
-    n_clust <- max(cl)
+    n_clust <- max(cl$clusters)
     wd2 <- sapply(1:n_clust, function (clst) {
-        members <- which(cl == clst, arr.ind=T)
-        mem_pairs <- combn(nrow(members), 2)
-        max(apply(mem_pairs, 2, function (p)
-            dst[members[p[1], 1], members[p[2], 1],
-                members[p[1], 2], members[p[2], 2]
-            ]
-        ))
+        members <- which(cl$clusters == clst, arr.ind=T)
+        if (nrow(members) == 1) {
+            0
+        } else {
+            max(apply(combn(nrow(members), 2), 2, function (p)
+                dst[members[p[1], 1], members[p[2], 1],
+                    members[p[1], 2], members[p[2], 2]
+                ]
+            ))
+        }
     })
     expect_equal(wd1, wd2)
 })

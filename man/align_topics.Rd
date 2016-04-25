@@ -2,9 +2,12 @@
 % Please edit documentation in R/align.R
 \name{align_topics}
 \alias{align_topics}
+\alias{print.topic_alignment}
 \title{Align topics across models}
 \usage{
 align_topics(dst, threshold)
+
+print.topic_alignment(x)
 }
 \arguments{
 \item{dst}{result from \code{\link{model_distances}} (q.v.)}
@@ -15,15 +18,18 @@ may ultimately join a cluster. More aggressive thresholding is
 recommended, in order to expose isolated topics.}
 }
 \value{
-a matrix of cluster assignments, where the \eqn{i,j} element is the
-  cluster number of topic \eqn{j} in model \eqn{i}. This matrix also
-  receives a \code{distances} attribute which gives the distance at which
+a \code{topic_alignment} object, which is a list of: \describe{
+\item{\code{clusters}}{integer matrix whose \eqn{i,j} element is the
+  cluster number of topic \eqn{j} in model \eqn{i}}
+\item{\code{distances}}{matrix giving the distance at which
   the given element was merged into its cluster. Because single-link
   clustering (if I've even implemented it correctly) is subject to
   "chaining," this is not necessarily an indication of the quality of a
-  cluster, but it may give some hints. To explore the result,
-  \code{\link{alignment_frame}} or simply \code{\link{gather_matrix}} may be
-  useful.
+  cluster, but it may give some hints.}
+\item{\code{model_distances}}{The supplied \code{model_distances}}
+\item{\code{threshold}}{The threshold used}
+}
+To explore the result, \code{\link{alignment_frame}} may be useful.
 }
 \description{
 Given information about the dissimilarities among topics across
@@ -46,7 +52,7 @@ number of topics.
 dists <- model_distances(list(m1, m2, m3), n_words=40)
 clusters <- align_topics(dists, threshold=0.5)
 # data frame readout
-gather_matrix(clusters, col_names=c("model", "topic", "cluster"))
+alignment_frame(clusters)
 }
 
 }

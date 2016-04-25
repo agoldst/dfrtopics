@@ -18,19 +18,20 @@ model_distances(ms, n_words, g = JS_divergence)
 returning the matrix of dissimilarities between rows, \eqn{d_{ij} =
 g(\theta_i, \theta_j)}. By default, the Jensen-Shannon divergence
 is used (\code{\link{JS_divergence}}). Or you might try the cosine
-distance (\code{\link{cosine_distance}}). If you have
-a function \code{f} of two vectors, you can lift it to matrix rows, at
-a speed penalty, as \code{function (X, Y) apply(Y, 1, function (y)
-apply(X, 1, f, y))} (N.B. the transpose is necessary).}
+distance (\code{\link{cosine_distance}}). If you have a function
+\code{f} of two vectors, you can lift it to matrix rows, at a speed
+penalty, as \code{function (X, Y) apply(Y, 1, function (y) apply(X,
+1, f, y))} (N.B. the transpose is necessary).}
 }
 \value{
-a \code{model_distances} object, which is simply a list
-of lists of matrices representing the upper block-triangle of
-distances. Specifically, if \code{x} is the result of the function,
-the dissimilarity between topic \code{i} from model \code{m1} and
-topic \code{j} from model \code{m2 > m1} is found at \code{x[[m1]][[m2 -
-m1]][i, j]}. For convenience, this can be expressed as \code{x[m1,
-m2, i, j]}.
+a \code{model_distances} object, which is a list
+including elements \code{d}, a list of lists of matrices representing the
+upper block-triangle of distances, and {ms, n_words, g} storing
+the arguments. If \code{x} is the result of the
+function, the dissimilarity between topic \code{i} from model
+\code{m1} and topic \code{j} from model \code{m2 > m1} is found at
+\code{x$d[[m1]][[m2 - m1]][i, j]}. For convenience, this can be
+expressed as \code{x[m1, m2, i, j]}.
 }
 \description{
 This function calculates dissimilarities between topic-word
