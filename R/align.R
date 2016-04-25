@@ -202,7 +202,7 @@ derive one from a list of models.")
 #' @export
 print.topic_alignment <- function (x) {
     cat("A topic clustering from align_topics\n")
-    cat("Cluster assignments:")
+    cat("Cluster assignments:\n")
     print(x$clusters)
 }
 
