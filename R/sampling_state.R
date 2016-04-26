@@ -15,12 +15,12 @@
 #' @export
 #'
 write_mallet_state <- function(m, outfile="state.gz") {
-    mod <- RTopicModel(m)
-    if (is.null(mod)) {
+    ptm <- ParallelTopicModel(m)
+    if (is.null(ptm)) {
         stop("MALLET model object is not available.")
     }
     f <- rJava::.jnew("java/io/File", path.expand(outfile))
-    rJava::.jcall(mod, "V", "printState", f)
+    rJava::.jcall(ptm, "V", "printState", f)
 }
 
 #' Reduce a MALLET sampling state on disk to a simplified form

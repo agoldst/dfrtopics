@@ -2,7 +2,7 @@
 % Please edit documentation in R/model.R
 \name{ParallelTopicModel}
 \alias{ParallelTopicModel}
-\title{Access MALLET's model object (deprecated)}
+\title{Access MALLET's model object}
 \usage{
 ParallelTopicModel(m)
 }
@@ -10,7 +10,7 @@ ParallelTopicModel(m)
 \item{m}{a \code{mallet_model} object}
 }
 \value{
-a reference to the RTopicModel object (or NULL if unavailable)
+a reference to a ParallelTopicModel object (or NULL if unavailable)
 }
 \description{
 This function returns a reference to the main Java object representing an LDA

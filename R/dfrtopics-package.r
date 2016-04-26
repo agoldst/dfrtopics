@@ -82,12 +82,26 @@ flaw in R and rJava."
     }
 
     if (requireNamespace("mallet", quietly=TRUE)) {
-        dfrtopics_flags$mallet_loaded <- TRUE
-    } else {
+        if (packageVersion("mallet") < "1.1") {
+            # Old R mallet needs to find rJava on the search path
+            # We're not supposed to use require in a package
+            # but this is what we need to be compatible
+            # with both CRAN 1.0 and github 1.1+ versions of mallet
+            dfrtopics_flags$mallet_loaded <- require("rJava", quietly=TRUE)
+        } else {
+            dfrtopics_flags$mallet_loaded <- TRUE
+        }
+    }
+
+    if (!dfrtopics_flags$mallet_loaded) {
         stop(
-"Unable to load mallet and rJava. Ensure mallet is installed with
-install.packages(\"mallet\"). If you still have problems, you may have to
-adjust environment variables."
+"Unable to load mallet and rJava. Ensure mallet is installed,
+either from CRAN with
+install.packages(\"mallet\")
+or the development version
+devtools::install_github(\"mimno/RMallet\", subdir=\"mallet\")
+If you still have problems, you may have to adjust environment variables
+to get Java working."
         )
     }
 }

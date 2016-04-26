@@ -251,16 +251,26 @@ train_model <- function(instances, n_topics,
         as.numeric(n_topics),
         as.numeric(alpha_sum),
         as.numeric(beta))
-    rJava::.jcall(trainer, "V", "setNumThreads", as.integer(threads))
+
+   if (rJava::.jinstanceof(trainer, "cc.mallet.topics.ParallelTopicModel")) {
+        # new mallet: RTopicModel IS a ParallelTopicModel
+        ptm <- trainer
+    } else {
+        # old mallet: RTopicModel HAS a ParallelTopicModel
+        ptm <- rJava::.jfield(trainer,
+            "Lcc/mallet/topics/ParallelTopicModel;", "model")
+    }
+
+    rJava::.jcall(ptm, "V", "setNumThreads", as.integer(threads))
     if (!is.null(seed)) {
-        rJava::.jcall(trainer, "V", "setRandomSeed", as.integer(seed))
+        rJava::.jcall(ptm, "V", "setRandomSeed", as.integer(seed))
         message("MALLET random number seed set to ", seed)
     }
 
     rJava::.jcall(trainer, "V", "loadDocuments", instances)
 
     if (optimize_hyperparameters) {
-        rJava::.jcall(trainer, "V", "setSymmetricAlpha", symmetric_alpha)
+        rJava::.jcall(ptm, "V", "setSymmetricAlpha", symmetric_alpha)
         rJava::.jcall(trainer, "V", "setAlphaOptimization",
             as.numeric(n_hyper_iters), as.numeric(n_burn_in))
     }
@@ -284,7 +294,7 @@ train_model <- function(instances, n_topics,
             seed=seed,
             initial_alpha_sum=alpha_sum,
             initial_beta=beta,
-            final_ll=rJava::.jcall(trainer, "D", "modelLogLikelihood")
+            final_ll=rJava::.jcall(ptm, "D", "modelLogLikelihood")
         ),
         doc_topics=mallet::mallet.doc.topics(trainer,
             smoothed=FALSE, normalized=FALSE),
@@ -318,8 +328,8 @@ n_topics <- function (m) UseMethod("n_topics")
 
 #' @export
 n_topics.mallet_model <- function (m) {
-    if (!is.null(m$model)) {
-        rJava::.jfield(m$model, "I", "numTopics")
+    if (!is.null(ParallelTopicModel(m))) {
+        rJava::.jfield(ParallelTopicModel(m), "I", "numTopics")
     } else if (!is.null(m$doc_topics)) {
         ncol(m$doc_topics)
     } else if (!is.null(m$topic_words)) {
@@ -346,10 +356,10 @@ n_docs.mallet_model <- function (m) {
         nrow(m$doc_topics)
     } else if (!is.null(m$doc_ids)) {
         length(m$doc_ids)
-    } else if (!is.null(m$model)) {
+    } else if (!is.null(RTopicModel(m))) {
         rJava::.jcall(
-            rJava::.jfield(m$model,
-                "Lcc/mallet/types/InstanceList;", 
+            rJava::.jfield(RTopicModel(m),
+                "Lcc/mallet/types/InstanceList;",
                 "instances"),
             "I",
             "size"
@@ -382,9 +392,8 @@ modeling_parameters.mallet_model  <- function (m) m$params
 #' package.
 #'
 #' In earlier versions of MALLET, this object had a data member of class
-#' ParallelTopicModel instance. In the latest MALLET, RTopicModel inherits from 
-#' ParallelTopicModel, so the \code{\link{ParallelTopicModel}} method of this
-#' package is now redundant and deprecated.
+#' ParallelTopicModel instance. In the latest MALLET, RTopicModel inherits from
+#' ParallelTopicModel.
 #'
 #' @param m a \code{mallet_model} object
 #' @return a reference to the RTopicModel object (or NULL if unavailable)
@@ -395,13 +404,13 @@ RTopicModel <- function (m) UseMethod("RTopicModel")
 #' @export
 RTopicModel.mallet_model <- function (m) m$model
 
-#' Access MALLET's model object (deprecated)
+#' Access MALLET's model object
 #'
 #' This function returns a reference to the main Java object representing an LDA
 #' model in MALLET.
 #'
 #' @param m a \code{mallet_model} object
-#' @return a reference to the RTopicModel object (or NULL if unavailable)
+#' @return a reference to a ParallelTopicModel object (or NULL if unavailable)
 #' @seealso \code{\link{RTopicModel}}
 #' @export
 #'
@@ -411,9 +420,14 @@ ParallelTopicModel <- function (m) UseMethod("ParallelTopicModel")
 ParallelTopicModel.mallet_model <- function (m) {
     if (is.null(m$model)) {
         NULL
+    } else if (rJava::.jinstanceof(
+            m$model, "cc.mallet.topics.ParallelTopicModel")) {
+        # new mallet: RTopicModel IS a ParallelTopicModel
+        rJava::.jcast(m$model, "cc/mallet/topics/ParallelTopicModel")
     } else {
-        # .jfield(rtm, "Lcc/mallet/topics/ParallelTopicModel;", "model")
-        m$model
+        # old mallet: RTopicModel HAS a ParallelTopicModel
+        rJava::.jfield(m$model,
+            "Lcc/mallet/topics/ParallelTopicModel;", "model")
     }
 }
 
@@ -474,8 +488,8 @@ doc_topics <- function (m) UseMethod("doc_topics")
 #' @export
 doc_topics.mallet_model <- function (m) {
     dtm <- m$doc_topics
-    if (is.null(dtm) && !is.null(m$model)) {
-        dtm <- mallet::mallet.doc.topics(m$model,
+    if (is.null(dtm) && !is.null(RTopicModel(m))) {
+        dtm <- mallet::mallet.doc.topics(RTopicModel(m),
             smoothed=FALSE, normalized=FALSE)
     }
     dtm
@@ -529,8 +543,8 @@ doc_ids <- function (m) UseMethod("doc_ids")
 doc_ids.mallet_model <- function (m) {
     if (!is.null(m$doc_ids)) {
         m$doc_ids
-    } else if (!is.null(m$model)) {
-        rJava::.jcall(m$model, "[S", "getDocumentNames")
+    } else if (!is.null(RTopicModel(m))) {
+        rJava::.jcall(RTopicModel(m), "[S", "getDocumentNames")
     } else {
         stop("Neither the model object nor a pre-loaded list of IDs is available.
              To load the latter, use doc_ids(m) <- readLines(...)")
@@ -562,8 +576,8 @@ vocabulary <- function (m) UseMethod("vocabulary")
 vocabulary.mallet_model <- function (m) {
     if (!is.null(m$vocab)) {
         m$vocab
-    } else if (!is.null(m$model)) {
-        rJava::.jcall(m$model, "[S", "getVocabulary")
+    } else if (!is.null(RTopicModel(m))) {
+        rJava::.jcall(RTopicModel(m), "[S", "getVocabulary")
     } else {
         stop("Neither the model object nor a pre-loaded vocabulary is available.
              To load the latter, use vocabulary(m) <- readLines(...)")
@@ -614,9 +628,9 @@ topic_words <- function (m, ...) UseMethod("topic_words")
 #' @export
 topic_words.mallet_model <- function (m) {
     tw <- m$topic_words
-    if (is.null(tw) && !is.null(m$model)) {
+    if (is.null(tw) && !is.null(RTopicModel(m))) {
         tw <- as(
-            mallet::mallet.topic.words(m$model,
+            mallet::mallet.topic.words(RTopicModel(m),
                 smoothed=FALSE, normalized=FALSE),
             "sparseMatrix"
         )
@@ -784,9 +798,9 @@ hyperparameters <- function (m) UseMethod("hyperparameters")
 hyperparameters.mallet_model <- function (m) {
     if (!is.null(m$hyper)) {
         m$hyper
-    } else if (!is.null(m$model)) {
-        list(alpha=rJava::.jcall(m$model, "[D", "getAlpha"),
-             beta=rJava::.jfield(m$model, "D", "beta"))
+    } else if (!is.null(RTopicModel(m))) {
+        list(alpha=rJava::.jcall(RTopicModel(m), "[D", "getAlpha"),
+             beta=rJava::.jfield(ParallelTopicModel(m), "D", "beta"))
     } else {
         stop(
 "Neither the model object nor pre-loaded hyperparameters are available."

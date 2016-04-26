@@ -12,8 +12,9 @@
 #'
 #' @export
 inferencer <- function (m) {
-    if (!is.null(m$model)) {
-        rJava::.jcall(m$model, "Lcc/mallet/topics/TopicInferencer;",
+    if (!is.null(ParallelTopicModel(m))) {
+        rJava::.jcall(ParallelTopicModel(m),
+                      "Lcc/mallet/topics/TopicInferencer;",
             "getInferencer")
     } else {
         NULL
