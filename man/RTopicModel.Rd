@@ -23,7 +23,7 @@ R using rJava. It is also used by the functions in the \pkg{mallet}
 package.
 
 In earlier versions of MALLET, this object had a data member of class
-ParallelTopicModel instance. In the latest MALLET, RTopicModel inherits from 
+ParallelTopicModel instance. In the latest MALLET, RTopicModel inherits from
 ParallelTopicModel.
 }
 
