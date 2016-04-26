@@ -6,6 +6,8 @@
 #' topics in different models of the same (or similar) corpora: see
 #' \code{\link{align_topics}}.
 #'
+#' The models in \code{ms} need not have the same number of topics.
+#'
 #' @param ms list of \code{\link{mallet_model}} objects
 #'
 #' @param n_words number of top words from each topic to consider
@@ -111,7 +113,7 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
 #' @export
 print.model_distances <- function (x) {
     cat("Distances between topics from model_distances\n")
-    cat("Model:",
+    cat("Model: ",
         sprintf("%4.4s", seq(length(x$d[[1]]) + 1)))
     cat("\nTopics:",
         sprintf("%4.4s", c(nrow(x$d[[1]][[1]]), vapply(x$d[[1]], ncol, 0))))

@@ -201,3 +201,25 @@ test_that("cluster widths are right", {
     })
     expect_equal(wd1, wd2)
 })
+
+test_that("we can also cluster models with varying K", {
+    ks <- 7:10
+
+    msk <- lapply(ks, function (K) train_model(
+        insts,
+        n_topics=K,
+        n_iters=200,
+        threads=1,
+        alpha_sum=5,
+        beta=0.01,
+        n_hyper_iters=20,
+        n_burn_in=20,
+        n_max_iters=10,
+        metadata=meta
+    ))
+
+    dstk <- model_distances(msk, V)
+    expect_equal(dim(dstk$d[[1]][[length(ks) - 1]]), ks[c(1, length(ks))])
+    cl <- align_topics(dstk)
+    expect_equal(sapply(cl$clusters, length), ks)
+})

@@ -42,6 +42,9 @@ distributions over a list of models. The result can be used to align
 topics in different models of the same (or similar) corpora: see
 \code{\link{align_topics}}.
 }
+\details{
+The models in \code{ms} need not have the same number of topics.
+}
 \seealso{
 \code{\link{align_topics}}
 }
