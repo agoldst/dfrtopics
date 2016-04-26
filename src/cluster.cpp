@@ -167,32 +167,36 @@ List naive_cluster(NumericVector D, IntegerVector K, double threshold) {
 // cl list of vectors in which cl[[i]][j] is the ONE-BASED cluster number
 // D element distances, specified as for naive_cluster
 // [[Rcpp::export]]
-std::vector<double> naive_cluster_width(
+NumericVector naive_cluster_width(
         std::vector<std::vector<int> > cl, NumericVector D) {
     int M = cl.size();
-    std::vector<double> result;
+    std::map<int, double> widths;
 
     int d = 0; // runs along D
     int cl1, cl2; // ONE-BASED cluster numbers from cl
+    int max_cl = 0;
     for (int m1 = 0; m1 < M - 1; ++m1) {
         for (int m2 = m1 + 1; m2 < M; ++m2) {
             for (int k1 = 0; k1 < cl[m1].size(); ++k1) {
                 cl1 = cl[m1][k1];
-                if (cl1 > result.size()) {
-                    result.resize(cl1);
+                if (widths.count(cl1 - 1) == 0) { // initialize to zero
+                    widths[cl1 - 1] = 0.0;
                 }
+                max_cl = std::max(max_cl, cl1);
                 for (int k2 = 0; k2 < cl[m2].size(); ++k2) {
                     if (d >= D.size()) {
                         stop("Something's wrong: counted past D");
                     }
                     cl2 = cl[m2][k2];
+                    if (widths.count(cl2 - 1) == 0) { // initialize to zero
+                        widths[cl2 - 1] = 0.0;
+                    }
                     if (cl1 == cl2) {
-                        result[cl1 - 1] = std::max(result[cl1 - 1], D[d]);
+                        widths[cl1 - 1] = std::max(widths[cl1 - 1], D[d]);
+                    } else {
+                        max_cl = std::max(max_cl, cl2);
                     }
 
-                    if (cl2 > result.size()) {
-                        result.resize(cl2);
-                    }
                     d += 1;
                 }
             }
@@ -202,5 +206,11 @@ std::vector<double> naive_cluster_width(
         stop("Something's wrong: didn't finish counting D.");
     }
 
+    NumericVector result(max_cl, NA_REAL);
+    for (int c = 0; c < max_cl; ++c) {
+        if (widths.count(c) > 0) {
+            result[c] = widths[c];
+        }
+    }
     return result;
 }

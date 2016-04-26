@@ -193,8 +193,8 @@ test_that("cluster widths are right", {
     n_clust <- max(unlist(cl$clusters))
     wd2 <- sapply(1:n_clust, function (clst) {
         members <- which(clmat == clst, arr.ind=T)
-        if (nrow(members) == 1) {
-            0
+        if (nrow(members) <= 1) {
+            NA
         } else {
             max(apply(combn(nrow(members), 2), 2, function (p)
                 dst[members[p[1], 1], members[p[2], 1],

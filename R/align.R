@@ -256,6 +256,10 @@ alignment_frame <- function (clusters) {
 #'
 #' @param x result from \code{\link{align_topics}}
 #'
+#' @return a vector whose \code{i}th element is the width of cluster \code{i}. 
+#' If there is no cluster with that number, the corresponding element is 
+#' \code{NA}. Single-member clusters have a width of zero.
+#'
 #' @seealso \code{\link{align_topics}}, \code{\link{alignment_frame}}
 #'
 #' @export

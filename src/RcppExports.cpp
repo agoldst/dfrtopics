@@ -20,7 +20,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // naive_cluster_width
-std::vector<double> naive_cluster_width(std::vector<std::vector<int> > cl, NumericVector D);
+NumericVector naive_cluster_width(std::vector<std::vector<int> > cl, NumericVector D);
 RcppExport SEXP dfrtopics_naive_cluster_width(SEXP clSEXP, SEXP DSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
