@@ -23,6 +23,9 @@ meta <- read_dfr_metadata(file.path(data_dir, "citations.tsv"))
 
 M <- 4
 K <- 8
+s <- sample(10000, 1)
+set.seed(s)
+
 ms <- replicate(M, train_model(
         insts,
         n_topics=K,
@@ -33,7 +36,8 @@ ms <- replicate(M, train_model(
         n_hyper_iters=20,
         n_burn_in=20,
         n_max_iters=10,
-        metadata=meta
+        metadata=meta,
+        seed=sample(10000, 1)
     ),
     simplify=F
 )
@@ -148,7 +152,7 @@ test_that("clustering with low threshold leaves some isolates", {
     thresh <- quantile(cldst[cldst > 0], 0.25)
     cl <- align_topics(dst, thresh)
     expect_true(length(unique(unlist(cl$clusters))) > K)
-    expect_true(all(unlist(cl$distances) < thresh))
+    expect_true(all(unlist(cl$distances) <= thresh))
 })
 
 test_that("alignment_frame gives an expected result", {
@@ -223,3 +227,5 @@ test_that("we can also cluster models with varying K", {
     cl <- align_topics(dstk)
     expect_equal(sapply(cl$clusters, length), ks)
 })
+
+message("random seed started at: ", s)
