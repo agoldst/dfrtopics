@@ -17,26 +17,6 @@ test_that("row_entropies is correct", {
     expect_equal(row_entropies(p), h, info="cast from ordinary matrix")
 })
 
-test_that("rmultinom_sparse isn't crazy", {
-    pr <- c(0.1, 0.7, 0.2)
-    nn <- 10000
-    x <- rmultinom_sparse(nn, pr)
-    # chi^2 test, alpha=0.05
-    expect_more_than(
-        prop.test(as.vector(x), rep(nn, length(pr)), pr)$p.value,
-        0.05,
-        info="H0: one sample with many trials is plausible")
-
-    nn <- rep(1000, 10)
-    x <- rmultinom_sparse(nn, pr)
-    expect_more_than(
-        prop.test(Matrix::rowSums(x), rep(sum(nn), length(pr)),
-                  pr)$p.value,
-        0.05,
-        info="H0: summing over ten samples again yields sth. plausible")
-})
-
-
 test_that("calc_imi is correct", {
     # example from
     # https://lists.cs.princeton.edu/pipermail/topic-models/2012-March/001779.html
