@@ -113,6 +113,7 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
 #' @export
 print.model_distances <- function (x) {
     cat("Distances between topics from model_distances\n")
+    cat("Number of top words used: ", x$n_words, "\n")
     cat("Model: ",
         sprintf("%4.4s", seq(length(x$d[[1]]) + 1)))
     cat("\nTopics:",
