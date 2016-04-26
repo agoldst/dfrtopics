@@ -1,22 +1,8 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-//' Jensen-Shannon divergence between two vectors
-//'
-//' This function computes the Jensen-Shannon divergence between two vectors,
-//' understood as distributions over the index.
-//'
-//' @param P,Q vectors representing the distributions. Must be of same length.
-//'
-//' @return \deqn{\sum_j \frac{1}{2}P(j) log\left(\frac{2P(j)}{P(j) +
-//' Q(j)}\right) + \frac{1}{2}Q(j) log\left(\frac{2P(j)}{P(j) +
-//' Q(j)}\right)}
-//'
-//' @seealso \code{\link{topic_divergences}}, \code{\link{row_dists}}
-//'
-//' @export
 // [[Rcpp::export]]
-double JS_divergence(NumericVector P, NumericVector Q) {
+double jsdiv_v(NumericVector P, NumericVector Q) {
     int n = P.size();
     if (Q.size() != n) {
         stop("P and Q must be of same length");
@@ -35,3 +21,21 @@ double JS_divergence(NumericVector P, NumericVector Q) {
     }
     return total / 2;
 }
+
+// [[Rcpp::export]]
+NumericMatrix jsdiv_m(NumericMatrix x, NumericMatrix y) {
+    int n = x.nrow(), m = y.nrow();
+    if (y.ncol() != x.ncol()) {
+        stop("x and y must have the same number of columns");
+    }
+
+    NumericMatrix result(n, m);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            result(i, j) = jsdiv_v(x(i, _), y(j, _));
+        }
+    }
+    return result;
+}
+
+// TODO an RcppEigen version for sparse matrices would be nice

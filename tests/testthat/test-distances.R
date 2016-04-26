@@ -51,4 +51,24 @@ test_that("row_dists works right", {
                  check.attributes=FALSE)
 })
 
+test_that("JS_divergence's matrix version agrees with vector version", {
+    x <- matrix(runif(200), nrow=20)
+    x <- diag(1 / rowSums(x)) %*% x
+    y <- matrix(runif(200), nrow=20)
+    y <- diag(1 / rowSums(y)) %*% y
+
+    expect_equal(JS_divergence(x, y),
+        apply(y, 1, function (Y) apply(x, 1, JS_divergence, Y)))
+})
+
+test_that("cosine_distance works right", {
+    x <- matrix(c(1, 0, 1, 1), byrow=T, nrow=2)
+    y <- matrix(c(0, 1, 0.5, 0.5), byrow=T, nrow=2)
+    expect_equal(cosine_distance(x, y),
+        matrix(c(0, 1 / sqrt(2), 1 / sqrt(2), 1), byrow=T, nrow=2)
+    )
+})
+
+
+
 # TODO test topic_divergences and topic_scaled_2d 

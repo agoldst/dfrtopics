@@ -6,6 +6,31 @@
 
 using namespace Rcpp;
 
+// naive_cluster
+List naive_cluster(NumericVector D, IntegerVector K, double threshold);
+RcppExport SEXP dfrtopics_naive_cluster(SEXP DSEXP, SEXP KSEXP, SEXP thresholdSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericVector >::type D(DSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type K(KSEXP);
+    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
+    __result = Rcpp::wrap(naive_cluster(D, K, threshold));
+    return __result;
+END_RCPP
+}
+// naive_cluster_width
+std::vector<double> naive_cluster_width(std::vector<std::vector<int> > cl, NumericVector D);
+RcppExport SEXP dfrtopics_naive_cluster_width(SEXP clSEXP, SEXP DSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< std::vector<std::vector<int> > >::type cl(clSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type D(DSEXP);
+    __result = Rcpp::wrap(naive_cluster_width(cl, D));
+    return __result;
+END_RCPP
+}
 // calc_row_entropies
 NumericVector calc_row_entropies(const Eigen::MappedSparseMatrix<double> m);
 RcppExport SEXP dfrtopics_calc_row_entropies(SEXP mSEXP) {
@@ -28,15 +53,27 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-// JS_divergence
-double JS_divergence(NumericVector P, NumericVector Q);
-RcppExport SEXP dfrtopics_JS_divergence(SEXP PSEXP, SEXP QSEXP) {
+// jsdiv_v
+double jsdiv_v(NumericVector P, NumericVector Q);
+RcppExport SEXP dfrtopics_jsdiv_v(SEXP PSEXP, SEXP QSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< NumericVector >::type P(PSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type Q(QSEXP);
-    __result = Rcpp::wrap(JS_divergence(P, Q));
+    __result = Rcpp::wrap(jsdiv_v(P, Q));
+    return __result;
+END_RCPP
+}
+// jsdiv_m
+NumericMatrix jsdiv_m(NumericMatrix x, NumericMatrix y);
+RcppExport SEXP dfrtopics_jsdiv_m(SEXP xSEXP, SEXP ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type y(ySEXP);
+    __result = Rcpp::wrap(jsdiv_m(x, y));
     return __result;
 END_RCPP
 }

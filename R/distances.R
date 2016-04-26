@@ -126,3 +126,47 @@ topic_scaled_2d <- function (m, n_words=1000) {
     cmdscale(d, k=2)
 }
 
+#' Distance measures for topics
+#'
+#' Distance measures in convenient forms for the purposes of this
+#' package. \code{JS_divergence} gives the Jensen-Shannon divergence
+#' (see below) between two vectors (understood as distributions over the
+#' index) or between two matrices (row-wise), and \code{cosine_distance}
+#' gives the cosine distance between two matrices (row-wise).
+#'
+#' The Jensen-Shannon divergence between \eqn{P} and \eqn{Q} is
+#' given by \deqn{\sum_j \frac{1}{2}P(j) \log\left(\frac{2P(j)}{P(j)
+#' + Q(j)}\right) + \frac{1}{2}Q(j) \log\left(\frac{2P(j)}{P(j) +
+#' Q(j)}\right)}{%
+#' (1/2) \sum P(j) log (2P(j) / (P(j) + Q(j))) %
+#' + Q(j) log (2Q(j) / (P(j) + Q(j)))}
+#'
+#' setting \eqn{x log x = 0} by definition.
+#'
+#' @param x,y matrices of the same dimensions, or vectors
+#' (\code{JS_divergence} only).
+#'
+#' @return For matrices, the result has the distance between \code{x[i,
+#' ]} and \code{y[j, ]} in the \code{i, j} position.
+#'
+#'
+#' @seealso \code{\link{topic_divergences}}, \code{\link{row_dists}},
+#' \code{\link{model_distances}}
+#'
+#' @export
+JS_divergence <- function (x, y) UseMethod("JS_divergence")
+
+#' @export
+JS_divergence.default <- jsdiv_v
+
+#' @export
+JS_divergence.matrix <- jsdiv_m
+
+#' @export
+JS_divergence.Matrix <- function (x, y) jsdiv_m(as.matrix(x), as.matrix(y))
+# TODO do this without conversion??
+
+#' @rdname JS_divergence
+#' @export
+cosine_distance <- function (x, y)
+    tcrossprod(x, y) / (sqrt(rowSums(x^2)) %o% sqrt(rowSums(y^2)))
