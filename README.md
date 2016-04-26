@@ -11,19 +11,24 @@ Every function has online help in R. For a fairly detailed introduction to what 
 This is too messy for CRAN. The easiest way to install is to first install the [devtools](http://cran.r-project.org/web/packages/devtools/index.html) package, and then use it to install this package straight from github:
 
 ```R
-library(devtools)
-install_github("agoldst/dfrtopics")
+devtools::install_github("agoldst/dfrtopics")
 ```
 
 (This should work even if you don't have git or a github account.)
 
-I have been profligate with dependencies. Note, however, that the [mallet](http://cran.r-project.org/web/packages/mallet) package is *not* a formal dependency of the package, so as to make it possible to use other parts of the passage without loading the Java VM. To make use of the topic-modeling functions, however, mallet must be installed from CRAN:
+I have been profligate with dependencies. Note, however, that the [mallet](http://cran.r-project.org/web/packages/mallet) package is *not* a formal dependency of the package, so as to make it possible to use other parts of the passage without loading the Java VM. To make use of the topic-modeling functions, however, mallet must be installed. It is available in two versions. To install from CRAN, use
 
 ```R
 install.packages("mallet")
 ```
 
-This will also install rJava, which mallet depends on. If you use RStudio, getting rJava and mallet to load can be a messy business. Mac users, see my [blog post on rJava and RStudio on MacOS X](http://andrewgoldstone.com/blog/2015/02/03/rjava/).
+To install a more recent development version of mallet, use
+
+```R
+devtools::install_github("mimno/RMallet", subdir="mallet")
+```
+
+Either command will also install rJava, which mallet depends on. If you use RStudio, getting rJava and mallet to load can be a messy business. Mac users, see my [blog post on rJava and RStudio on MacOS X](http://andrewgoldstone.com/blog/2015/02/03/rjava/).
 
 ## Browsing the model interactively
 
@@ -38,6 +43,9 @@ I have decided to apply the [MIT License](https://github.com/agoldst/dfr-analysi
 The tests are based on a sample set of data from DfR. I do not currently have permission to distribute that data, but you can recreate it if you wish to run the tests or regenerate the package vignette. Perform [this search in DfR](http://dfr.jstor.org/fsearch/submitrequest?cs=jo%3A%28pmla+OR+%22modern+philology%22%29+AND+year%3A%5B1905+TO+1915%5D+AND+ty%3Afla%5E1.0&fs=yrm1&view=text&) and make a Dataset Request for wordcounts and metadata in CSV format. Then unzip the archive to a directory `test-data` inside the package directory for `dfrtopics`.
 
 ## Version history
+
+v0.2.4
+ : 4/26/16. Compatibility with `mallet` package versions 1.0 and 1.1+. *Very experimental* topic alignment functions.
 
 v0.2.3
  : 4/19/16. An adjusted dfr-browser export via `dfr_browser()` for one-line interactive browsing. `export_browser_data` is still avaiable for more control. `wordcounts_instances` introduced to help express "no, MALLET, no more tokenizing!"
