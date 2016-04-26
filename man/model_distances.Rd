@@ -3,11 +3,14 @@
 \name{model_distances}
 \alias{[.model_distances}
 \alias{model_distances}
+\alias{print.model_distances}
 \title{Calculate topic dissimilarity across models}
 \usage{
 model_distances(ms, n_words, g = JS_divergence)
 
 \method{[}{model_distances}(x, m1, m2, i, j)
+
+print.model_distances(x)
 }
 \arguments{
 \item{ms}{list of \code{\link{mallet_model}} objects}

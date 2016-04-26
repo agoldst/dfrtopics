@@ -24,14 +24,14 @@ double jsdiv_v(NumericVector P, NumericVector Q) {
 
 // [[Rcpp::export]]
 NumericMatrix jsdiv_m(NumericMatrix x, NumericMatrix y) {
-    int n = x.nrow();
-    if (y.nrow() != n || y.ncol() != x.ncol()) {
-        stop("x and y must have the same dimensions");
+    int n = x.nrow(), m = y.nrow();
+    if (y.ncol() != x.ncol()) {
+        stop("x and y must have the same number of columns");
     }
 
-    NumericMatrix result(n, n);
+    NumericMatrix result(n, m);
     for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
+        for (int j = 0; j < m; ++j) {
             result(i, j) = jsdiv_v(x(i, _), y(j, _));
         }
     }

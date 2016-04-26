@@ -3,12 +3,16 @@ using namespace Rcpp;
 
 // #define __NAIVE_CLUSTER_LOG__
 
+// topics are indexed by model and topic
+typedef std::pair<int, int> topic_index;
+
 // used to keep track when we sort our distances
 struct pair_dist {
     double d;
-    int i;
-    int j;
+    topic_index t1;
+    topic_index t2;
 };
+
 
 // custom comparator for sorting pair-distances
 // (C++11 would let us use a lambda instead, but...)
@@ -19,48 +23,56 @@ struct pair_dist_cmp {
 };
 
 // [[Rcpp::export]]
-List naive_cluster(NumericVector D, int M, int K, double threshold) {
-    IntegerVector result(M * K);
-    NumericVector result_distances(M * K);
+List naive_cluster(NumericVector D, IntegerVector K, double threshold) {
+    int M = K.size();
+    std::vector<std::vector<int> > result(M);
+    std::vector<std::vector<double> > result_distances(M);
     std::vector<pair_dist> dst(D.size());
-    std::map<int, std::set<int> > clusters;
+    std::map<int, std::set<topic_index> > clusters;
 
-    if (M * (M - 1) / 2 * K * K != D.size()) {
-        stop("The length of D is not consistent with M and K");
-    }
+    // if (M * (M - 1) / 2 * K * K != D.size()) {
+   //// }
 
     // initialization
-    std::iota(result.begin(), result.end(), 0);
-    for (int i = 0; i < K * M; ++i) {
-        clusters[i].insert(i);
+
+    int c = 0;
+    for (int m = 0; m < M; ++m) {
+        result[m].resize(K[m]);
+        result_distances[m].resize(K[m]);
+        for (int k = 0; k < K[m]; ++k) {
+            result[m][k] = c;
+            clusters[c].insert(topic_index(m, k));
+            ++c;
+        }
     }
 
-    // brute force (1): we'll just write down which index in D
+    // brute force: we'll just write down which index in D
     // corresponds to which pair of topics, copying over D like space
     // is cheap or something. D is assumed to go block-by-block row-wise
     // along a block-upper-triangular matrix whose (I, J) block is the
-    // K x K matrix of distances between topics in models I and J.
+    // K_I x K_J matrix of distances between topics in models I and J.
     // Within each block D runs rowwise along the block.
     // Zero blocks are omitted.
-    // We code topic k in model m by its index in `result`, m * K + k.
     int d = 0; // runs along D
     for (int m1 = 0; m1 < M - 1; ++m1) {
         for (int m2 = m1 + 1; m2 < M; ++m2) {
-            for (int k1 = 0; k1 < K; ++k1) {
-                for (int k2 = 0; k2 < K; ++k2) {
+            for (int k1 = 0; k1 < K[m1]; ++k1) {
+                for (int k2 = 0; k2 < K[m2]; ++k2) {
                     if (d >= dst.size()) {
-                        stop("Something's wrong: counted past D");
+                        stop("The length of D is not consistent with K");
                     }
                     dst[d].d = D[d];
-                    dst[d].i = m1 * K + k1;
-                    dst[d].j = m2 * K + k2;
+                    dst[d].t1.first = m1;
+                    dst[d].t1.second = k1;
+                    dst[d].t2.first = m2;
+                    dst[d].t2.second = k2;
                     d += 1;
                 }
             }
         }
     }
     if (d != D.size()) {
-        stop("Something's wrong: didn't finish counting D.");
+        stop("The length of D is not consistent with K");
     }
 
     pair_dist_cmp pdc;
@@ -74,20 +86,18 @@ List naive_cluster(NumericVector D, int M, int K, double threshold) {
         if (d->d > threshold) { // then we're done
             break;
         }
-        // topic pair's positions in the sequence of all topics
-        d->i = d->i;
-        d->j = d->j;  // guaranteed to be > d->i
 
 #ifdef __NAIVE_CLUSTER_LOG__
-        Rcout << "Consider: " << d->i << " (" << d->i / K << " ";
-        Rcout << d->i % K << ") ";
-        Rcout << d->j << " (" << d->j / K << " ";
-        Rcout << d->j % K << ") [";
+        Rcout << d->t1.first << " ";
+        Rcout << d->t1.second << " | ";
+        Rcout << d->t2.first << " ";
+        Rcout << d->t2.second << " [";
         Rcout << d->d << "]";
 #endif
+
         // get current cluster assignments
-        r1 = result[d->i];
-        r2 = result[d->j];
+        r1 = result[d->t1.first][d->t1.second];
+        r2 = result[d->t2.first][d->t2.second];
         if (r1 == r2) {
 #ifdef __NAIVE_CLUSTER_LOG__
             Rcout << "...already merged." << std::endl;
@@ -97,8 +107,8 @@ List naive_cluster(NumericVector D, int M, int K, double threshold) {
         if (r1 > r2) {
             std::swap(r1, r2);  // guarantee r1 < r2
         }
-        std::set<int> &c1 = clusters[r1];
-        std::set<int> &c2 = clusters[r2];
+        std::set<topic_index> &c1 = clusters[r1];
+        std::set<topic_index> &c2 = clusters[r2];
 
         if (c1.size() == M || c2.size() == M) {
             // if either cluster is full, merge is impossible
@@ -113,22 +123,23 @@ List naive_cluster(NumericVector D, int M, int K, double threshold) {
 #ifdef __NAIVE_CLUSTER_LOG__
         Rcout << " c1 " << "(" << r1 << "):";
 #endif
-        for (std::set<int>::iterator t = c1.begin(); t != c1.end(); ++t) {
+        for (std::set<topic_index>::iterator t = c1.begin();
+                t != c1.end(); ++t) {
 #ifdef __NAIVE_CLUSTER_LOG__
-            Rcout <<  " " << *t / K;
+            Rcout <<  " " << t->first;
 #endif
-            sect.insert(*t / K);
+            sect.insert(t->first);
         }
 #ifdef __NAIVE_CLUSTER_LOG__
         Rcout << " c2:" << "(" << r2 << "):";
 #endif
-        for (std::set<int>::iterator t = c2.begin();
+        for (std::set<topic_index>::iterator t = c2.begin();
                     t != c2.end() && allow; ++t) {
             // if same model: cluster disallowed
 #ifdef __NAIVE_CLUSTER_LOG__
-            Rcout << " " << *t / K;
+            Rcout << " " << t->first;
 #endif
-            allow = (sect.count(*t / K) == 0);
+            allow = (sect.count(t->first) == 0);
         }
         if (!allow) {
 #ifdef __NAIVE_CLUSTER_LOG__
@@ -136,49 +147,56 @@ List naive_cluster(NumericVector D, int M, int K, double threshold) {
 #endif
             continue;
         }
+
 #ifdef __NAIVE_CLUSTER_LOG__
         Rcout << "...merge." << std::endl;
 #endif
         // otherwise: merge
-        for (std::set<int>::iterator t = c2.begin(); t != c2.end(); ++t) {
+        for (std::set<topic_index>::iterator t = c2.begin();
+                t != c2.end(); ++t) {
             c1.insert(*t);
-            result[*t] = r1;
-            result_distances[*t] = d->d;
+            result[t->first][t->second] = r1;
+            result_distances[t->first][t->second] = d->d;
         }
         clusters.erase(r2); // also deletes the associated set object
     }
 
     return List::create(
-        _["clusters"] = result,
-        _["distances"] = result_distances
+        _["clusters"] = wrap(result),
+        _["distances"] = wrap(result_distances)
     );
 }
 
 // Find maximum pairwise distance within clusters from a naive_cluster result
-// cl the result from align_models (i.e. cl[i, j] is ONE-BASED cluster number)
+// cl list of vectors in which cl[[i]][j] is the ONE-BASED cluster number
 // D element distances, specified as for naive_cluster
 // [[Rcpp::export]]
-std::vector<double> naive_cluster_width(IntegerMatrix cl, NumericVector D) {
-    int M = cl.nrow(), K = cl.ncol();
-    int n_clusters = 0;
-    std::vector<double> result(M * K);
+std::vector<double> naive_cluster_width(
+        std::vector<std::vector<int> > cl, NumericVector D) {
+    int M = cl.size();
+    std::vector<double> result;
 
     int d = 0; // runs along D
     int cl1, cl2; // ONE-BASED cluster numbers from cl
     for (int m1 = 0; m1 < M - 1; ++m1) {
         for (int m2 = m1 + 1; m2 < M; ++m2) {
-            for (int k1 = 0; k1 < K; ++k1) { 
-                cl1 = cl(m1, k1); 
-                n_clusters = std::max(cl1, n_clusters); 
-                for (int k2 = 0; k2 < K; ++k2) {
+            for (int k1 = 0; k1 < cl[m1].size(); ++k1) {
+                cl1 = cl[m1][k1];
+                if (cl1 > result.size()) {
+                    result.resize(cl1);
+                }
+                for (int k2 = 0; k2 < cl[m2].size(); ++k2) {
                     if (d >= D.size()) {
                         stop("Something's wrong: counted past D");
                     }
-                    cl2 = cl(m2, k2); 
+                    cl2 = cl[m2][k2];
                     if (cl1 == cl2) {
                         result[cl1 - 1] = std::max(result[cl1 - 1], D[d]);
                     }
-                    n_clusters = std::max(cl2, n_clusters); 
+
+                    if (cl2 > result.size()) {
+                        result.resize(cl2);
+                    }
                     d += 1;
                 }
             }
@@ -188,6 +206,5 @@ std::vector<double> naive_cluster_width(IntegerMatrix cl, NumericVector D) {
         stop("Something's wrong: didn't finish counting D.");
     }
 
-    result.resize(n_clusters);
     return result;
 }

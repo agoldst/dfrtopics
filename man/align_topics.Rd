@@ -18,16 +18,17 @@ may ultimately join a cluster. More aggressive thresholding is
 recommended, in order to expose isolated topics.}
 }
 \value{
-a \code{topic_alignment} object, which is a list of: \describe{
-\item{\code{clusters}}{integer matrix whose \eqn{i,j} element is the
-  cluster number of topic \eqn{j} in model \eqn{i}}
-\item{\code{distances}}{matrix giving the distance at which
-  the given element was merged into its cluster. Because single-link
-  clustering (if I've even implemented it correctly) is subject to
-  "chaining," this is not necessarily an indication of the quality of a
-  cluster, but it may give some hints.}
-\item{\code{model_distances}}{The supplied \code{model_distances}}
-\item{\code{threshold}}{The threshold used}
+a \code{topic_alignment} object, which is a list of:
+\describe{
+  \item{\code{clusters}}{list of vectors, one for each model, giving cluster
+    numbers of the topics in the model}
+  \item{\code{distances}}{list of vectors, one for each model, giving the
+    distance at which the given topic merged into its cluster. Because
+    single-link clustering (if I've even implemented it correctly) is
+    subject to "chaining," this is not necessarily an indication of the
+    quality of a cluster, but it may give some hints.}
+  \item{\code{model_distances}}{The supplied \code{model_distances}}
+  \item{\code{threshold}}{The threshold used}
 }
 To explore the result, \code{\link{alignment_frame}} may be useful.
 }
@@ -40,10 +41,6 @@ model are found in the same cluster ("up-to-one mapping"). The idea
 is from (Chuang et al., 2015). The implementation is my own (slow,
 unverified, \emph{experimental}) one. To prepare topic dissimilarities to
 supply to this function, use \code{\link{model_distances}}.
-}
-\details{
-Alignment is currently implemented only for models having the same
-number of topics.
 }
 \examples{
 

@@ -107,6 +107,17 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
     }
 }
 
+#' @rdname model_distances
+#' @export
+print.model_distances <- function (x) {
+    cat("Distances between topics from model_distances\n")
+    cat("Model:",
+        sprintf("%4.4s", seq(length(x$d[[1]]) + 1)))
+    cat("\nTopics:",
+        sprintf("%4.4s", c(nrow(x$d[[1]][[1]]), vapply(x$d[[1]], ncol, 0))))
+}
+
+
 # utility function: flatten a model_distances into a vector ordered as expected by naive_cluster
 unnest_model_distances <- function (dst) {
     do.call(c,
@@ -130,9 +141,6 @@ unnest_model_distances <- function (dst) {
 #' unverified, \emph{experimental}) one. To prepare topic dissimilarities to
 #' supply to this function, use \code{\link{model_distances}}.
 #'
-#' Alignment is currently implemented only for models having the same
-#' number of topics.
-#'
 #' @param dst result from \code{\link{model_distances}} (q.v.)
 #'
 #' @param threshold maximum dissimilarity allowed between merging clusters. By
@@ -140,16 +148,17 @@ unnest_model_distances <- function (dst) {
 #'   may ultimately join a cluster. More aggressive thresholding is
 #'   recommended, in order to expose isolated topics.
 #'
-#' @return a \code{topic_alignment} object, which is a list of: \describe{
-#' \item{\code{clusters}}{integer matrix whose \eqn{i,j} element is the
-#'   cluster number of topic \eqn{j} in model \eqn{i}}
-#' \item{\code{distances}}{matrix giving the distance at which
-#'   the given element was merged into its cluster. Because single-link
-#'   clustering (if I've even implemented it correctly) is subject to
-#'   "chaining," this is not necessarily an indication of the quality of a
-#'   cluster, but it may give some hints.}
-#' \item{\code{model_distances}}{The supplied \code{model_distances}}
-#' \item{\code{threshold}}{The threshold used}
+#' @return a \code{topic_alignment} object, which is a list of:
+#' \describe{
+#'   \item{\code{clusters}}{list of vectors, one for each model, giving cluster
+#'     numbers of the topics in the model}
+#'   \item{\code{distances}}{list of vectors, one for each model, giving the
+#'     distance at which the given topic merged into its cluster. Because
+#'     single-link clustering (if I've even implemented it correctly) is
+#'     subject to "chaining," this is not necessarily an indication of the
+#'     quality of a cluster, but it may give some hints.}
+#'   \item{\code{model_distances}}{The supplied \code{model_distances}}
+#'   \item{\code{threshold}}{The threshold used}
 #' }
 #' To explore the result, \code{\link{alignment_frame}} may be useful.
 #'
@@ -175,9 +184,8 @@ align_topics <- function (dst, threshold) {
         stop("dst must be a model_distances object. Use model_distances() to
 derive one from a list of models.")
     }
-    # TODO don't really need to enforce same K for all models
-    K <- nrow(dst$d[[1]][[1]])
-    M <- length(dst$d) + 1
+    K <- c(nrow(dst$d[[1]][[1]]),
+           vapply(dst$d[[1]], ncol, integer(1)))
 
     dst_flat <- unnest_model_distances(dst)
 
@@ -185,12 +193,12 @@ derive one from a list of models.")
         threshold <- max(dst_flat) + 1
     }
 
-    cl <- naive_cluster(dst_flat, M, K, threshold)
+    cl <- naive_cluster(dst_flat, K, threshold)
     structure(
         list(
             # naive_cluster numbers clusters from 0
-             clusters=matrix(cl$clusters + 1, nrow=M, byrow=T),
-             distances=matrix(cl$distances, nrow=M, byrow=T),
+             clusters=lapply(cl$clusters, `+`, 1),
+             distances=cl$distances,
              model_distances=dst,
              threshold=threshold
         ),
@@ -213,15 +221,18 @@ print.topic_alignment <- function (x) {
 #' Many other ways of investigating a clustering are of course possible.
 #'
 #' @param clusters from \code{\link{align_topics}}
-#' @param ms list of models supplied to \code{\link{model_distances}}
 #'
 #' @return A data frame. \code{d} is the distance between clusters at merge.
 #'
+#' @seealso \code{\link{align_topics}}, \code{\link{widths}}
+#'
 #' @export
 alignment_frame <- function (clusters) {
-    result <- gather_matrix(clusters$clusters,
-                            col_names=c("model", "topic", "cluster"))
-    result$d <- as.numeric(t(clusters$distances))
+    K <- vapply(clusters$clusters, length, 0)
+    result <- data.frame(model=rep(seq_along(K), times=K),
+               topic=unlist(lapply(K, seq)),
+               cluster=unlist(clusters$clusters))
+    result$d <- unlist(clusters$distances)
     result <- dplyr::group_by_(result, ~ cluster)
     result <- dplyr::mutate_(result, size=~ length(cluster))
     result <- dplyr::ungroup(result)

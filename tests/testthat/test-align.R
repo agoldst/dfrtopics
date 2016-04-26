@@ -43,12 +43,14 @@ dst <- model_distances(ms, V)
 
 test_that("naive_cluster does the right thing with trivial data", {
     expect_equal(
-        dfrtopics:::naive_cluster(c(1, 100, 100, 1), 2, 2, 1)$clusters,
-        c(0, 1, 0, 1))
+        dfrtopics:::naive_cluster(c(1, 100, 100, 1), c(2, 2), 1)$clusters,
+        list(0:1, 0:1)
+    )
     # setting a big threshold should make no difference
     expect_equal(
-        dfrtopics:::naive_cluster(c(1, 100, 100, 1), 2, 2, 1000)$clusters,
-        c(0, 1, 0, 1))
+        dfrtopics:::naive_cluster(c(1, 100, 100, 1), c(2, 2), 1000)$clusters,
+        list(0:1, 0:1)
+    )
 })
 
 test_that("model_distances returns something of the right form", {
@@ -103,8 +105,8 @@ test_that("we can take distances between non-overlapping models", {
 test_that("clustering two models with high threshold fully aligns them", {
     dd <- model_distances(ms[1:2], 20)
     cl <- align_topics(dd, 10000000)
-    expect_equal(sort(cl$clusters[1, ]), 1:K)
-    expect_equal(sort(cl$clusters[2, ]), 1:K)
+    expect_equal(sort(cl$clusters[[1]]), 1:K)
+    expect_equal(sort(cl$clusters[[2]]), 1:K)
 
 })
 
@@ -112,11 +114,11 @@ test_that("in clustering two models, the closest pair is indeed grouped", {
     dd <- model_distances(ms[1:2], 20)
     cl <- align_topics(dd, 10000000)
     closest <- which(dd$d[[1]][[1]] == min(dd$d[[1]][[1]]), arr.ind=TRUE)
-    expect_equal(cl$clusters[1, closest[1]], cl$clusters[2, closest[2]])
+    expect_equal(cl$clusters[[1]][closest[1]], cl$clusters[[2]][closest[2]])
 })
 
 test_that("clustering meets up-to-one constraint", {
-    cl <- align_topics(dst)$clusters
+    cl <- matrix(unlist(align_topics(dst)$clusters), byrow=T, nrow=M)
     expect_equal(dim(cl), c(M, K))
     expect_true(all(1 <= cl & cl <= M * K))
     ck <- gather_matrix(cl, col_names=c("model", "topic", "cluster")) %>%
@@ -130,22 +132,23 @@ test_that("clustering numbers are a sequence with no holes", {
     # merging cluster numbers to the lower index
     # randomly cluster some models
     dd <- model_distances(sample(ms, M - 1), 20)
-    cl <- align_topics(dd)$clusters
-    expect_equal(sort(unique(as.numeric(cl))), 1:max(cl))
+    cl <- unlist(align_topics(dd)$clusters)
+    expect_equal(sort(unique(cl)), 1:max(cl))
 })
 
 test_that("clustering with default infinite threshold leaves no isolates", {
     cl <- align_topics(dst)$clusters
     # it can leave some non-full clusters, because of the greedy algorithm
     # and the mapping constraint
-    expect_true(!(1 %in% tabulate(cl)))
+    expect_true(!(1 %in% tabulate(unlist(cl))))
 })
 
 test_that("clustering with low threshold leaves some isolates", {
-    thresh <- quantile(dst$d[[1]][[1]], 0.25)
-    cl <- align_topics(dst, thresh)$clusters
-    expect_true(length(unique(cl)) > K)
-    expect_true(all(attr(cl, "distances") < thresh))
+    cldst <- unlist(align_topics(dst)$distances)
+    thresh <- quantile(cldst[cldst > 0], 0.25)
+    cl <- align_topics(dst, thresh)
+    expect_true(length(unique(unlist(cl$clusters))) > K)
+    expect_true(all(unlist(cl$distances) < thresh))
 })
 
 test_that("alignment_frame gives an expected result", {
@@ -169,25 +172,23 @@ test_that("an obvious clustering is found", {
                          1, 100), nrow=2)))),
         class="model_distances")
     cl <- align_topics(faked)
-    expect_equal(cl$clusters, matrix(c(
-        1, 2,
-        2, 1,
-        1, 2), byrow=2, nrow=3))
+    expect_equal(cl$clusters, list(1:2, 2:1, 1:2))
 })
 
 test_that("a trivial clustering is found", {
     dtriv <- model_distances(ms[c(1, 1, 1)], V)
     cl <- align_topics(dtriv)$clusters
-    expect_equal(cl, cl[c(1, 1, 1), ], check.attributes=F)
+    expect_equal(cl, rep(cl[1], 3))
 })
 
 test_that("cluster widths are right", {
     cl <- align_topics(dst)
     wd1 <- widths(cl)
+    clmat <- matrix(unlist(cl$clusters), byrow=T, nrow=M)
     # find widths by (even more) brute force
-    n_clust <- max(cl$clusters)
+    n_clust <- max(unlist(cl$clusters))
     wd2 <- sapply(1:n_clust, function (clst) {
-        members <- which(cl$clusters == clst, arr.ind=T)
+        members <- which(clmat == clst, arr.ind=T)
         if (nrow(members) == 1) {
             0
         } else {

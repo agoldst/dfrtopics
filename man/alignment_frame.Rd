@@ -8,8 +8,6 @@ alignment_frame(clusters)
 }
 \arguments{
 \item{clusters}{from \code{\link{align_topics}}}
-
-\item{ms}{list of models supplied to \code{\link{model_distances}}}
 }
 \value{
 A data frame. \code{d} is the distance between clusters at merge.
@@ -18,5 +16,8 @@ A data frame. \code{d} is the distance between clusters at merge.
 Once you've clustered topics with \code{\link{align_topics}}, this function
 summarizes the results as a data frame grouping topic labels by cluster.
 Many other ways of investigating a clustering are of course possible.
+}
+\seealso{
+\code{\link{align_topics}}, \code{\link{widths}}
 }
 

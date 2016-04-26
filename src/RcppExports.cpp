@@ -7,26 +7,25 @@
 using namespace Rcpp;
 
 // naive_cluster
-List naive_cluster(NumericVector D, int M, int K, double threshold);
-RcppExport SEXP dfrtopics_naive_cluster(SEXP DSEXP, SEXP MSEXP, SEXP KSEXP, SEXP thresholdSEXP) {
+List naive_cluster(NumericVector D, IntegerVector K, double threshold);
+RcppExport SEXP dfrtopics_naive_cluster(SEXP DSEXP, SEXP KSEXP, SEXP thresholdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< NumericVector >::type D(DSEXP);
-    Rcpp::traits::input_parameter< int >::type M(MSEXP);
-    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type K(KSEXP);
     Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
-    __result = Rcpp::wrap(naive_cluster(D, M, K, threshold));
+    __result = Rcpp::wrap(naive_cluster(D, K, threshold));
     return __result;
 END_RCPP
 }
 // naive_cluster_width
-std::vector<double> naive_cluster_width(IntegerMatrix cl, NumericVector D);
+std::vector<double> naive_cluster_width(std::vector<std::vector<int> > cl, NumericVector D);
 RcppExport SEXP dfrtopics_naive_cluster_width(SEXP clSEXP, SEXP DSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type cl(clSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<int> > >::type cl(clSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type D(DSEXP);
     __result = Rcpp::wrap(naive_cluster_width(cl, D));
     return __result;
