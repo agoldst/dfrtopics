@@ -30,11 +30,7 @@ List naive_cluster(NumericVector D, IntegerVector K, double threshold) {
     std::vector<pair_dist> dst(D.size());
     std::map<int, std::set<topic_index> > clusters;
 
-    // if (M * (M - 1) / 2 * K * K != D.size()) {
-   //// }
-
     // initialization
-
     int c = 0;
     for (int m = 0; m < M; ++m) {
         result[m].resize(K[m]);
