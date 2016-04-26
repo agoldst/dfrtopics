@@ -12,7 +12,12 @@
 #'
 #' @export
 inferencer <- function (m) {
-    ParallelTopicModel(m)$getInferencer()
+    if (!is.null(m$model)) {
+        rJava::.jcall(m$model, "Lcc/mallet/topics/TopicInferencer;",
+            "getInferencer")
+    } else {
+        NULL
+    }
 }
 
 #' Save an inferencer object to a file
@@ -26,11 +31,13 @@ inferencer <- function (m) {
 #' @export
 #'
 write_inferencer <- function (inf, out_file) {
-    fos <- .jnew("java/io/FileOutputStream", out_file)
-    oos <- .jnew("java/io/ObjectOutputStream",
-                 .jcast(fos, "java/io/OutputStream"))
-    oos$writeObject(inf)
-    oos$close()
+    fos <- rJava::.jnew("java/io/FileOutputStream", out_file)
+    oos <- rJava::.jnew("java/io/ObjectOutputStream",
+                 rJava::.jcast(fos, "java/io/OutputStream"))
+    rJava::.jcall(oos, "V", "writeObject",
+        rJava::.jcast(inf, "java/lang/Object")
+    )
+    rJava::.jcall(oos, "V", "close")
 }
 
 #' Retrieve an inferencer object from a file
@@ -42,9 +49,11 @@ write_inferencer <- function (inf, out_file) {
 #'
 #' @export
 read_inferencer <- function (filename) {
-    J("cc.mallet.topics.TopicInferencer")$read(
-        new(J("java.io.File"), path.expand(filename))
-    )
+    load_mallet()
+
+    f <- rJava::.jnew("java/io/File", path.expand(filename))
+    rJava::.jcall("cc/mallet/topics/TopicInferencer",
+        "Lcc/mallet/topics/TopicInferencer;", "read", f)
 }
 
 #' Infer document topics
@@ -65,12 +74,13 @@ read_inferencer <- function (filename) {
 #' @param seed integer random seed; set for reproducibility
 #'
 #' @return a model object of class \code{\link{mallet_model_inferred}}, which
-#'   inherits from \code{\link{mallet_model}}. This does not have all the
-#'   elements of the original topic model, however; the new value of interest is
-#'   the matrix of estimated document-topic weights, accessible via
-#'   \code{\link{doc_topics}}. The inferencer sampling state and hyperparameters 
-#'   are not accessible. MALLET supplies estimated topic proportions, which we 
-#'   multiply by the document lengths to obtain the doc-topics matrix.
+#'   inherits from \code{\link{mallet_model}}. This does not have all
+#'   the elements of the original topic model, however; the new value
+#'   of interest is the matrix of estimated document-topic weights,
+#'   accessible via \code{\link{doc_topics}}. The inferencer sampling
+#'   state and hyperparameters are not accessible. MALLET supplies
+#'   estimated topic proportions, which we multiply by the document
+#'   lengths to obtain the doc-topics matrix.  
 #'
 #' @examples
 #' \dontrun{
@@ -97,19 +107,25 @@ infer_topics.default <- function (m, instances,
         sampling_interval=10, # aka "thinning"
         burn_in=10,
         seed=NULL) {
-    iter <- instances$iterator()
+    iter <- rJava::.jcall(instances, "Ljava/util/Iterator;", "iterator")
     n_iterations <- as.integer(n_iterations)
     sampling_interval <- as.integer(sampling_interval)
     burn_in <- as.integer(burn_in)
     if (!is.null(seed)) {
-        m$setRandomSeed(as.integer(seed))
+        rJava::.jcall(m, "V", "setRandomSeed", as.integer(seed))
     }
 
-    doc_topics <- vector("list", instances$size())
-    for (j in 1:instances$size()) {
-        inst <- .jcall(iter, "Ljava/lang/Object;", "next")
-        doc_topics[[j]] <- m$getSampledDistribution(inst,
-            n_iterations, sampling_interval, burn_in)
+    n_docs <- rJava::.jcall(instances, "I", "size")
+    doc_topics <- vector("list", n_docs)
+
+    for (j in seq(n_docs)) {
+        inst <- rJava::.jcast(
+            rJava::.jcall(iter, "Ljava/lang/Object;", "next"),
+            "cc/mallet/types/Instance"
+        )
+
+        doc_topics[[j]] <- rJava::.jcall(m, "[D", "getSampledDistribution",
+            inst, n_iterations, sampling_interval, burn_in)
     }
 
 

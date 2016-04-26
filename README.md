@@ -17,7 +17,13 @@ install_github("agoldst/dfrtopics")
 
 (This should work even if you don't have git or a github account.)
 
-I have been profligate with dependencies. Note that if you use RStudio, getting rJava and mallet to load can be a messy business. See my [blog post on rJava and RStudio on MacOS X](http://andrewgoldstone.com/blog/2015/02/03/rjava/).
+I have been profligate with dependencies. Note, however, that the [mallet](http://cran.r-project.org/web/packages/mallet) package is *not* a formal dependency of the package, so as to make it possible to use other parts of the passage without loading the Java VM. To make use of the topic-modeling functions, however, mallet must be installed from CRAN:
+
+```R
+install.packages("mallet")
+```
+
+This will also install rJava, which mallet depends on. If you use RStudio, getting rJava and mallet to load can be a messy business. Mac users, see my [blog post on rJava and RStudio on MacOS X](http://andrewgoldstone.com/blog/2015/02/03/rjava/).
 
 ## Browsing the model interactively
 

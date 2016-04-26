@@ -245,29 +245,31 @@ train_model <- function(instances, n_topics,
     # for integers. So we have to do some coercions to avoid rJava
     # complaints.
 
-    trainer <- MalletLDA(
+    load_mallet()
+
+    trainer <- mallet::MalletLDA(
         as.numeric(n_topics),
         as.numeric(alpha_sum),
         as.numeric(beta))
-    trainer$model$setNumThreads(as.integer(threads))
+    rJava::.jcall(trainer, "V", "setNumThreads", as.integer(threads))
     if (!is.null(seed)) {
-        trainer$model$setRandomSeed(as.integer(seed))
+        rJava::.jcall(trainer, "V", "setRandomSeed", as.integer(seed))
         message("MALLET random number seed set to ", seed)
     }
 
-    trainer$loadDocuments(instances)
+    rJava::.jcall(trainer, "V", "loadDocuments", instances)
 
     if (optimize_hyperparameters) {
-        trainer$model$setSymmetricAlpha(symmetric_alpha)
-        trainer$setAlphaOptimization(as.numeric(n_hyper_iters),
-                                     as.numeric(n_burn_in))
+        rJava::.jcall(trainer, "V", "setSymmetricAlpha", symmetric_alpha)
+        rJava::.jcall(trainer, "V", "setAlphaOptimization",
+            as.numeric(n_hyper_iters), as.numeric(n_burn_in))
     }
     else {
-        trainer$setAlphaOptimization(0, 0)
+        rJava::.jcall(trainer, "V", "setAlphaOptimization", 0, 0)
     }
 
-    trainer$train(as.numeric(n_iters))
-    trainer$maximize(as.numeric(n_max_iters))
+    rJava::.jcall(trainer, "V", "train", as.numeric(n_iters))
+    rJava::.jcall(trainer, "V", "maximize", as.numeric(n_max_iters))
 
     result <- mallet_model(
         model=trainer,
@@ -282,10 +284,13 @@ train_model <- function(instances, n_topics,
             seed=seed,
             initial_alpha_sum=alpha_sum,
             initial_beta=beta,
-            final_ll=trainer$model$modelLogLikelihood()
+            final_ll=rJava::.jcall(trainer, "D", "modelLogLikelihood")
         ),
-        doc_topics=mallet.doc.topics(trainer, smoothed=FALSE, normalized=FALSE),
-        metadata=match_metadata(metadata, trainer$getDocumentNames())
+        doc_topics=mallet::mallet.doc.topics(trainer,
+            smoothed=FALSE, normalized=FALSE),
+        metadata=match_metadata(metadata,
+            rJava::.jcall(trainer, "[S", "getDocumentNames")
+        )
     )
 
     # assign metadata; issue warning if it doesn't match
@@ -314,7 +319,7 @@ n_topics <- function (m) UseMethod("n_topics")
 #' @export
 n_topics.mallet_model <- function (m) {
     if (!is.null(m$model)) {
-        m$model$model$numTopics
+        rJava::.jfield(m$model, "I", "numTopics")
     } else if (!is.null(m$doc_topics)) {
         ncol(m$doc_topics)
     } else if (!is.null(m$topic_words)) {
@@ -342,7 +347,13 @@ n_docs.mallet_model <- function (m) {
     } else if (!is.null(m$doc_ids)) {
         length(m$doc_ids)
     } else if (!is.null(m$model)) {
-        m$model$instances$size()
+        rJava::.jcall(
+            rJava::.jfield(m$model,
+                "Lcc/mallet/types/InstanceList;", 
+                "instances"),
+            "I",
+            "size"
+        )
     } else {
         NULL # return null if we haven't loaded enough information yet
     }
@@ -368,17 +379,15 @@ modeling_parameters.mallet_model  <- function (m) m$params
 #' For its R interface, MALLET uses a class RTopicModel. This has some
 #' convenience methods for accessing and manipulating a topic model from
 #' R using rJava. It is also used by the functions in the \pkg{mallet}
-#' package. Most of the modeling functionality is carried out by a
-#' ParallelTopicModel instance, which is a data member of this class
-#' (and accessible using \code{\link{ParallelTopicModel}}.
+#' package.
 #'
-#' Java's strict typing means you'll have some funtimes with
-#' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java,
-#' apply \code{\link[base]{as.integer}} to parameters.
+#' In earlier versions of MALLET, this object had a data member of class
+#' ParallelTopicModel instance. In the latest MALLET, RTopicModel inherits from 
+#' ParallelTopicModel, so the \code{\link{ParallelTopicModel}} method of this
+#' package is now redundant and deprecated.
 #'
 #' @param m a \code{mallet_model} object
-#' @return a reference to the RTopicModel object
-#' @seealso \code{\link{ParallelTopicModel}}
+#' @return a reference to the RTopicModel object (or NULL if unavailable)
 #' @export
 #'
 RTopicModel <- function (m) UseMethod("RTopicModel")
@@ -386,22 +395,13 @@ RTopicModel <- function (m) UseMethod("RTopicModel")
 #' @export
 RTopicModel.mallet_model <- function (m) m$model
 
-#' Access MALLET's model object
+#' Access MALLET's model object (deprecated)
 #'
 #' This function returns a reference to the main Java object representing an LDA
 #' model in MALLET.
 #'
-#' For its R interface, MALLET uses a class RTopicModel, but most of the
-#' modeling functionality is carried out by a ParallelTopicModel instance. This
-#' object is reachable from R. Once you have the reference to it here, you can
-#' use rJava to access all its public methods and members.
-#'
-#' Java's strict typing means you'll have some funtimes with
-#' \code{\link[rJava]{.jcall}}. To index into array-like objects from Java,
-#' apply \code{\link[base]{as.integer}} to parameters.
-#'
 #' @param m a \code{mallet_model} object
-#' @return a reference to the ParallelTopicModel object
+#' @return a reference to the RTopicModel object (or NULL if unavailable)
 #' @seealso \code{\link{RTopicModel}}
 #' @export
 #'
@@ -412,7 +412,8 @@ ParallelTopicModel.mallet_model <- function (m) {
     if (is.null(m$model)) {
         NULL
     } else {
-        m$model$model
+        # .jfield(rtm, "Lcc/mallet/topics/ParallelTopicModel;", "model")
+        m$model
     }
 }
 
@@ -436,7 +437,8 @@ instances.mallet_model <- function (m) {
     if (!is.null(m$instances)) {
         m$instances
     } else if (!is.null(RTopicModel(m))) {
-        RTopicModel(m)$instances
+        rJava::.jfield(RTopicModel(m), "Lcc/mallet/types/InstanceList;",
+                       "instances")
     } else {
         NULL
     }
@@ -473,7 +475,8 @@ doc_topics <- function (m) UseMethod("doc_topics")
 doc_topics.mallet_model <- function (m) {
     dtm <- m$doc_topics
     if (is.null(dtm) && !is.null(m$model)) {
-        dtm <- mallet.doc.topics(m$model, smoothed=FALSE, normalized=FALSE)
+        dtm <- mallet::mallet.doc.topics(m$model,
+            smoothed=FALSE, normalized=FALSE)
     }
     dtm
 }
@@ -527,7 +530,7 @@ doc_ids.mallet_model <- function (m) {
     if (!is.null(m$doc_ids)) {
         m$doc_ids
     } else if (!is.null(m$model)) {
-        m$model$getDocumentNames()
+        rJava::.jcall(m$model, "[S", "getDocumentNames")
     } else {
         stop("Neither the model object nor a pre-loaded list of IDs is available.
              To load the latter, use doc_ids(m) <- readLines(...)")
@@ -560,7 +563,7 @@ vocabulary.mallet_model <- function (m) {
     if (!is.null(m$vocab)) {
         m$vocab
     } else if (!is.null(m$model)) {
-        m$model$getVocabulary()
+        rJava::.jcall(m$model, "[S", "getVocabulary")
     } else {
         stop("Neither the model object nor a pre-loaded vocabulary is available.
              To load the latter, use vocabulary(m) <- readLines(...)")
@@ -612,8 +615,11 @@ topic_words <- function (m, ...) UseMethod("topic_words")
 topic_words.mallet_model <- function (m) {
     tw <- m$topic_words
     if (is.null(tw) && !is.null(m$model)) {
-        tw <- as(mallet.topic.words(m$model, smoothed=FALSE, normalized=FALSE),
-                 "sparseMatrix")
+        tw <- as(
+            mallet::mallet.topic.words(m$model,
+                smoothed=FALSE, normalized=FALSE),
+            "sparseMatrix"
+        )
     }
 
     tw
@@ -779,8 +785,8 @@ hyperparameters.mallet_model <- function (m) {
     if (!is.null(m$hyper)) {
         m$hyper
     } else if (!is.null(m$model)) {
-        list(alpha=m$model$getAlpha(),
-             beta=m$model$model$beta)
+        list(alpha=rJava::.jcall(m$model, "[D", "getAlpha"),
+             beta=rJava::.jfield(m$model, "D", "beta"))
     } else {
         stop(
 "Neither the model object nor pre-loaded hyperparameters are available."

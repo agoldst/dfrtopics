@@ -10,7 +10,7 @@ RTopicModel(m)
 \item{m}{a \code{mallet_model} object}
 }
 \value{
-a reference to the RTopicModel object
+a reference to the RTopicModel object (or NULL if unavailable)
 }
 \description{
 This function returns a reference to the top-level Java object representing
@@ -20,15 +20,11 @@ an LDA model.
 For its R interface, MALLET uses a class RTopicModel. This has some
 convenience methods for accessing and manipulating a topic model from
 R using rJava. It is also used by the functions in the \pkg{mallet}
-package. Most of the modeling functionality is carried out by a
-ParallelTopicModel instance, which is a data member of this class
-(and accessible using \code{\link{ParallelTopicModel}}.
+package.
 
-Java's strict typing means you'll have some funtimes with
-\code{\link[rJava]{.jcall}}. To index into array-like objects from Java,
-apply \code{\link[base]{as.integer}} to parameters.
-}
-\seealso{
-\code{\link{ParallelTopicModel}}
+In earlier versions of MALLET, this object had a data member of class
+ParallelTopicModel instance. In the latest MALLET, RTopicModel inherits from
+ParallelTopicModel, so the \code{\link{ParallelTopicModel}} method of this
+package is now redundant and deprecated.
 }
 
