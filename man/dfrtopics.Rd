@@ -8,20 +8,19 @@
 \description{
 This package supplies functions for creating and analyzing topic models using
 \href{http://mallet.cs.umass.edu}{MALLET}. It has numerous functions to help
-processing data from one particular ssource, JSTOR's
-\href{http://dfr.jstor.org}{JSTOR Data for Research} service, but the
+process data from one particular source, JSTOR's
+\href{http://dfr.jstor.org}{Data for Research} service, but the
 modeling and exploration functions are independent of that source. It uses
-\code{\link[mallet]{mallet}}, the R wrapper for MALLET, to control the
-modeling process.
-}
-\details{
+\code{\link[mallet]{mallet}}, the R wrapper for MALLET, for modeling.
 A detailed walkthrough of the package can be found in the "Introduction"
 vignette.
-
-A companion project, \href{http://agoldst.github.io/dfr-browser}{dfr-browser},
-uses JavaScript to create an interactive model browser in a web browser. To 
-save the model outputs produced in this package into files formatted as 
-\code{dfr-browser} requires, use \code{\link{export_browser_data}}.
+A companion project,
+\href{http://agoldst.github.io/dfr-browser}{dfr-browser},
+uses JavaScript to create an interactive model browser in a web browser.
+To explore a model with dfr-browser, use the \code{\link{dfr_browser}}
+function. To save the model outputs produced in this package into files
+formatted as \code{dfr-browser} requires, use
+\code{\link{export_browser_data}}.
 }
 \examples{
 \dontrun{
@@ -35,6 +34,7 @@ m <- model_dfr_documents(
 )
 topic_labels(m)
 plot_series(topic_series(m))
+dfr_browser(m)
 }
 
 }
