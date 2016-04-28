@@ -131,15 +131,6 @@ test_that("clustering meets up-to-one constraint", {
     expect_true(all(ck$no_dupes))
 })
 
-test_that("clustering numbers are a sequence with no holes", {
-    # otherwise we've failed to consistently reassign
-    # merging cluster numbers to the lower index
-    # randomly cluster some models
-    dd <- model_distances(sample(ms, M - 1), 20)
-    cl <- unlist(align_topics(dd)$clusters)
-    expect_equal(sort(unique(cl)), 1:max(cl))
-})
-
 test_that("clustering with default infinite threshold leaves no isolates", {
     cl <- align_topics(dst)$clusters
     # it can leave some non-full clusters, because of the greedy algorithm
