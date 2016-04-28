@@ -444,6 +444,7 @@ dt_normalize <- function (m) {
 #'
 top_n_row <- function (m, n) {
     # TODO Rcpp
+    stopifnot(n <= ncol(m))
 
     # apply pastes vectorial arguments back together as columns even when
     # applying over rows: genius!
@@ -457,6 +458,8 @@ top_n_row <- function (m, n) {
 #' @rdname top_n_row
 top_n_col <- function (m, n) {
     # TODO Rcpp
+    stopifnot(n <= nrow(m))
+
     o <- apply(m, 2, order, decreasing=TRUE)
     j <- rep(1:ncol(m), each=n)
 

@@ -169,3 +169,9 @@ test_that("row/col group sums work", {
     )
 })
 
+test_that("bounds checking for top_n_row/col works", {
+    m <- matrix(1:12, ncol=3)
+    expect_error(top_n_row(m, 4), "ncol")
+
+    expect_error(top_n_col(t(m), 4), "nrow")
+})
