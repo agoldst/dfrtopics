@@ -13,10 +13,9 @@ wordcounts_stm_inputs(counts, meta = NULL)
 matched against \code{counts$id}).}
 }
 \value{
-a list with elements \code{documents}, \code{vocab},
-  \code{data} (if \code{meta} has been supplied). These elements are
-  suitable to be passed as the parameters of those names to
-  \code{\link[stm]{stm}}.
+a list with elements \code{documents}, \code{vocab}, \code{data} (if
+  \code{meta} has been supplied). These elements are suitable to be passed as
+  the parameters of those names to \code{\link[stm]{stm}}.
 }
 \description{
 This is a helper function for transforming word-counts-type data into the
@@ -26,10 +25,6 @@ metadata), it yields a list whose components can be passed as arguments to
 \code{stm}. See below for example usage.
 }
 \details{
-At present, dfrtopics functions for exploring topic models cannot be applied
-to \code{stm} objects. That may change in future, but \pkg{stm} supplies a
-rich array of exploratory and inferential functions itself.
-
 Some memory-management might be a good idea here. Once you have the list of
 inputs from this function, you no longer need the \code{counts} object.
 }
@@ -46,5 +41,9 @@ m <- stm(documents=corpus$documents,
     prevalence= ~ journaltitle)
 }
 
+}
+\seealso{
+\code{\link{foreign_model}} for using this package's
+  model-exploration utilities in conjunction with an STM.
 }
 

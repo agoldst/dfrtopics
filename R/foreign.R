@@ -6,10 +6,6 @@
 #' metadata), it yields a list whose components can be passed as arguments to
 #' \code{stm}. See below for example usage.
 #'
-#' At present, dfrtopics functions for exploring topic models cannot be applied
-#' to \code{stm} objects. That may change in future, but \pkg{stm} supplies a
-#' rich array of exploratory and inferential functions itself.
-#'
 #' Some memory-management might be a good idea here. Once you have the list of
 #' inputs from this function, you no longer need the \code{counts} object.
 #'
@@ -17,10 +13,9 @@
 #' @param meta optional metadata data frame (with an \code{id} column to be
 #'   matched against \code{counts$id}).
 #'
-#' @return a list with elements \code{documents}, \code{vocab},
-#'   \code{data} (if \code{meta} has been supplied). These elements are
-#'   suitable to be passed as the parameters of those names to
-#'   \code{\link[stm]{stm}}.
+#' @return a list with elements \code{documents}, \code{vocab}, \code{data} (if
+#'   \code{meta} has been supplied). These elements are suitable to be passed as
+#'   the parameters of those names to \code{\link[stm]{stm}}.
 #'
 #' @examples \dontrun{
 #' library(stm)
@@ -33,6 +28,9 @@
 #'     K=25,
 #'     prevalence= ~ journaltitle)
 #' }
+#'
+#' @seealso \code{\link{foreign_model}} for using this package's
+#'   model-exploration utilities in conjunction with an STM.
 #'
 #' @export
 #'
@@ -57,7 +55,9 @@ wordcounts_stm_inputs <- function (counts, meta=NULL) {
 #' \code{\link[tm]{DocumentTermMatrix}} (defined by the \pkg{tm} package). This
 #' function converts a data frame of word counts to this form.
 #'
-#' @seealso \code{\link{wordcounts_Matrix}}
+#' @seealso \code{\link{foreign_model}} for using this package's other functions
+#'   on a model from \pkg{topicmodels}, \code{\link{wordcounts_Matrix}} which
+#'   underlies this function.
 #'
 #' @export
 wordcounts_DocumentTermMatrix <- function (counts) {
@@ -78,12 +78,13 @@ wordcounts_DocumentTermMatrix <- function (counts) {
 #' topic-modeling infrastructure as well as supplying functions for estimating
 #' both ordinary LDA and Correlated Topic Models several ways.  I have tried to
 #' make it possible to use at least some of \pkg{dfrtopics}'s functions with
-#' \pkg{topicmodels} results from the \code{\link[topicmodels]{LDA}} function. I
-#' have also wished to make it possible to interface with the \pkg{stm} package
-#' and its Structural Topic Model (\code{\link[stm]{stm}}). Given a model from
-#' one of these two packages, apply \code{foreign_model} to obtain an object
-#' that can be used with (some of) the functions in \pkg{dfrtopics}. Use
-#' \code{unwrap} to get back the original model object.
+#' results from \pkg{topicmodels}' \code{\link[topicmodels]{LDA}} and
+#' \code{\link[topicmodels]{CTM}} functions. I have also wished to make it
+#' possible to interface with the \pkg{stm} package and its Structural Topic
+#' Model (\code{\link[stm]{stm}}). Given a model from one of these two packages,
+#' apply \code{foreign_model} to obtain an object that can be used with (some
+#' of) the functions in \pkg{dfrtopics}. Use \code{unwrap} to get back the
+#' original model object.
 #'
 #' Most of this package emerged out of my particular need to wrangle MALLET, and
 #' as a result I did not take account of the \pkg{topicmodels} infrastructure
@@ -96,28 +97,80 @@ wordcounts_DocumentTermMatrix <- function (counts) {
 #' \code{\link{mallet_model}} does. This is not the best way to do things, but
 #' it's straightforward.
 #'
-#' Not all functionality is supported. Note too that \code{doc_topics} and
-#' \code{topic_words} applied to a \code{TopicModel} or an \code{stm} return
-#' \emph{parameter estimates} of the probabilities of topics in documents or
-#' words in topics. In MALLET terminology these are "smoothed and normalized,"
-#' not raw sampling weights. For this reason \code{\link{hyperparameters}} does
-#' \emph{not} return true hyperparameter values for these models---which are, in
-#' any case, defined variously for the various estimation procedures. Instead,
+#' Not all functionality is supported. Anything that requires MALLET's
+#' assignments of topics to individual words (the "sampling state") does not at
+#' present work. Note too that \code{doc_topics} and \code{topic_words} applied
+#' to a \code{TopicModel} or an \code{stm} return \emph{parameter estimates} of
+#' the probabilities of topics in documents or words in topics. In MALLET
+#' terminology these are "smoothed and normalized," not raw sampling weights.
+#' For this reason \code{\link{hyperparameters}} does \emph{not} return true
+#' hyperparameter values for these models---which are, in any case, defined
+#' variously for the various estimation procedures. Instead,
 #' \code{hyperparameters} returns dummy values of zero so that
 #' \code{\link{tw_smooth_normalize}} and \code{\link{dt_smooth_normalize}} will
 #' not incorrectly add anything to the posteriors. The actual hyperparameters
 #' should be retrieved from the underlying model if needed.
 #'
+#' \code{\link{align_topics}} will work with glue objects and should help
+#' compare variant models and estimation strategies.
+#'
+#' It is possible to apply \code{\link{dfr_browser}} to a glue object to explore
+#' a model, with two caveats. First, the implication of using the normalized
+#' posteriors is that all documents are given equal weight in the display,
+#' whereas the display of a model from mallet will weight documents by their
+#' lengths. Second, at present the display of an \code{stm} object will not use
+#' any explicit estimates of the effects of time covariates. It just takes the
+#' average estimated topic proportion of all documents in each year. To examine
+#' the actual estimates, together with uncertainties, the
+#' \code{\link[stm]{estimateEffect}} method should be used, or the interactive
+#' visualization provided by the \pkg{stmBrowser} package, for which the kludges
+#' here are no substitute.
+#'
 #' @param x model for translation from \pkg{topicmodels} or \pkg{stm}
 #'
 #' @param metadata metadata frame to attach to model. For converting from
 #'   \code{stm}, supply the same metadata as was given to \code{stm}. Conversion
-#'   from \code{LDA} can use a superset of the document metadata, provided
-#'   the rownames of the modeled \code{DocumentTermMatrix} can be matched
-#'   against \code{metadata$id}.
+#'   from \code{LDA} can use a superset of the document metadata, provided the
+#'   rownames of the modeled \code{DocumentTermMatrix} can be matched against
+#'   \code{metadata$id}.
 #'
-#' @return a wrapper object which will work with most functions of an object of
+#' @return A wrapper object which will work with most functions of an object of
 #'   class \code{mallet_model}.
+#'
+#' @seealso \code{\link{wordcounts_DocumentTermMatrix}} and
+#'   \code{\link{wordcounts_stm_inputs}} to prepare wordcount data for input to
+#'   these other packages' modeling procedures.
+#'
+#' @examples
+#'
+#' \dontrun{
+#' # aligning three models from three packages
+#'
+#' counts <- read_wordcounts(...) # etc.
+#' meta <- read_dfr_metadata(...) # etc.
+#'
+#' library(stm)
+#' corpus <- wordcounts_stm_inputs(counts, meta)
+#' m_stm <- stm(documents=corpus$documents,
+#'     vocab=corpus$vocab,
+#'     data=corpus$data,
+#'     K=25, prevalence= ~ s(journaltitle))
+#' m_stm_glue <- foreign_model(m_stm, corp$data)
+#'
+#' library(topicmodels)
+#' dtm <- wordcounts_DocumentTermMatrix(counts)
+#' m_lda <- LDA(dtm,
+#'     k=25, control=list(alpha=0.1))
+#' m_lda_glue <- foreign_model(m_lda, meta)
+#'
+#' insts <- wordcounts_instances(counts)
+#' m_mallet <- train_model(insts, n_topics=25,
+#'     metadata=meta)
+#'
+#' model_distances(list(m_stm_glue, m_lda_glue, m_mallet), 100) %>%
+#' align_topics() %>%
+#' alignment_frame()
+#' }
 #'
 #' @export
 foreign_model <- function (x, metadata=NULL) {

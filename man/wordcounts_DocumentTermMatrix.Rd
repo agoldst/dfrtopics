@@ -12,6 +12,8 @@ The \pkg{topicmodels} package expects corpora in the form of a
 function converts a data frame of word counts to this form.
 }
 \seealso{
-\code{\link{wordcounts_Matrix}}
+\code{\link{foreign_model}} for using this package's other functions
+  on a model from \pkg{topicmodels}, \code{\link{wordcounts_Matrix}} which
+  underlies this function.
 }
 
