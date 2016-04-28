@@ -219,4 +219,14 @@ test_that("we can also cluster models with varying K", {
     expect_equal(sapply(cl$clusters, length), ks)
 })
 
+test_that("different topic-word matrix types is okay", {
+    msmat <- ms
+    # The gremlin comes and converts one Matrix into a matrix
+    gremlin <- sample(M, 1)
+    msmat[[gremlin]]$topic_words <- as.matrix(topic_words(ms[[gremlin]]))
+    expect_true(!is(topic_words(msmat[[gremlin]]), "Matrix"))
+    expect_equal(model_distances(msmat, V)$d, dst$d)
+})
+
 message("random seed started at: ", s)
+

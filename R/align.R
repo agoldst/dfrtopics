@@ -77,6 +77,12 @@ model_distances <- function (ms, n_words, g=JS_divergence) {
             )
             y <- normalize_rows(y)
 
+            if (xor(is(x, "Matrix"), is(y, "Matrix"))) {
+                # coerce to ordinary matrix if exactly one is Matrix
+                # to avoid annoying errors with g
+                x <- as.matrix(x)
+                y <- as.matrix(y)
+            }
             # the resulting matrix is g_ij
             result[[i]][[j - i]] <- g(x, y)
         }
