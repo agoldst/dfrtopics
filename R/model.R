@@ -708,6 +708,9 @@ top_words.mallet_model <- function (m, n=NULL, weighting=NULL) {
             if (!is.null(weighting)) {
                 tw <- weighting(tw)
             }
+            if (n > ncol(tw)) {
+                n <- ncol(tw)
+            }
             ij <- top_n_row(tw, n)
             result <- dplyr::data_frame_(list(
                 topic=~ ij[ , 1],
