@@ -121,7 +121,7 @@ wordcounts_DocumentTermMatrix <- function (counts) {
 #'
 #' @export
 foreign_model <- function (x, metadata=NULL) {
-    if (is(x, "LDA")) {
+    if (is(x, "TopicModel")) {
         result <- structure(list(m=x),
             class=c("TopicModel_glue", "mallet_model"))
     } else if (inherits(x, "STM")) {
