@@ -82,7 +82,8 @@ wordcounts_DocumentTermMatrix <- function (counts) {
 #' have also wished to make it possible to interface with the \pkg{stm} package
 #' and its Structural Topic Model (\code{\link[stm]{stm}}). Given a model from
 #' one of these two packages, apply \code{foreign_model} to obtain an object
-#' that can be used with (some of) the functions in \pkg{dfrtopics}.
+#' that can be used with (some of) the functions in \pkg{dfrtopics}. Use
+#' \code{unwrap} to get back the original model object.
 #'
 #' Most of this package emerged out of my particular need to wrangle MALLET, and
 #' as a result I did not take account of the \pkg{topicmodels} infrastructure
@@ -109,8 +110,11 @@ wordcounts_DocumentTermMatrix <- function (counts) {
 #'
 #' @param x model for translation from \pkg{topicmodels} or \pkg{stm}
 #'
-#' @param metadata metadata frame to attach to model (row sequence must match
-#'   document sequence used by \code{x})
+#' @param metadata metadata frame to attach to model. For converting from
+#'   \code{stm}, supply the same metadata as was given to \code{stm}. Conversion
+#'   from \code{LDA} can use a superset of the document metadata, provided
+#'   the rownames of the modeled \code{DocumentTermMatrix} can be matched
+#'   against \code{metadata$id}.
 #'
 #' @return a wrapper object which will work with most functions of an object of
 #'   class \code{mallet_model}.
@@ -118,10 +122,12 @@ wordcounts_DocumentTermMatrix <- function (counts) {
 #' @export
 foreign_model <- function (x, metadata=NULL) {
     if (is(x, "LDA")) {
-        result <- structure(list(LDA=x),
+        result <- structure(list(m=x),
             class=c("TopicModel_glue", "mallet_model"))
-    } else if (inherits(x, "stm")) {
-        result <- x
+    } else if (inherits(x, "STM")) {
+        result <- structure(list(m=x),
+            class=c("stm_glue", "TopicModel_glue", "mallet_model"))
+
         if (!is.null(metadata)) {
             if (nrow(metadata) != nrow(x$theta)) {
                 warning(
@@ -142,52 +148,60 @@ metadata will be stored.")
     result
 }
 
+#' @rdname foreign_model
+#' @export
+unwrap <- function (x) UseMethod("unwrap")
+
+#' @export
+unwrap.TopicModel_glue <- function (x) x$m
+
 #' @export
 print.TopicModel_glue <- function (x, ...) {
     cat("A dfrtopics wrapper around a topic model from another package:\n")
-    print(x$LDA, ...)
+    print(x$m, ...)
 }
 
 #' @export
 summary.TopicModel_glue <- function (x, ...) {
-    structure(list(s=summary(x$LDA, ...),
-                   c=class(x$LDA)),
+    structure(list(s=summary(x$m, ...),
+                   c=class(x$m)),
+              class="TopicModel_glue_summary")
+}
+
+#' @export
+summary.stm_glue <- function (x, ...) {
+    # summary.STM `cat`s some of its output, so we capture it
+    structure(list(s=capture.output(print(summary(x$m, ...))),
+                   c=class(x$m)),
               class="TopicModel_glue_summary")
 }
 
 #' @export
 print.TopicModel_glue_summary <- function (x) {
     cat("A dfrtopics wrapper around a topic model from another package:\n")
-    cat("Source type: ", x$c, "\n")
+    cat("Source type:", x$c, "\n")
     print(x$s)
 }
 
 #' @export
-summary.stm_glue <- function (x, ...) {
-    structure(list(s=summary.STM(x, ...),
-                   c="STM"),
-              class="TopicModel_glue_summary")
-}
-
-#' @export
 doc_topics.TopicModel_glue <- function (x)
-    topicmodels::posterior(x$LDA)$topics
+    topicmodels::posterior(x$m)$topics
 
 #' @export
 topic_words.TopicModel_glue<- function (x)
-    topicmodels::posterior(x$LDA)$terms
+    topicmodels::posterior(x$m)$terms
 
 #' @export
-vocabulary.TopicModel_glue <- function (x) x$LDA@terms
+vocabulary.TopicModel_glue <- function (x) x$m@terms
 
 #' @export
-n_topics.TopicModel_glue <- function (x) x$LDA@k
+n_topics.TopicModel_glue <- function (x) x$m@k
 
 #' @export
-n_docs.TopicModel_glue <- function (x) nrow(x$LDA@gamma)
+n_docs.TopicModel_glue <- function (x) nrow(x$m@gamma)
 
 #' @export
-doc_ids.TopicModel_glue <- function (x) x$LDA@documents
+doc_ids.TopicModel_glue <- function (x) x$m@documents
 
 #' @export
 hyperparameters.TopicModel_glue <- function (x) {
@@ -206,17 +220,6 @@ hyperparameters.TopicModel_glue <- function (x) {
 }
 
 #' @export
-top_words.TopicModel_glue <- function (x, n) {
-    tw <- topic_words(x)
-    ij <- top_n_row(tw, n)
-    dplyr::data_frame_(list(
-        topic=~ ij[ , 1],
-        word=~ vocabulary(x)[ij[ , 2]],
-        weight=~ tw[ij]
-    ))
-}
-
-#' @export
 ParallelTopicModel.TopicModel_glue <- function (x) NULL
 
 #' @export
@@ -226,19 +229,19 @@ RTopicModel.TopicModel_glue <- function (x) NULL
 instances.TopicModel_glue <- function (x) NULL
 
 #' @export
-doc_topics.stm_glue <- function (x) x$theta
+doc_topics.stm_glue <- function (x) x$m$theta
 
 #' @export
-topic_words.stm_glue<- function (x) exp(x$beta[[1]][[1]])
+topic_words.stm_glue<- function (x) exp(x$m$beta[[1]][[1]])
 
 #' @export
-vocabulary.stm_glue <- function (x) x$vocab
+vocabulary.stm_glue <- function (x) x$m$vocab
 
 #' @export
-n_topics.stm_glue <- function (x) ncol(x$theta)
+n_topics.stm_glue <- function (x) ncol(x$m$theta)
 
 #' @export
-n_docs.stm_glue <- function (x) nrow(x$theta)
+n_docs.stm_glue <- function (x) nrow(x$m$theta)
 
 #' @export
 doc_ids.stm_glue <- function (x) x$doc_ids

@@ -2,15 +2,21 @@
 % Please edit documentation in R/foreign.R
 \name{foreign_model}
 \alias{foreign_model}
+\alias{unwrap}
 \title{Glue for results from other topic-modeling packages}
 \usage{
 foreign_model(x, metadata = NULL)
+
+unwrap(x)
 }
 \arguments{
 \item{x}{model for translation from \pkg{topicmodels} or \pkg{stm}}
 
-\item{metadata}{metadata frame to attach to model (row sequence must match
-document sequence used by \code{x})}
+\item{metadata}{metadata frame to attach to model. For converting from
+\code{stm}, supply the same metadata as was given to \code{stm}. Conversion
+from \code{LDA} can use a superset of the document metadata, provided
+the rownames of the modeled \code{DocumentTermMatrix} can be matched
+against \code{metadata$id}.}
 }
 \value{
 a wrapper object which will work with most functions of an object of
@@ -26,7 +32,8 @@ make it possible to use at least some of \pkg{dfrtopics}'s functions with
 have also wished to make it possible to interface with the \pkg{stm} package
 and its Structural Topic Model (\code{\link[stm]{stm}}). Given a model from
 one of these two packages, apply \code{foreign_model} to obtain an object
-that can be used with (some of) the functions in \pkg{dfrtopics}.
+that can be used with (some of) the functions in \pkg{dfrtopics}. Use 
+\code{unwrap} to get back the original model object.
 }
 \details{
 Most of this package emerged out of my particular need to wrangle MALLET, and
