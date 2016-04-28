@@ -13,11 +13,10 @@ wordcounts_stm_inputs(counts, meta = NULL)
 matched against \code{counts$id}).}
 }
 \value{
-a list with elements \code{documents}, \code{vocab}, \code{ids} and
-  \code{data} (if \code{meta} has been supplied). \code{ids} are for user
-  convenience and are not required by \code{stm}, which matches by index. The
-  other elements are suitable to be passed as the parameters of those names
-  to \code{\link[stm]{stm}}.
+a list with elements \code{documents}, \code{vocab},
+  \code{data} (if \code{meta} has been supplied). These elements are
+  suitable to be passed as the parameters of those names to
+  \code{\link[stm]{stm}}.
 }
 \description{
 This is a helper function for transforming word-counts-type data into the

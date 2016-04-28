@@ -17,11 +17,10 @@
 #' @param meta optional metadata data frame (with an \code{id} column to be
 #'   matched against \code{counts$id}).
 #'
-#' @return a list with elements \code{documents}, \code{vocab}, \code{ids} and
-#'   \code{data} (if \code{meta} has been supplied). \code{ids} are for user
-#'   convenience and are not required by \code{stm}, which matches by index. The
-#'   other elements are suitable to be passed as the parameters of those names
-#'   to \code{\link[stm]{stm}}.
+#' @return a list with elements \code{documents}, \code{vocab},
+#'   \code{data} (if \code{meta} has been supplied). These elements are
+#'   suitable to be passed as the parameters of those names to
+#'   \code{\link[stm]{stm}}.
 #'
 #' @examples \dontrun{
 #' library(stm)
@@ -41,14 +40,13 @@ wordcounts_stm_inputs <- function (counts, meta=NULL) {
     if (!requireNamespace("stm", quietly=TRUE)) {
         stop("Please install stm from CRAN first.")
     }
-    tdm <- wordcounts_Matrix(counts)
+    dtm <- wordcounts_Matrix(counts)
     result <- list(
-        documents=stm::readCorpus(Matrix::t(x), type="Matrix")$documents,
-        vocab=rownames(tdm),
-        ids=colnames(tdm)
+        documents=stm::readCorpus(dtm, type="Matrix")$documents,
+        vocab=colnames(dtm)
     )
     if (!is.null(meta)) {
-        result$data <- meta[match(colnames(tdm), meta$id), ]
+        result$data <- as.data.frame(meta[match(rownames(dtm), meta$id), ])
     }
     result
 }
