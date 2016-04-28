@@ -1,6 +1,13 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+// underflow prevention: if the argument to log is so small
+// we get -Inf, we just give back 0.
+inline double xlogy(double x, double y) {
+    double lg = log(y);
+    return (lg == R_NegInf) ? 0 : x * lg;
+}
+
 // [[Rcpp::export]]
 double jsdiv_v(NumericVector P, NumericVector Q) {
     int n = P.size();
@@ -13,10 +20,10 @@ double jsdiv_v(NumericVector P, NumericVector Q) {
     for (int i = 0; i < n; i++) {
         PQ_mean = (P[i] + Q[i]) / 2;
         if (P[i] != 0) {
-            total += P[i] * log(P[i] / PQ_mean);
+            total += xlogy(P[i], P[i] / PQ_mean);
         }
         if (Q[i] != 0) {
-            total += Q[i] * log(Q[i] / PQ_mean);
+            total += xlogy(Q[i], Q[i] / PQ_mean);
         }
     }
     return total / 2;
