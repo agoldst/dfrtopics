@@ -447,9 +447,11 @@ From this plot we can see the way *`r w`* moves among topics assigned to differe
 
 ## Other package features
 
-Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET's other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (`instance_Matrix`--the capital M because the result is a sparse `Matrix` object). I provide `read_diagnostics` and `write_diagnostics` methods to access MALLET's own set of model diagnostics.
+Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET's other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (`instance_Matrix`---the capital M because the result is a sparse `Matrix` object). I provide `read_diagnostics` and `write_diagnostics` methods to access MALLET's own set of model diagnostics.
 
 I have included some functions for MALLET's "topic inference" functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is `infer_topics`, which returns a model object `m` whose document-topic matrix is available as `doc_topics(m)`.
 
 The package also contains an *experimental* implementation of a posterior predictive check of the model fit which may help to diagnose the quality of individual topics and of the overall model. The check is described in the help files for `imi_check` and `mi_check`. I make no guarantee that the implementation is correct (and would welcome diagnoses or verifications).
+
+*Even more experimental* is a function for finding topics that are similar across models: `align_topics` (see the help file and references to other functions there). In order to make it possible to align models from other topic modeling packages, I supply some simple glue: the `foreign_model` function will "wrap" a model from the [topicmodels](http://cran.r-project.org/web/packages/topicmodels) or [stm](https://cran.r-project.org/web/packages/stm) packages in an object that can be used with this package's functions. Again I urge caution in using these functions, since I have yet carefully validated them.
 
