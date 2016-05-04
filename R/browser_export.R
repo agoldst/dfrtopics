@@ -320,7 +320,7 @@ display may not work as expected. See ?export_browser_data for details."
                 VIS=list(overview_words=15)
             )
         }
-        info <- jsonlite::toJSON(info)
+        info <- jsonlite::toJSON(info, auto_unbox=TRUE)
 
         write_dfb_file(info, info_file, zip=FALSE,
             overwrite=overwrite || internalize, index=index)
