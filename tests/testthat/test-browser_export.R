@@ -257,7 +257,8 @@ test_that("dfr_browser would launch browser on the right file", {
     options(browser=function (x) message("browser: ", x))
 
     expect_message(dfr_browser(m, out_dir=out_dir, n_scaled_words=100),
-        paste0("browser: file://", file.path(out_dir, "index.html")))
+        paste0("browser: file://",
+               normalizePath(file.path(out_dir, "index.html"))))
 
     clear_files(out_dir, recursive=T) 
     options(browser=brow)

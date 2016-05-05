@@ -19,22 +19,30 @@ than separate files. See Details.}
 
 \item{browse}{if TRUE, launch web browser after export for viewing}
 
-\item{...}{passed on to \code{\link{export_browser_data}}, q.v.
-(especially \code{overwrite}, \code{n_scaled_words}, and \code{info})}
+\item{...}{passed on to \code{\link{export_browser_data}}, q.v. (especially
+\code{overwrite}, \code{n_scaled_words}, and \code{info})}
 }
 \description{
 Export model data and all supporting files needed to browse a model
-interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser}.
+interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser},
+then open a web browser.
 }
 \details{
 There are two ways to store the model data in the exported files. Either the
 data can be part of the source for the web page (\code{internalize=TRUE}) or
-it can be filed in separate files (\code{internalize=FALSE}). The former is
-more convenient for local browsing, since a web browser can simply be
-pointed to the file on disk (this is what \code{browse=TRUE} does). For web
-hosting, however, the latter is better, because dfr-browser can load data
+it can be filed in separate files (\code{internalize=FALSE}).  For web
+hosting, the latter is better, because dfr-browser can load data
 asynchronously rather than all at once, resulting in a more responsive
-initial page view for web visitors.
+initial page view for web visitors.  The former, "internalized" option is
+intended to be more convenient for local browsing, since a web browser can
+simply be pointed to the file on disk (this is what \code{browse=TRUE} does).
+However, this method may not always work, depending on your system's
+implementation of \code{\link[utils]{browseURL}} and your web browser. Thus,
+RStudio appears to launch a web server to serve files given by a
+\code{file://} URL. This allows for browsing regardless of
+\code{internalize}. By contrast, opening an \code{internalize}d dfr-browser's
+\code{index.html} file directly currently works in Firefox but not Chrome
+(which refuses to load the associated Web Worker from disk).
 
 For more control over the export, including the option to export data files
 only, if for example you have modified the HTML/CSS/JS of an existing
