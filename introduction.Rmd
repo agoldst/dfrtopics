@@ -184,7 +184,7 @@ The metadata supplied here as a parameter to `train_model` is not used in modeli
 
 # Saving and loading the results
 
-Though this `r n_docs(m)`-corpus needs only minutes to model, it often takes hours or more to produce a topic model of even a moderately-sized corpus. you are likely to want to save the results. It is most convenient, I have found, to save both the richest possible MALLET outputs and user-friendlier transformations: many analyses need only the estimated document-topic and topic-word matrices, for example. For this reason, the default `write_mallet_model` function takes the results of `train_model` and outputs a directory of files.
+Though this `r n_docs(m)`-corpus needs only minutes to model, it often takes hours or more to produce a topic model of even a moderately-sized corpus. You are likely to want to save the results. It is most convenient, I have found, to save both the richest possible MALLET outputs and user-friendlier transformations: many analyses need only the estimated document-topic and topic-word matrices, for example. For this reason, the default `write_mallet_model` function takes the results of `train_model` and outputs a directory of files.
 
 ```{r message=F}
 write_mallet_model(m, "modeling_results")
@@ -240,7 +240,7 @@ A good sanity check on a model is to examine the list of the words most frequent
 top_words(m, n=10) # n is the number of words to return for each topic
 ```
 
-This data frame is in fact separately saved to disk and stored, even if the full topic-word matrix is not available. It is in essence a sparse representation of the topic-word matrix.^[By default this matrix contains integer counts of topic-word assignments, *not* probabilities of words in topics. For the purpose of finding top words this does not matter. See the help for `top_words`, hwoever, for notes on different word-scoring schemes.]
+This data frame is in fact separately saved to disk and stored, even if the full topic-word matrix is not available. It is in essence a sparse representation of the topic-word matrix.^[By default this matrix contains integer counts of topic-word assignments, *not* probabilities of words in topics. For the purpose of finding top words this does not matter. See the help for `top_words`, however, for notes on different word-scoring schemes.]
 
 As even this data frame is too long to read if you have more than few topics, a conveniently human-readable summary can be generated from
 
@@ -447,9 +447,11 @@ From this plot we can see the way *`r w`* moves among topics assigned to differe
 
 ## Other package features
 
-Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET's other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (`instance_Matrix`--the capital M because the result is a sparse `Matrix` object). I provide `read_diagnostics` and `write_diagnostics` methods to access MALLET's own set of model diagnostics.
+Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET's other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (`instance_Matrix`---the capital M because the result is a sparse `Matrix` object). I provide `read_diagnostics` and `write_diagnostics` methods to access MALLET's own set of model diagnostics.
 
 I have included some functions for MALLET's "topic inference" functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is `infer_topics`, which returns a model object `m` whose document-topic matrix is available as `doc_topics(m)`.
 
 The package also contains an *experimental* implementation of a posterior predictive check of the model fit which may help to diagnose the quality of individual topics and of the overall model. The check is described in the help files for `imi_check` and `mi_check`. I make no guarantee that the implementation is correct (and would welcome diagnoses or verifications).
+
+*Even more experimental* is a function for finding topics that are similar across models: `align_topics` (see the help file and references to other functions there). In order to make it possible to align models from other topic modeling packages, I supply some simple glue: the `foreign_model` function will "wrap" a model from the [topicmodels](http://cran.r-project.org/web/packages/topicmodels) or [stm](https://cran.r-project.org/web/packages/stm) packages in an object that can be used with this package's functions. Again I urge caution in using these functions, since I have yet carefully validated them.
 

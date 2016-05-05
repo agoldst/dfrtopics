@@ -12,7 +12,7 @@
 
 <meta name="author" content="Andrew Goldstone" />
 
-<meta name="date" content="2016-04-19" />
+<meta name="date" content="2016-05-05" />
 
 <title>Introduction to dfrtopics</title>
 
@@ -72,7 +72,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title">Introduction to dfrtopics</h1>
 <h4 class="author"><em>Andrew Goldstone</em></h4>
-<h4 class="date"><em>2016-04-19</em></h4>
+<h4 class="date"><em>2016-05-05</em></h4>
 
 </div>
 
@@ -192,7 +192,7 @@ counts &lt;-<span class="st"> </span>counts %&gt;%
 </div>
 <div id="saving-and-loading-the-results" class="section level1">
 <h1>Saving and loading the results</h1>
-<p>Though this 605-corpus needs only minutes to model, it often takes hours or more to produce a topic model of even a moderately-sized corpus. you are likely to want to save the results. It is most convenient, I have found, to save both the richest possible MALLET outputs and user-friendlier transformations: many analyses need only the estimated document-topic and topic-word matrices, for example. For this reason, the default <code>write_mallet_model</code> function takes the results of <code>train_model</code> and outputs a directory of files.</p>
+<p>Though this 605-corpus needs only minutes to model, it often takes hours or more to produce a topic model of even a moderately-sized corpus. You are likely to want to save the results. It is most convenient, I have found, to save both the richest possible MALLET outputs and user-friendlier transformations: many analyses need only the estimated document-topic and topic-word matrices, for example. For this reason, the default <code>write_mallet_model</code> function takes the results of <code>train_model</code> and outputs a directory of files.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">write_mallet_model</span>(m, <span class="st">&quot;modeling_results&quot;</span>)</code></pre></div>
 <p>Consult <code>write_mallet_model</code> for the list of outputs. By default and an overabundance of caution, this function saves quite a few files, including two big, wasteful representations of the Gibbs sampling state: MALLET’s own and a simplified CSV. These files run to gigabytes on models of even medium-sized corpora.</p>
 <p>The resulting set of files can be used to reconstruct the model object with a single call:</p>
@@ -440,7 +440,7 @@ bin/server</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sampling_state</span>(m)</code></pre></div>
 <pre><code>## An object of class &quot;big.matrix&quot;
 ## Slot &quot;address&quot;:
-## &lt;pointer: 0x13f5c39c0&gt;</code></pre>
+## &lt;pointer: 0x127f88fa0&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dim</span>(<span class="kw">sampling_state</span>(m))</code></pre></div>
 <pre><code>## [1] 693350      4</code></pre>
 <p>What we now want is to examine the topic-document matrix <em>conditional on</em> the word poem. This is easy to do with the <code>mwhich</code> function from <code>bigmemory</code>, but as a convenience this package provides a function for this particular application (as well as the the term-document matrices conditioned on a topic, <code>tdm_topic</code>):</p>
@@ -479,9 +479,10 @@ bin/server</code></pre>
 </div>
 <div id="other-package-features" class="section level2">
 <h2>Other package features</h2>
-<p>Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET’s other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (<code>instance_Matrix</code>–the capital M because the result is a sparse <code>Matrix</code> object). I provide <code>read_diagnostics</code> and <code>write_diagnostics</code> methods to access MALLET’s own set of model diagnostics.</p>
+<p>Not discussed here are a few parts of the package which help to make the bridge from R to some of MALLET’s other features for topic models. There are a series of functions for handling InstanceLists, and in particular for converting such a list into a term-document matrix (<code>instance_Matrix</code>—the capital M because the result is a sparse <code>Matrix</code> object). I provide <code>read_diagnostics</code> and <code>write_diagnostics</code> methods to access MALLET’s own set of model diagnostics.</p>
 <p>I have included some functions for MALLET’s “topic inference” functionality, where we use an already-trained model to infer topics for new or held-out documents. The core function is <code>infer_topics</code>, which returns a model object <code>m</code> whose document-topic matrix is available as <code>doc_topics(m)</code>.</p>
 <p>The package also contains an <em>experimental</em> implementation of a posterior predictive check of the model fit which may help to diagnose the quality of individual topics and of the overall model. The check is described in the help files for <code>imi_check</code> and <code>mi_check</code>. I make no guarantee that the implementation is correct (and would welcome diagnoses or verifications).</p>
+<p><em>Even more experimental</em> is a function for finding topics that are similar across models: <code>align_topics</code> (see the help file and references to other functions there). In order to make it possible to align models from other topic modeling packages, I supply some simple glue: the <code>foreign_model</code> function will “wrap” a model from the <a href="http://cran.r-project.org/web/packages/topicmodels">topicmodels</a> or <a href="https://cran.r-project.org/web/packages/stm">stm</a> packages in an object that can be used with this package’s functions. Again I urge caution in using these functions, since I have yet carefully validated them.</p>
 </div>
 </div>
 <div class="footnotes">
@@ -490,7 +491,7 @@ bin/server</code></pre>
 <li id="fn1"><p>“Roughly” because of ties.<a href="#fnref1">↩</a></p></li>
 <li id="fn2"><p>There are two senses in which you might want your modeling to be reproducible, however: your exact outputs should be reproducible, <em>and</em> any substantive features of interest should probably be independent of the [pseudo]-randomness of the modeling process.<a href="#fnref2">↩</a></p></li>
 <li id="fn3"><p>A more sophisticated solution would be to allow pieces to be stored on disk and load them as needed. I find R’s functional style makes this quite hard to arrange without an exhausting proliferation of parentheses.<a href="#fnref3">↩</a></p></li>
-<li id="fn4"><p>By default this matrix contains integer counts of topic-word assignments, <em>not</em> probabilities of words in topics. For the purpose of finding top words this does not matter. See the help for <code>top_words</code>, hwoever, for notes on different word-scoring schemes.<a href="#fnref4">↩</a></p></li>
+<li id="fn4"><p>By default this matrix contains integer counts of topic-word assignments, <em>not</em> probabilities of words in topics. For the purpose of finding top words this does not matter. See the help for <code>top_words</code>, however, for notes on different word-scoring schemes.<a href="#fnref4">↩</a></p></li>
 <li id="fn5"><p>Recall that we had metadata for more documents than we modeled, because we discarded some documents in the corpus-creation step. However, when metadata is provided for a model, the package selects and reorders rows so that rows of <code>metadata(m)</code> correspond to rows of <code>doc_topics(m)</code> and entries in <code>doc_ids(m)</code>.<a href="#fnref5">↩</a></p></li>
 <li id="fn6"><p>A more formal way to do this, however, requires more elaborate modeling. See, in particular, the <a href="http://cran.r-project.org/web/packages/stm/">stm</a> package for the Structured Topic Model.<a href="#fnref6">↩</a></p></li>
 <li id="fn7"><p>These are simple arithmetical operations, of course, and you may ask why we do not stick to the dplyr idiom all the way through. But converting a full document-topic or topic-word matrix to a data frame—as dplyr would require—can be a cumbersome operation. It makes more sense to stay with the matrices until the final aggregates have been created.<a href="#fnref7">↩</a></p></li>
