@@ -129,8 +129,31 @@ test_that("loading from a sampling state reproduces the model", {
     expect_equal(as.data.frame(top_words(m, 50)),
                  as.data.frame(top_words(m2, 50)), check.attributes=F)
 
-    expect_equal(topic_words(m)[5, 93], topic_words(m)[5, 93])
+    expect_equal(topic_words(m)[5, 93], topic_words(m2)[5, 93])
     expect_equal(hyperparameters(m), hyperparameters(m2))
 
     clear_files(out_files)
 })
+
+test_that("loading sampling state w/o bigmemory reproduces the model", {
+    il_file <- tempfile()
+    write_instances(insts, il_file)
+    ms_file <- file.path(out_dir, "mallet_state.gz")
+    write_mallet_state(m, ms_file)
+    m2 <- load_from_mallet_state(ms_file,
+                                 instances_file=il_file, bigmemory=FALSE)
+
+    clear_files(il_file)
+    expect_is(m2, "mallet_model")
+    expect_equal(doc_topics(m), doc_topics(m2))
+    expect_equal(doc_ids(m), doc_ids(m2))
+    expect_equal(vocabulary(m), vocabulary(m2))
+    expect_equal(as.data.frame(top_words(m, 50)),
+                 as.data.frame(top_words(m2, 50)), check.attributes=F)
+
+    expect_equal(topic_words(m)[5, 93], topic_words(m2)[5, 93])
+    expect_equal(hyperparameters(m), hyperparameters(m2))
+
+    clear_files(out_files)
+})
+

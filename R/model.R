@@ -1129,14 +1129,22 @@ load_mallet_model_legacy <- function (
 #' from the MALLET instances file.
 #'
 #' @param mallet_state_file name of gzipped state file
-#' @param simplified_state_file name of file to save "simplified" representation
-#'   of the state to. If NULL, a temporary file will be used
+#' @param simplified_state_file name of file to save "simplified"
+#' representation of the state to (\code{\link{simplify_state}}, q.v.). If
+#' NULL, a temporary file will be used.
 #' @param instances_file location of MALLET instances file used to create the
 #'   model. If NULL, this will be skipped, but the resulting model object will
 #'   have missing vocabulary and document ID's.
 #' @param keep_sampling_state If TRUE (default), the returned object will hold a
 #'   reference to the sampling state \code{big.matrix} as well.
 #' @param metadata_file metadata file (CSV or TSV; optional here)
+#' @param bigmemory If TRUE (default), the \pkg{bigmemory} and
+#' \pkg{bigtabulate} packages will be used to read and store the Gibbs sampling
+#' state. Some users report errors with this on Windows. In that case, try
+#' \code{bigmemory=F}, but note that this can be much more memory-intensive, as
+#' it requires loading the entire contents of \code{mallet_state_file} into
+#' memory; also, the result will not hold the sampling state
+#' (\code{\link{sampling_state}} will be NULL).
 #' @return a \code{\link{mallet_model}} object.
 #'
 #' @examples
@@ -1159,7 +1167,8 @@ load_from_mallet_state <- function (
                                         "state.csv"),
         instances_file=NULL,
         keep_sampling_state=TRUE,
-        metadata_file=NULL) {
+        metadata_file=NULL,
+        bigmemory=TRUE) {
 
     gzf <- gzfile(mallet_state_file)
     pp <- readLines(gzf, n=3)
@@ -1180,36 +1189,28 @@ mallet train-topics --output-state?"
         beta=as.numeric(b[1, 2])
     )
 
-    ss_temp <- F
+    ss_temp <- FALSE
     if (is.null(simplified_state_file)) {
         simplified_state_file <- tempfile()
-        ss_temp <- T
+        ss_temp <- TRUE
     }
 
-    simplify_state(mallet_state_file, simplified_state_file)
+    simplify_state(mallet_state_file, simplified_state_file) 
 
     if (!requireNamespace("bigtabulate", quietly=TRUE)) {
-        stop(
-"bigtabulate package required for model loading from sampling state.
-Otherwise, the dplyr manipulation in memory is up to you."
+        bigmemory <- FALSE
+        warning(
+"bigtabulate package not available. Falling back to in-memory loading.
+Sampling state will not be available after loading."
         )
     }
 
-    ss <- read_sampling_state(simplified_state_file)
-
-    K <- length(hyper$alpha)
-    docs <- bigtabulate::bigsplit(ss, c("doc", "topic"))
-    dtl <- vapply(docs, function (i) sum(ss[i, "count"]), integer(1))
-    doc_topics <- matrix(dtl, ncol=K)
-
-    words <- bigtabulate::bigsplit(ss, c("topic", "type"),
-                                   splitret="sparselist")
-    twl <- vapply(words, function (i) sum(ss[i, "count"]), integer(1))
-    twl_ij <- stringr::str_split_fixed(names(twl), ":", 2)
-    topic_words <- Matrix::sparseMatrix(
-        i=as.integer(twl_ij[ , 1]),
-        j=as.integer(twl_ij[ , 2]),
-        x=twl)
+    if (!bigmemory) {
+        keep_sampling_state <- FALSE
+        st <- read_state_nobigmem(mallet_state_file)
+    } else {
+        st <- read_state_bigmem(simplified_state_file, K=length(hyper$alpha))
+    }
 
     doc_ids <- NULL
     vocab <- NULL
@@ -1225,7 +1226,7 @@ Otherwise, the dplyr manipulation in memory is up to you."
     }
 
     if (!keep_sampling_state) {
-        ss <- NULL
+        st$ss <- NULL
     }
 
     meta <- NULL
@@ -1234,10 +1235,10 @@ Otherwise, the dplyr manipulation in memory is up to you."
     }
 
     mallet_model(
-        doc_topics=doc_topics,
-        topic_words=topic_words,
+        doc_topics=st$doc_topics,
+        topic_words=st$topic_words,
         hyper=hyper,
-        ss=ss,
+        ss=st$ss,
         doc_ids=doc_ids,
         vocab=vocab,
         instances=il,
@@ -1245,4 +1246,71 @@ Otherwise, the dplyr manipulation in memory is up to you."
     )
 }
 
+# read simplified state file using bigmemory functions
+read_state_bigmem <- function (simplified_state_file, K) {
+    ss <- read_sampling_state(simplified_state_file)
 
+    docs <- bigtabulate::bigsplit(ss, c("doc", "topic"))
+    dtl <- vapply(docs, function (i) sum(ss[i, "count"]), integer(1))
+    doc_topics <- matrix(dtl, ncol=K)
+
+    words <- bigtabulate::bigsplit(ss, c("topic", "type"),
+                                   splitret="sparselist")
+    twl <- vapply(words, function (i) sum(ss[i, "count"]), integer(1))
+    twl_ij <- stringr::str_split_fixed(names(twl), ":", 2)
+    topic_words <- Matrix::sparseMatrix(
+        i=as.integer(twl_ij[ , 1]),
+        j=as.integer(twl_ij[ , 2]),
+        x=twl)
+
+    list(
+        ss=ss,
+        doc_topics=doc_topics,
+        topic_words=topic_words
+    )
+}
+
+# read mallet state directly without using bigmemory functions
+read_state_nobigmem <- function (mallet_state_file) { 
+    if (requireNamespace("readr", quietly=TRUE)) {
+        gibbs <- readr::read_delim(mallet_state_file,
+            delim=" ",
+            quote="",
+            comment="#",
+            col_names=c("doc", "type", "topic"),
+            col_types="i__i_i"
+        ) 
+    } else {
+        gzf <- gzfile(mallet_state_file)
+        pp <- readLines(gzf, n=3)
+        on.exit(close(gzf))
+    
+        gibbs <- read.table(gzf,
+            header=FALSE, sep="", quote="", row.names=NULL,
+            col.names=c("doc", "src", "pos", "type", "word", "topic"),
+            as.is=TRUE,
+            colClasses=c("integer", "NULL", "NULL",
+                         "integer", "NULL", "integer"),
+            comment.char="#")
+    }
+    dtl <- dplyr::group_by_(gibbs, ~ doc, ~ topic)
+    dtl <- dplyr::ungroup(dplyr::summarize_(dtl, count=~ n()))
+    dtl <- dplyr::mutate_(dtl, doc=~ doc + 1L, topic=~ topic + 1L)
+
+    twl <- dplyr::group_by_(gibbs, ~ topic, ~ type)
+    twl <- dplyr::ungroup(dplyr::summarize_(twl, count=~ n()))
+    twl <- dplyr::mutate_(twl, type=~ type + 1L, topic=~ topic + 1L)
+
+    doc_topics <- matrix(0, nrow=max(dtl$doc),
+                         ncol=max(dtl$topic))
+    doc_topics[cbind(dtl$doc, dtl$topic)] <- dtl$count
+
+    topic_words <- Matrix::sparseMatrix(
+        i=twl$topic, j=twl$type, x=twl$count
+    )
+
+    list(
+        doc_topics=doc_topics,
+        topic_words=topic_words
+    )
+}

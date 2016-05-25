@@ -6,13 +6,15 @@
 \usage{
 load_from_mallet_state(mallet_state_file,
   simplified_state_file = file.path(dirname(mallet_state_file), "state.csv"),
-  instances_file = NULL, keep_sampling_state = TRUE, metadata_file = NULL)
+  instances_file = NULL, keep_sampling_state = TRUE, metadata_file = NULL,
+  bigmemory = TRUE)
 }
 \arguments{
 \item{mallet_state_file}{name of gzipped state file}
 
-\item{simplified_state_file}{name of file to save "simplified" representation
-of the state to. If NULL, a temporary file will be used}
+\item{simplified_state_file}{name of file to save "simplified"
+representation of the state to (\code{\link{simplify_state}}, q.v.). If
+NULL, a temporary file will be used.}
 
 \item{instances_file}{location of MALLET instances file used to create the
 model. If NULL, this will be skipped, but the resulting model object will
@@ -22,6 +24,14 @@ have missing vocabulary and document ID's.}
 reference to the sampling state \code{big.matrix} as well.}
 
 \item{metadata_file}{metadata file (CSV or TSV; optional here)}
+
+\item{bigmemory}{If TRUE (default), the \pkg{bigmemory} and
+\pkg{bigtabulate} packages will be used to read and store the Gibbs sampling
+state. Some users report errors with this on Windows. In that case, try
+\code{bigmemory=F}, but note that this can be much more memory-intensive, as
+it requires loading the entire contents of \code{mallet_state_file} into
+memory; also, the result will not hold the sampling state
+(\code{\link{sampling_state}} will be NULL).}
 }
 \value{
 a \code{\link{mallet_model}} object.
