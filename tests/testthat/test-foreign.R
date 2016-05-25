@@ -96,7 +96,8 @@ test_that("Conversion from TopicModel works okay", {
 
     bout <- tempfile("ldag-dfb")
     expect_message(dfr_browser(ldag, out_dir=bout),
-        paste0("browser: file://", file.path(bout, "index.html")))
+        paste0("browser: file://",
+               normalizePath(file.path(bout, "index.html"))))
 
     clear_files(bout, recursive=T) 
     options(browser=brow)
@@ -142,7 +143,8 @@ test_that("Conversion from stm works okay", {
 
     bout <- tempfile("stg-dfb")
     expect_message(dfr_browser(stg, out_dir=bout),
-        paste0("browser: file://", file.path(bout, "index.html")))
+        paste0("browser: file://",
+               normalizePath(file.path(bout, "index.html"))))
 
     clear_files(bout, recursive=T) 
 
