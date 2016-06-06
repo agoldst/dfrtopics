@@ -306,7 +306,7 @@ display may not work as expected. See ?export_browser_data for details."
 
     info_file <- paste0(file.path(out_dir, "info"), ".json")
     write_info <- TRUE
-    if (!internalize) {
+    if (!internalize && is.null(info)) {
         message("Checking for info.json file...")
         write_info <- !file.exists(info_file)
         if (!write_info) message(info_file, " ok")
@@ -320,7 +320,7 @@ display may not work as expected. See ?export_browser_data for details."
                 VIS=list(overview_words=15)
             )
         }
-        info <- jsonlite::toJSON(info, auto_unbox=TRUE)
+        info <- jsonlite::toJSON(info, auto_unbox=TRUE, pretty=4)
 
         write_dfb_file(info, info_file, zip=FALSE,
             overwrite=overwrite || internalize, index=index)
