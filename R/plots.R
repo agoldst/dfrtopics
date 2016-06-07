@@ -18,7 +18,7 @@
 #' @param w PNG width (pixels)
 #' @param h PNG height (pixels)
 #'
-#' @seealso \code{\link{plot_top_words}}, \code{\link{plot_topic_series}},
+#' @seealso \code{\link{plot_top_words}}, \code{\link{plot_series}},
 #' \code{\link{export_browser_data}} and the
 #' \href{http://agoldst.github.io/dfr-browser}{dfr-browser} web-browser-based
 #' topic model explorer
