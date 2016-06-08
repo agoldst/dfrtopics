@@ -139,7 +139,7 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' \code{index.html} source instead of into a series of separate files.
 #' @param info a list of dfr-browser parameters. Converted to JSON with
 #'   \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
-#'   default values are used.
+#'   default values (\code{getOption("dfrtopics.browser_info")}) are used.
 #'
 #' @examples
 #'
@@ -314,11 +314,7 @@ display may not work as expected. See ?export_browser_data for details."
     if (write_info) {
         if (is.null(info)) {
             # default stub info
-            info <- list(
-                title="Model Browser",
-                meta_info="<h2></h2>",
-                VIS=list(overview_words=15)
-            )
+            info <- getOption("dfrtopics.browser_info")
         }
         info <- jsonlite::toJSON(info, auto_unbox=TRUE, pretty=4)
 

@@ -106,6 +106,35 @@ to get Java working."
     }
 }
 
+# package load
+.onLoad <- function (libname, pkgname) {
+    op <- options()
+    op_ours <- list(
+        dfrtopics.browser_info=list(
+title="Model Browser",
+meta_info=paste0(
+    "<p>Topic model browser generated for ",
+    Sys.getenv("USER"), "</p>"
+),
+VIS=list(
+    condition=list(
+        type="time",
+        spec=list(
+            field="date",
+            "unit"="year",
+            n=1
+        )
+    )
+)
+        )
+    )
+
+    to_set <- !(names(op_ours) %in% names(op))
+    if (any(to_set)) options(op_ours[to_set])
+    invisible()
+}
+
+
 # Package unload
 .onUnload <- function (libpath) {
     library.dynam.unload("dfrtopics", libpath)

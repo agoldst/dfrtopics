@@ -35,7 +35,7 @@ run \code{bin/server} to launch a local web server.}
 
 \item{info}{a list of dfr-browser parameters. Converted to JSON with
 \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
-default values are used.}
+default values (\code{getOption("dfrtopics.browser_info")}) are used.}
 }
 \description{
 Transform and save modeling results in a format suitable for use by
