@@ -60,6 +60,9 @@ over the dfr-browser source (javascript, HTML, and CSS), pass
 \code{index.html} file, also passed \code{internalize=T}. I recommend this
 last option for local viewing only, not for web hosting; in the latter case,
 separate data files will allow for asynchronous loading.
+}
+\section{Metadata format}{
+
 
 If you are working with non-JSTOR documents, the one file that will reflect
 this is the exported metadata. dfr-browser expects seven metadata columns:

@@ -98,6 +98,8 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' last option for local viewing only, not for web hosting; in the latter case,
 #' separate data files will allow for asynchronous loading.
 #'
+#' @section Metadata format:
+#'
 #' If you are working with non-JSTOR documents, the one file that will reflect
 #' this is the exported metadata. dfr-browser expects seven metadata columns:
 #' \code{id,title,author,journaltitle,volume,issue,pubdate,pagerange}. This
@@ -119,7 +121,6 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' \code{metadata(m)$publisher <- NULL}. Earlier versions of dfrtopics tried to
 #' eliminate such columns automatically, but this more conservative approach
 #' aims to allow you more flexibility about what gets exported.
-#'
 #'
 #' @param m \code{mallet_model} object from \code{\link{train_model}} or
 #'   \code{\link{load_mallet_model}}
@@ -242,9 +243,9 @@ Set overwrite=TRUE to overwrite existing files."
 
 
     if (!is.null(doc_topics(m))) {
+        # could compress much more aggressively considering that weights are
+        # integers, so could be stored as binary data rather than ASCII
         dtm <- Matrix::Matrix(doc_topics(m), sparse=TRUE)
-            # could compress much more aggressively considering that weights are
-            # integers, so could be stored as binary data rather than ASCII
 
         write_dfb_file(jsonlite::toJSON(list(i=dtm@i, p=dtm@p, x=dtm@x)),
             paste0(file.path(out_dir, "dt"), ".json"), zip=zipped,
