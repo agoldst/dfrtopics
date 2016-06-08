@@ -30,7 +30,7 @@ relative weight in the corpus over time. The plots are saved to
 of this package will probably break too.
 }
 \seealso{
-\code{\link{plot_top_words}}, \code{\link{plot_topic_series}},
+\code{\link{plot_top_words}}, \code{\link{plot_series}},
 \code{\link{export_browser_data}} and the
 \href{http://agoldst.github.io/dfr-browser}{dfr-browser} web-browser-based
 topic model explorer

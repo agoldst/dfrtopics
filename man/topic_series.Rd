@@ -9,7 +9,7 @@ topic_series(m, breaks = "years")
 \arguments{
 \item{m}{\code{mallet_model} object}
 
-\item{breaks}{passed on to \code{link[base]}{cut.Date} (q.v.): what interval
+\item{breaks}{passed on to \code{\link[base]{cut.Date}}: what interval
 should the time series use?}
 }
 \value{

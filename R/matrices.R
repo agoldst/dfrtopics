@@ -69,7 +69,7 @@ word_series_matrix <- function (tdm, dates, breaks="years") {
 #' See the package vignette for an example of this function in use.
 #'
 #' @param m \code{mallet_model} object
-#' @param breaks passed on to \code{\link[base]}{cut.Date}: what interval
+#' @param breaks passed on to \code{\link[base]{cut.Date}}: what interval
 #'   should the time series use?
 #'
 #' @return a data frame with three columns, \code{topic, pubdate, weight}. The
