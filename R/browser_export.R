@@ -546,8 +546,9 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' @param browse if TRUE, launch web browser after export for viewing
 #' @param internalize if TRUE, model data is in the browser home page rather
 #'   than separate files. See Details.
-#' @param ... passed on to \code{\link{export_browser_data}}, q.v. (especially
-#'   \code{overwrite}, \code{n_scaled_words}, and \code{info})
+#' @param ... passed on to \code{\link{export_browser_data}}, q.v., especially
+#' the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, and
+#' \code{proper}
 #'
 #' @seealso \code{\link{export_browser_data}} which does the work of exporting
 #'   files, \code{\link{model_dfr_documents}}, \code{\link{train_model}},

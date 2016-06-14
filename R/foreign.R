@@ -114,17 +114,18 @@ wordcounts_DocumentTermMatrix <- function (counts) {
 #' \code{\link{align_topics}} will work with glue objects and should help
 #' compare variant models and estimation strategies.
 #'
-#' It is possible to apply \code{\link{dfr_browser}} to a glue object to explore
-#' a model, with two caveats. First, the implication of using the normalized
-#' posteriors is that all documents are given equal weight in the display,
-#' whereas the display of a model from mallet will weight documents by their
-#' lengths. Second, at present the display of an \code{stm} object will not use
-#' any explicit estimates of the effects of time covariates. It just takes the
-#' average estimated topic proportion of all documents in each year. To examine
-#' the actual estimates, together with uncertainties, the
-#' \code{\link[stm]{estimateEffect}} method should be used, or the interactive
-#' visualization provided by the \pkg{stmBrowser} package, for which the kludges
-#' here are no substitute.
+#' It is possible to apply \code{\link{dfr_browser}} to a glue object to
+#' explore a model, with two caveats. First, the implication of using the
+#' normalized posteriors is that all documents are given equal weight in the
+#' display, whereas the display of a model from mallet by default weights
+#' documents by their lengths; for a more comparable display of a mallet model
+#' \code{m}, use \code{dfr_browser(m, proper=T)}. Second, at present the
+#' display of an \code{stm} object will not use any explicit estimates of the
+#' effects of time covariates. It just takes the average estimated topic
+#' proportion of all documents in each year. To examine the actual estimates,
+#' together with uncertainties, the \code{\link[stm]{estimateEffect}} method
+#' should be used, or the interactive visualization provided by the
+#' \pkg{stmBrowser} package, for which the kludges here are no substitute.
 #'
 #' @param x model for translation from \pkg{topicmodels} or \pkg{stm}
 #'

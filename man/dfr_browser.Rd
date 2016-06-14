@@ -19,8 +19,9 @@ than separate files. See Details.}
 
 \item{browse}{if TRUE, launch web browser after export for viewing}
 
-\item{...}{passed on to \code{\link{export_browser_data}}, q.v. (especially
-\code{overwrite}, \code{n_scaled_words}, and \code{info})}
+\item{...}{passed on to \code{\link{export_browser_data}}, q.v., especially
+the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, and
+\code{proper}}
 }
 \description{
 Export model data and all supporting files needed to browse a model
