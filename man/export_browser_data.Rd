@@ -6,7 +6,8 @@
 \usage{
 export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
   n_scaled_words = 1000, supporting_files = FALSE, overwrite = FALSE,
-  internalize = FALSE, info = NULL)
+  internalize = FALSE, info = NULL, proper = FALSE,
+  digits = getOption("digits"))
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or
@@ -36,6 +37,19 @@ run \code{bin/server} to launch a local web server.}
 \item{info}{a list of dfr-browser parameters. Converted to JSON with
 \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
 default values (\code{getOption("dfrtopics.browser_info")}) are used.}
+
+\item{proper}{if TRUE, the document-topic and topic-word matrices will be
+smoothed by the hyperparameters alpha and beta (respectively) and normalized
+before export, instead of the "raw" sampling weights (which is the default).
+For MALLET models, moothed and normalized weights then give the maximum a
+posteriori estimates of the corresponding probabilities, which is "properly"
+what the modeling process yields (but may disguise the effects of variations
+in document length---and increase the storage space required).}
+
+\item{digits}{if \code{proper} is TRUE, probabilities are rounded to this
+decimal place, yielding a somewhat sparser doc-topics matrix (the topic-word
+matrix is more aggressively truncated anyway). Set to NULL for no rounding.
+Rounded weights are renormalized within dfr-browser itself.}
 }
 \description{
 Transform and save modeling results in a format suitable for use by
@@ -103,6 +117,12 @@ export_browser_data(m, out_dir="browser/data",
 }
 \seealso{
 \code{\link{dfr_browser}}, \code{\link{model_dfr_documents}},
-  \code{\link{train_model}}, \code{\link{topic_scaled_2d}}
+\code{\link{train_model}}, \code{\link{topic_scaled_2d}}, and the functions
+for outputting individual custom files:
+\code{\link{export_browser_topic_words}},
+\code{\link{export_browser_doc_topics}},
+\code{\link{export_browser_metadata}},
+\code{\link{export_browser_topic_scaled}},
+\code{\link{export_browser_info}}.
 }
 

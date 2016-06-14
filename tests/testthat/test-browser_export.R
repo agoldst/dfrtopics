@@ -1,6 +1,7 @@
 context("dfr-browser export")
 
 library(dplyr)
+library(Matrix)
 
 clear_files <- function (fs, ...) {
     for (f in fs) {
@@ -264,4 +265,36 @@ test_that("dfr_browser would launch browser on the right file", {
     options(browser=brow)
 })
 
+test_that("proper doc-topics actually are", { 
+    out_files_non_zip <- gsub("\\.zip$", "", out_files)
+    clear_files(out_files_non_zip)
 
+    dt_prop <- dt_smooth_normalize(m)(doc_topics(m))
+    dg <- abs(round(log10(min(dt_prop)))) - 1
+    expect_true(all(
+            apply(dt_prop, 1, function (row) any(round(row, dg) > 0))
+        ),
+        info="check that rounding doesn't leave a degenerate matrix"
+    )
+    expect_true(any(round(dt_prop, dg) == 0),
+        info="check that rounding zaps some entry"
+    )
+
+    export_browser_data(m, out_dir=out_dir, zipped=F, n_scaled_words=100,
+        proper=TRUE, digits=dg
+    )
+
+    dtj <- jsonlite::fromJSON(file.path(out_dir, "dt.json"))
+    expect_true(all(dtj$x > 0), info="check that output has no zero entries")
+    expect_true((length(dtj$x) < nrow(dt_prop) * ncol(dt_prop)),
+        info="check that some entries were dropped")
+    dtm <- sparseMatrix(i=dtj$i, p=dtj$p, x=dtj$x, index1=FALSE)
+    expect_equal(Matrix(round(dt_prop, dg), sparse=TRUE), dtm,
+        info="check that input and output matrices match"
+    )
+    expect_equal(rowSums(dtm), rep(1, nrow(dtm)), tolerance=10^-dg,
+        info="check that matrix actually is proper"
+    )
+
+    clear_files(out_files_non_zip)
+})

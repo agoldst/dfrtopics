@@ -141,6 +141,17 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' @param info a list of dfr-browser parameters. Converted to JSON with
 #'   \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
 #'   default values (\code{getOption("dfrtopics.browser_info")}) are used.
+#' @param proper if TRUE, the document-topic and topic-word matrices will be
+#' smoothed by the hyperparameters alpha and beta (respectively) and normalized
+#' before export, instead of the "raw" sampling weights (which is the default).
+#' For MALLET models, moothed and normalized weights then give the maximum a
+#' posteriori estimates of the corresponding probabilities, which is "properly"
+#' what the modeling process yields (but may disguise the effects of variations
+#' in document length---and increase the storage space required).
+#' @param digits if \code{proper} is TRUE, probabilities are rounded to this
+#' decimal place, yielding a somewhat sparser doc-topics matrix (the topic-word
+#' matrix is more aggressively truncated anyway). Set to NULL for no rounding.
+#' Rounded weights are renormalized within dfr-browser itself.
 #'
 #' @examples
 #'
@@ -157,7 +168,13 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' }
 #'
 #' @seealso \code{\link{dfr_browser}}, \code{\link{model_dfr_documents}},
-#'   \code{\link{train_model}}, \code{\link{topic_scaled_2d}}
+#' \code{\link{train_model}}, \code{\link{topic_scaled_2d}}, and the functions
+#' for outputting individual custom files:
+#' \code{\link{export_browser_topic_words}},
+#' \code{\link{export_browser_doc_topics}},
+#' \code{\link{export_browser_metadata}},
+#' \code{\link{export_browser_topic_scaled}},
+#' \code{\link{export_browser_info}}.
 #'
 #' @export
 export_browser_data <- function (m, out_dir, zipped=TRUE,
@@ -166,7 +183,9 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
                                  supporting_files=FALSE,
                                  overwrite=FALSE,
                                  internalize=FALSE,
-                                 info=NULL) {
+                                 info=NULL,
+                                 proper=FALSE,
+                                 digits=getOption("digits")) {
     if (!requireNamespace("jsonlite", quietly=TRUE)) {
         stop("jsonlite package required for browser export. Install from CRAN.")
     }
@@ -218,24 +237,22 @@ Set overwrite=TRUE to overwrite existing files."
         }
     }
 
-    keys <- top_words(m, n_top_words)
+    if (proper) {
+        keys <- top_words(m, n_top_words, tw_smooth_normalize(m))
+        if (!is.null(keys) && is.numeric(digits)) {
+            keys$weight <- round(keys$weight, digits)
+        }
+    } else {
+        keys <- top_words(m, n_top_words)
+    }
     if (!is.null(keys)) {
-        tw <- list(
+        export_browser_topic_words(
+            file=paste0(file.path(out_dir, "tw"), ".json"),
+            keys=keys,
             alpha=hyperparameters(m)$alpha,
-            tw=lapply(1:n_topics(m),
-                function (i) {
-                    setNames(
-                        keys[(i - 1) * n_top_words + 1:n_top_words,
-                             c("word", "weight")],
-                        c("words", "weights")
-                    )
-                }
-            )
-        )
-
-        write_dfb_file(jsonlite::toJSON(tw, dataframe="columns"),
-            paste0(file.path(out_dir, "tw"), ".json"), zip=FALSE,
-            overwrite=overwrite || internalize, index=index
+            digits=digits,  # irrelevant unless proper is TRUE
+            overwrite= overwrite || internalize,
+            index=index
         )
     } else {
         warning("Topic top words unavailable; unable to write tw.json")
@@ -243,14 +260,24 @@ Set overwrite=TRUE to overwrite existing files."
 
 
     if (!is.null(doc_topics(m))) {
-        # could compress much more aggressively considering that weights are
-        # integers, so could be stored as binary data rather than ASCII
-        dtm <- Matrix::Matrix(doc_topics(m), sparse=TRUE)
+        if (proper) {
+            dtm <- dt_smooth_normalize(m)(doc_topics(m))
+            if (is.numeric(digits)) {
+                dtm <- Matrix::drop0(Matrix::zapsmall(dtm, digits))
+            }
+        } else {
+            # could compress much more aggressively considering that weights are
+            # integers, so could be stored as binary data rather than ASCII
+            dtm <- Matrix::Matrix(doc_topics(m), sparse=TRUE)
+        }
 
-        write_dfb_file(jsonlite::toJSON(list(i=dtm@i, p=dtm@p, x=dtm@x)),
-            paste0(file.path(out_dir, "dt"), ".json"), zip=zipped,
+        export_browser_doc_topics(
+            file=paste0(file.path(out_dir, "dt"), ".json"),
+            dtm=dtm, 
+            digits=digits,  # irrelevant unless proper is TRUE
+            zip=zipped,
             overwrite=overwrite || internalize, index=index
-        )
+        ) 
     } else {
         warning("Document topics unavailable; unable to write dt.json.zip")
     }
@@ -273,16 +300,13 @@ display may not work as expected. See ?export_browser_data for details."
             md_frame <- md_frame[ , c(dfb_expected, rest_cols)]
         }
 
-        md_txt <- capture.output(
-            write.table(md_frame,
-                        quote=TRUE, sep=",",
-                        col.names=FALSE, row.names=FALSE,
-                        # d3.csv.* expects RFC 4180 compliance
-                        qmethod="double")
+        export_browser_metadata(
+            file=paste0(file.path(out_dir, "meta"), ".csv"),
+            meta=md_frame,
+            zip=zipped,
+            overwrite=overwrite || internalize,
+            index=index
         )
-        write_dfb_file(md_txt,
-            paste0(file.path(out_dir, "meta"), ".csv"), zip=zipped,
-            overwrite=overwrite || internalize, index=index)
     } else {
         warning(
 "Metadata frame unavailable, so document metadata has not been written."
@@ -290,14 +314,11 @@ display may not work as expected. See ?export_browser_data for details."
     }
 
     if (!is.null(topic_words(m))) {
-
-        write_dfb_file(capture.output(
-            write.table(topic_scaled_2d(m, n_scaled_words),
-                        quote=FALSE, sep=",", row.names=FALSE,
-                        col.names=FALSE)
-            ),
-            paste0(file.path(out_dir, "topic_scaled"), ".csv"), zip=FALSE,
-            overwrite=overwrite || internalize, index=index
+        export_browser_topic_scaled( 
+            file=paste0(file.path(out_dir, "topic_scaled"), ".csv"),
+            scaled=topic_scaled_2d(m, n_scaled_words),
+            overwrite=overwrite || internalize,
+            index=index
         )
     } else {
         warning(
@@ -317,11 +338,179 @@ display may not work as expected. See ?export_browser_data for details."
             # default stub info
             info <- getOption("dfrtopics.browser_info")
         }
-        info <- jsonlite::toJSON(info, auto_unbox=TRUE, pretty=4)
-
-        write_dfb_file(info, info_file, zip=FALSE,
-            overwrite=overwrite || internalize, index=index)
+        export_browser_info(
+            info_file,
+            info,
+            overwrite=overwrite || internalize,
+            index=index
+        )
     }
+}
+
+#' Export topic-word file for dfr-browser
+#'
+#' Exports the \code{tw.json} representation of the topic-word matrix as used by dfr-browser. Use this to customize the output (e.g. by changing the weighting of words in topics).
+#'
+#' @param file output file name
+#' @param keys data frame with \code{topic}, \code{word}, \code{weight} columns
+#' and \eqn{n} rows for each topic (as in the result of \code{\link{top_words}}
+#' @param alpha vector of topic hyperparameters \eqn{a}. The number of topics
+#' \eqn{K} is guessed from the length of this vector, so even if the alpha
+#' parameter is not meaningful, supply a vector of zeroes \emph{of length equal
+#' to} \eqn{K}.
+#' @param digits numerical rounding (passed on to \code{\link[jsonlite]{toJSON}})
+#' @param overwrite clobber existing file?
+#' @param index if non-NULL, output is assumed to go into an element with ID
+#' \code{m__DATA__tw} in an HTML file at this path. \code{file} is ignored.
+#'
+#' @seealso \code{\link{export_browser_data}} for a more automated export of
+#' all model information at once
+#' @export
+#' 
+export_browser_topic_words <- function (file, keys, alpha, digits=4,
+                                        overwrite, index) {
+    keys <- dplyr::arrange_(keys, ~ topic, ~ desc(weight))
+    n_top_words <- nrow(keys) / length(alpha)
+    if (!is.null(index)) {
+        file <- "tw.json"
+    }
+    tw <- list(
+        alpha=alpha,
+        tw=lapply(seq_along(alpha),
+            function (i) {
+                setNames(
+                    keys[(i - 1) * n_top_words + 1:n_top_words,
+                         c("word", "weight")],
+                    c("words", "weights")
+                )
+            }
+        )
+    )
+
+    write_dfb_file(jsonlite::toJSON(tw, dataframe="columns", digits=digits),
+        file, zip=FALSE, overwrite=overwrite, index=index
+    )
+}
+
+#' Export document-topic file for dfr-browser
+#'
+#' Exports the \code{dt.json[.zip]} representation of the document-topic matrix as used by dfr-browser. Use this function to customize the output (e.g. by changing the weighting).
+#'
+#' @param file output file name
+#' @param dtm document-topic matrix (will be coerced to sparse if necessary)
+#' @param digits numerical rounding (passed on to \code{\link[jsonlite]{toJSON}})
+#' @param zipped compress output?
+#' @param overwrite clobber existing file?
+#' @param index if non-NULL, output is assumed to go into an element with ID
+#' \code{m__DATA__dt} in an HTML file at this path. \code{file} is ignored.
+#'
+#' @seealso \code{\link{export_browser_data}} for a more automated export of
+#' all model information at once
+#' @export
+#'
+export_browser_doc_topics <- function (file, dtm, digits=4,
+                                       zipped, overwrite, index) { 
+    dtm <- as(dtm, "CsparseMatrix")
+    if (!is.null(index)) {
+        file <- "dt.json"
+    }
+    write_dfb_file(jsonlite::toJSON(list(i=dtm@i, p=dtm@p, x=dtm@x),
+                                    digits=digits),
+        file, zip=zipped, overwrite=overwrite, index=index
+    )
+}
+
+#' Export metadata file for dfr-browser
+#'
+#' Exports the \code{meta.csv[.zip]} metadata file for dfr-browser. This is a
+#' convenience function in case you wish to re-export metadata without changing
+#' anything else. Equivalent results can be achieved by modifying the metadata
+#' on the model object before calling \code{\link{export_browser_data}}.
+#'
+#' This file simply writes the supplied \code{meta} frame as a headerless CSV
+#' according to the conventions expected by the default settings in
+#' dfr-browser.
+#'
+#' @param file output file name
+#' @param meta data frame with metadata, one row per document
+#' @param zipped compress output?
+#' @param overwrite clobber existing file?
+#' @param index if non-NULL, output is assumed to go into an element with ID
+#' \code{m__DATA__meta} in an HTML file at this path. \code{file} is ignored.
+#'
+#' @seealso \code{\link{export_browser_data}} for a more automated export of
+#' all model information at once
+#' @export
+#'
+export_browser_metadata <- function (file, meta, zipped, overwrite, index) {
+    if (!is.null(index)) {
+        file <- "meta.csv"
+    }
+    md_txt <- capture.output(
+        write.table(meta,
+                    quote=TRUE, sep=",",
+                    col.names=FALSE, row.names=FALSE,
+                    # d3.csv.* expects RFC 4180 compliance
+                    qmethod="double")
+    )
+    write_dfb_file(md_txt,
+        file, zip=zipped, overwrite=overwrite, index=index)
+}
+
+#' Export scaled topic coordinates for dfr-browser
+#'
+#' Exports the \code{topic_scaled.csv} file for dfr-browser's "Scaled" view of a topic model. Use this function to export different coordinates than those generated by default in \code{\link{export_browser_data}} (say, with a different dimension-reduction method, like t-SNE).
+#'
+#' @param file output file name
+#' @param scaled two-column coordinate matrix, one row per topic
+#' @param overwrite clobber existing file?
+#' @param index if non-NULL, output is assumed to go into an element with ID
+#' \code{m__DATA__topic_scaled} in an HTML file at this path. \code{file} is
+#' ignored.
+#'
+#' @seealso \code{\link{export_browser_data}} for a more automated export of
+#' all model information at once
+#' @export
+#'
+export_browser_topic_scaled <- function (file, scaled, overwrite, index) {
+    if (!is.null(index)) {
+        file <- "topic_scaled.csv"
+    }
+    write_dfb_file(capture.output(
+        write.table(scaled, quote=FALSE, sep=",", row.names=FALSE,
+                    col.names=FALSE)
+        ),
+        file, zip=FALSE, overwrite=overwrite, index=index
+    )
+}
+
+#' Export browser information/configuration for dfr-browser
+#'
+#' Exports the \code{info.json} file for dfr-browser. This is a convenience
+#' function in case you do not wish to re-export all other browser data files.
+#' An equivalent result can be achieved by passing the desired configuration as
+#' the \code{info} parameter to \code{\link{export_browser_data}}.
+#'
+#' @param file output file name
+#' @param info list, to be converted to JSON for export.
+#' @param overwrite clobber existing file?
+#' @param index if non-NULL, output is assumed to go into an element with ID
+#' \code{m__DATA__info} in an HTML file at this path. \code{file} is
+#' ignored.
+#'
+#' @seealso \code{\link{export_browser_data}} for a more automated export of
+#' all model information at once
+#' @export
+#'
+export_browser_info <- function (file, info, overwrite, index) {
+    if (!is.null(index)) {
+        file <- "info.json"
+    }
+
+    info <- jsonlite::toJSON(info, auto_unbox=TRUE, pretty=4)
+
+    write_dfb_file(info, file, zip=FALSE,
+        overwrite=overwrite, index=index)
 }
 
 #' Create and launch a model browser
