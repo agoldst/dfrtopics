@@ -162,9 +162,15 @@ to get Java working."
 #' }\item{\code{c("console", "file")}}{
 #' Both file and console logging.
 #' }\item{A file path}{
-#' The path is normalized and given to Java as the value of the
-#' system property \code{java.util.logging.config.file}. The file should be a
-#' Java Properties file that adjusts Java's logging settings.}}
+#' The path is normalized and given to Java as the value of the system property
+#' \code{java.util.logging.config.file}. The file should be a Java Properties
+#' file that adjusts Java's logging settings. For examples, see
+#' \code{list.files(system.file("javaconfig", package="dfrtopics"))}, or
+#' extract the mallet default \code{logging.properties} to the working
+#' directory as follows: \code{unzip(system.file("java", "mallet.jar",
+#' package="mallet"), "cc/mallet/util/resources/logging.properties",
+#' junkpaths=T)}.
+#' }}
 #'
 #' @name mallet-logging
 NULL
