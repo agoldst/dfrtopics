@@ -181,10 +181,17 @@ test_that("We can align models from a buncha sources", {
 
     cl <- align_topics(dst)
 
-    expect_less_than(max(unlist(cl$clusters)), 3 * K / 2 + 1 / 2,
-                     info="Three models yields at worst all-pair clusters")
+    # check that we have no isolates, at least. normally we get eight triples,
+    # but it's possible to get pairs. Examples of values that produce 9
+    # clusters instead of 8, with gaps in numbering:
+    # seeds <- 346749 + 0:2
+    # or
+    # seeds <- 21665 + 0:2
 
-    message("model seeds: ", paste(seeds, collapse=" "))
+    expect_true(all(table(unlist(cl$clusters)) > 1),
+        info=paste("isolates produced with seeds",
+                   paste(seeds, collapse=" "))
+    )
 })
 
 
