@@ -1,5 +1,5 @@
 #' Explore and analyze topic models
-#' 
+#'
 #' This package supplies functions for creating and analyzing topic models using
 #' \href{http://mallet.cs.umass.edu}{MALLET}. It has numerous functions to help
 #' process data from one particular source, JSTOR's
@@ -30,13 +30,13 @@
 #' plot_series(topic_series(m))
 #' dfr_browser(m)
 #' }
-#' 
+#'
 #' @name dfrtopics
 #' @import Matrix
 #' @useDynLib dfrtopics
 #' @importFrom Rcpp sourceCpp
 #' @docType package
-#'   
+#'
 NULL
 
 
@@ -60,7 +60,7 @@ load_mallet <- function () {
         return()
     }
 
-    javap <- options("java.parameters")[[1]]
+    javap <- getOption("java.parameters")
     jheap <- grep("-Xmx\\w+", javap, value=TRUE)
 
     if (length(jheap) == 0) {
@@ -78,6 +78,38 @@ flaw in R and rJava."
         )
 
         options(java.parameters="-Xmx2g")
+        on.exit(options(java.parameters=javap), add=TRUE)
+    }
+
+    # Process mallet logging options by choosing a config file.  This is pretty
+    # lame, but I can't seem to get mallet logging to respect settings I give
+    # with J("java.lang.System")$setProperty after the JVM is launched. So our
+    # only chance is to preempt the default configuration at initialization.
+    logging <- getOption("dfrtopics.mallet_logging")
+    if (identical(logging, "default") || identical(logging, "console")) {
+        logconfig <- NULL
+    } else if (identical(logging, "file")) {
+        logconfig <- system.file("javaconfig",
+            "logging-file.properties", package="dfrtopics")
+    } else if (identical(sort(logging), c("console", "file"))) {
+        logconfig <- system.file("javaconfig",
+            "logging-console-file.properties", package="dfrtopics")
+    } else if (identical(logging, "none")) {
+        logconfig <- system.file("javaconfig",
+            "logging-none.properties", package="dfrtopics")
+    } else if (file.exists(logging))  {
+        # custom file
+        logconfig <- normalizePath(logging)
+    } else {
+        logconfig <- NULL
+    }
+
+    # now set the logging config file option
+    if (!is.null(logconfig)) {
+        options(java.parameters=c(
+            getOption("java.parameters"),
+            paste0("-Djava.util.logging.config.file=", logconfig)
+        ))
         on.exit(options(java.parameters=javap), add=TRUE)
     }
 
@@ -106,6 +138,37 @@ to get Java working."
     }
 }
 
+#' MALLET logging options
+#'
+#' By default, MALLET provides a quite verbose continual report on the progress
+#' of the modeling process. This is normally useful, but sometimes you might
+#' prefer for the log to be saved to disk or suppressed altogether.
+#' Unfortunately the interaction between R and MALLET makes this difficult to
+#' configure: console output from rJava cannot be easily captured or
+#' redirected. But MALLET has built-in logging configuration options. The
+#' package option \code{dfrtopics.mallet_logging} can be set to change MALLET's
+#' behavior in this regard. The option must be set \emph{before} any MALLET
+#' functions are invoked (e.g. via \code{\link{make_instances}} or
+#' \code{\link{train_model}}). The option has the following possible settings:
+#' \describe{
+#' \item{\code{"default"} or \code{"console"}}{
+#' The MALLET default (verbose console output).
+#' }\item{\code{"file"}}{
+#' Output \emph{appended} to a file named \code{mallet0.log} in the working
+#' directory (this file is created if necessary). No limit is placed on the
+#' size of the log file, which might therefore grow very large.
+#' }\item{\code{"none"}}{
+#' Logging suppressed.
+#' }\item{\code{c("console", "file")}}{
+#' Both file and console logging.
+#' }\item{A file path}{
+#' The path is normalized and given to Java as the value of the
+#' system property \code{java.util.logging.config.file}. The file should be a
+#' Java Properties file that adjusts Java's logging settings.}}
+#'
+#' @name mallet-logging
+NULL
+
 # package load
 .onLoad <- function (libname, pkgname) {
     op <- options()
@@ -126,7 +189,8 @@ VIS=list(
         )
     )
 )
-        )
+        ),
+        dfrtopics.mallet_logging="default"
     )
 
     to_set <- !(names(op_ours) %in% names(op))
