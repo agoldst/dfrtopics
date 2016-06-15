@@ -156,20 +156,22 @@ test_that("We can align models from a buncha sources", {
     skip_if_not_installed("stm")
     library(topicmodels)
     library(stm)
+
+    seeds <- round(runif(1, 1, 1e6)) + 0:2
     ldag <- wordcounts_DocumentTermMatrix(counts) %>% 
-        LDA(k=K, control=list(alpha=0.1)) %>%
+        LDA(k=K, control=list(alpha=0.1, seed=seeds[1])) %>%
         foreign_model(meta)
     corp <- wordcounts_stm_inputs(counts, meta)
     corp$data$journaltitle <- factor(corp$data$journaltitle)
     stg <- stm(corp$documents, corp$vocab, K=K,
               prevalence = ~ journaltitle,
               data=corp$data,
-              max.em.its=40,
+              max.em.its=40, seed=seeds[2],
               verbose=F) %>%
         foreign_model(corp$data)
 
     mm <- wordcounts_instances(counts) %>%
-        train_model(n_topics=K)
+        train_model(n_topics=K, seed=seeds[3])
 
     dst <- model_distances(list(mm, stg, ldag), V)
     expect_true(all(dfrtopics:::unnest_model_distances(dst) > 0))
@@ -178,6 +180,8 @@ test_that("We can align models from a buncha sources", {
 
     expect_less_than(max(unlist(cl$clusters)), 3 * K / 2 + 1 / 2,
                      info="Three models yields at worst all-pair clusters")
+
+    message("model seeds: ", paste(seeds, collapse=" "))
 })
 
 
