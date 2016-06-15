@@ -292,8 +292,8 @@ test_that("proper doc-topics actually are", {
     expect_equal(Matrix(round(dt_prop, dg), sparse=TRUE), dtm,
         info="check that input and output matrices match"
     )
-    expect_equal(rowSums(dtm), rep(1, nrow(dtm)), tolerance=10^-dg,
-        info="check that matrix actually is proper"
+    expect_equal(rowSums(dtm), rep(1, nrow(dtm)), tolerance=10^-(dg - 1),
+        info="check that matrix is actually approximately proper"
     )
 
     clear_files(out_files_non_zip)
