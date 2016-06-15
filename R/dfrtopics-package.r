@@ -94,7 +94,7 @@ flaw in R and rJava."
     } else if (identical(sort(logging), c("console", "file"))) {
         logconfig <- system.file("javaconfig",
             "logging-console-file.properties", package="dfrtopics")
-    } else if (identical(logging, "none")) {
+    } else if (identical(logging, "none") || identical(logging, "off")) {
         logconfig <- system.file("javaconfig",
             "logging-none.properties", package="dfrtopics")
     } else if (file.exists(logging))  {
@@ -157,7 +157,7 @@ to get Java working."
 #' Output \emph{appended} to a file named \code{mallet0.log} in the working
 #' directory (this file is created if necessary). No limit is placed on the
 #' size of the log file, which might therefore grow very large.
-#' }\item{\code{"none"}}{
+#' }\item{\code{"none"} or \code{"off"}}{
 #' Logging suppressed.
 #' }\item{\code{c("console", "file")}}{
 #' Both file and console logging.

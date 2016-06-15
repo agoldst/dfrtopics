@@ -21,7 +21,7 @@ The MALLET default (verbose console output).
 Output \emph{appended} to a file named \code{mallet0.log} in the working
 directory (this file is created if necessary). No limit is placed on the
 size of the log file, which might therefore grow very large.
-}\item{\code{"none"}}{
+}\item{\code{"none"} or \code{"off"}}{
 Logging suppressed.
 }\item{\code{c("console", "file")}}{
 Both file and console logging.
