@@ -1,4 +1,7 @@
 context("MALLET diagnostics")
+options(java.parameters="-Xmx2g",
+        dfrtopics.mallet_logging="none",
+        dplyr.show_progress=FALSE)
 
 # run a scrap model: we're just doing manipulation here, not worrying
 # about quality

@@ -1,4 +1,7 @@
 context("Topic inference support")
+options(java.parameters="-Xmx2g",
+        dfrtopics.mallet_logging="none",
+        dplyr.show_progress=FALSE)
 
 data_dir <- file.path(path.package("dfrtopics"),
                           "test-data", "pmla-modphil1905-1915")

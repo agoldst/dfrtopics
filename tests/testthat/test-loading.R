@@ -1,4 +1,7 @@
 context("writing/loading model output files")
+options(java.parameters="-Xmx2g",
+        dfrtopics.mallet_logging="none",
+        dplyr.show_progress=FALSE)
 
 out_dir <- file.path(tempdir(), "test-loading")
 if (!file.exists(out_dir)) {

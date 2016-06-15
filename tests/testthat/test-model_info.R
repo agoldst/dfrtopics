@@ -1,4 +1,7 @@
 context("Model inspection with topic info functions")
+options(java.parameters="-Xmx2g",
+        dfrtopics.mallet_logging="none",
+        dplyr.show_progress=FALSE)
 
 # construct a dummy trial model. We're not going for quality here,
 # since this is just to check that all the formatters and extractors

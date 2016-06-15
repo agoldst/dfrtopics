@@ -1,4 +1,7 @@
 context("Using models from other packages")
+options(java.parameters="-Xmx2g",
+        dfrtopics.mallet_logging="none",
+        dplyr.show_progress=FALSE)
 
 clear_files <- function (fs, ...) {
     for (f in fs) {

@@ -1,4 +1,7 @@
 context("time series utilities")
+options(java.parameters="-Xmx2g",
+        dfrtopics.mallet_logging="none",
+        dplyr.show_progress=FALSE)
 
 library("dplyr") # for testing
 
