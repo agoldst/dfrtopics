@@ -65,6 +65,7 @@ out_files <- file.path(out_dir, c(
     "meta.csv.zip",
     "topic_scaled.csv",
     "tw.json"))
+out_files_non_zip <- gsub("\\.zip$", "", out_files)
 
 test_that("dfr-browser export produces the right files", {
 
@@ -145,7 +146,6 @@ test_that("metadata munging acts as expected", {
 
 test_that("non-zipped export produces files", {
 
-    out_files_non_zip <- gsub("\\.zip$", "", out_files)
     clear_files(out_files_non_zip)
     export_browser_data(m, out_dir=out_dir, zipped=F,
                         n_scaled_words=100)
@@ -270,7 +270,6 @@ test_that("dfr_browser would launch browser on the right file", {
 })
 
 test_that("proper doc-topics actually are", { 
-    out_files_non_zip <- gsub("\\.zip$", "", out_files)
     clear_files(out_files_non_zip)
 
     dt_prop <- dt_smooth_normalize(m)(doc_topics(m))
@@ -300,5 +299,28 @@ test_that("proper doc-topics actually are", {
         info="check that matrix is actually approximately proper"
     )
 
+    clear_files(out_files_non_zip)
+})
+
+test_that("permuted export behaves correctly", {
+    # pick a non-self-inverse permutation
+    n <- n_topics
+    if (n_topics %% 2 == 1) n <- n - 1
+
+    p <- c(n:(n / 2 + 1), 1:(n / 2))
+    if (n_topics %% 2 == 1) p <- c(n_topics, p)
+
+    export_browser_data(m, out_dir=out_dir, zipped=F, n_top_words=10,
+                        n_scaled_words=100, permute=p, digits=4)
+    dtj <- jsonlite::fromJSON(file.path(out_dir, "dt.json"))
+    dtm <- sparseMatrix(i=dtj$i, p=dtj$p, x=dtj$x, index1=FALSE)
+    expect_equal(doc_topics(m)[ , 4 ], dtm[, match(4, p)])
+    expect_equal(doc_topics(m), as.matrix(dtm)[, order(p)], check.attributes=F)
+    twj <- jsonlite::fromJSON(file.path(out_dir, "tw.json"),
+                              simplifyDataFrame=F)
+    expect_equal(round(hyperparameters(m)$alpha, 4)[p], twj$alpha)
+    tw2 <- top_words(m, 10) %>% filter(topic == p[2])
+    expect_equal(twj$tw[[2]]$weights, tw2$weight)
+    expect_equal(twj$tw[[2]]$words, tw2$word)
     clear_files(out_files_non_zip)
 })

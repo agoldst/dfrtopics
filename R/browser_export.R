@@ -152,6 +152,9 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' decimal place, yielding a somewhat sparser doc-topics matrix (the topic-word
 #' matrix is more aggressively truncated anyway). Set to NULL for no rounding.
 #' Rounded weights are renormalized within dfr-browser itself.
+#' @param permute if non-NULL, specifies a renumbering of the topics: the new
+#' topic \code{k} is old topic \code{permute[k]}. (If you have the inverse, use
+#' \code{\link{order}(permute)} to invert it back.)
 #'
 #' @examples
 #'
@@ -185,7 +188,8 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
                                  internalize=FALSE,
                                  info=NULL,
                                  proper=FALSE,
-                                 digits=getOption("digits")) {
+                                 digits=getOption("digits"),
+                                 permute=NULL) {
     if (!requireNamespace("jsonlite", quietly=TRUE)) {
         stop("jsonlite package required for browser export. Install from CRAN.")
     }
@@ -237,6 +241,12 @@ Set overwrite=TRUE to overwrite existing files."
         }
     }
 
+    # validate permute
+    if (!is.null(permute) && !identical(sort(permute), 1:n_topics(m))) {
+        warning("ignoring invalid permute parameter")
+        permute <- NULL
+    }
+
     if (proper) {
         keys <- top_words(m, n_top_words, tw_smooth_normalize(m))
         if (!is.null(keys) && is.numeric(digits)) {
@@ -252,7 +262,8 @@ Set overwrite=TRUE to overwrite existing files."
             alpha=hyperparameters(m)$alpha,
             digits=digits,  # irrelevant unless proper is TRUE
             overwrite= overwrite || internalize,
-            index=index
+            index=index,
+            permute
         )
     } else {
         warning("Topic top words unavailable; unable to write tw.json")
@@ -276,7 +287,8 @@ Set overwrite=TRUE to overwrite existing files."
             dtm=dtm, 
             digits=digits,  # irrelevant unless proper is TRUE
             zip=zipped,
-            overwrite=overwrite || internalize, index=index
+            overwrite=overwrite || internalize, index=index,
+            permute
         ) 
     } else {
         warning("Document topics unavailable; unable to write dt.json.zip")
@@ -318,7 +330,8 @@ display may not work as expected. See ?export_browser_data for details."
             file=paste0(file.path(out_dir, "topic_scaled"), ".csv"),
             scaled=topic_scaled_2d(m, n_scaled_words),
             overwrite=overwrite || internalize,
-            index=index
+            index=index,
+            permute
         )
     } else {
         warning(
@@ -362,13 +375,20 @@ display may not work as expected. See ?export_browser_data for details."
 #' @param overwrite clobber existing file?
 #' @param index if non-NULL, output is assumed to go into an element with ID
 #' \code{m__DATA__tw} in an HTML file at this path. \code{file} is ignored.
+#' @param permute if non-NULL, exported topic \code{k} will correspond to the
+#' topic numbered \code{permute[k]} in the data
 #'
 #' @seealso \code{\link{export_browser_data}} for a more automated export of
 #' all model information at once
 #' @export
 #' 
 export_browser_topic_words <- function (file, keys, alpha, digits=4,
-                                        overwrite, index) {
+                                        overwrite, index,
+                                        permute) {
+    if (!is.null(permute)) {
+        keys$topic <- match(keys$topic, permute)
+        alpha <- alpha[permute]
+    }
     keys <- dplyr::arrange_(keys, ~ topic, ~ desc(weight))
     n_top_words <- nrow(keys) / length(alpha)
     if (!is.null(index)) {
@@ -403,14 +423,19 @@ export_browser_topic_words <- function (file, keys, alpha, digits=4,
 #' @param overwrite clobber existing file?
 #' @param index if non-NULL, output is assumed to go into an element with ID
 #' \code{m__DATA__dt} in an HTML file at this path. \code{file} is ignored.
+#' @param permute if non-NULL, exported topic \code{k} will correspond to the
+#' topic numbered \code{permute[k]} in the data
 #'
 #' @seealso \code{\link{export_browser_data}} for a more automated export of
 #' all model information at once
 #' @export
 #'
 export_browser_doc_topics <- function (file, dtm, digits=4,
-                                       zipped, overwrite, index) { 
+                                       zipped, overwrite, index, permute) { 
     dtm <- as(dtm, "CsparseMatrix")
+    if (!is.null(permute)) {
+        dtm <- dtm[ , permute]
+    }
     if (!is.null(index)) {
         file <- "dt.json"
     }
@@ -467,14 +492,20 @@ export_browser_metadata <- function (file, meta, zipped, overwrite, index) {
 #' @param index if non-NULL, output is assumed to go into an element with ID
 #' \code{m__DATA__topic_scaled} in an HTML file at this path. \code{file} is
 #' ignored.
+#' @param permute if non-NULL, exported topic \code{k} will correspond to the
+#' topic numbered \code{permute[k]} in the data
 #'
 #' @seealso \code{\link{export_browser_data}} for a more automated export of
 #' all model information at once
 #' @export
 #'
-export_browser_topic_scaled <- function (file, scaled, overwrite, index) {
+export_browser_topic_scaled <- function (file, scaled, overwrite, index,
+                                         permute) {
     if (!is.null(index)) {
         file <- "topic_scaled.csv"
+    }
+    if (!is.null(permute)) {
+        scaled <- scaled[permute]
     }
     write_dfb_file(capture.output(
         write.table(scaled, quote=FALSE, sep=",", row.names=FALSE,
@@ -547,8 +578,8 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' @param internalize if TRUE, model data is in the browser home page rather
 #'   than separate files. See Details.
 #' @param ... passed on to \code{\link{export_browser_data}}, q.v., especially
-#' the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, and
-#' \code{proper}
+#' the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, 
+#' \code{proper}, and \code{permute}
 #'
 #' @seealso \code{\link{export_browser_data}} which does the work of exporting
 #'   files, \code{\link{model_dfr_documents}}, \code{\link{train_model}},
@@ -561,6 +592,14 @@ export_browser_info <- function (file, info, overwrite, index) {
 #'     "stoplist.txt", n_topics=40)
 #' # launch browser
 #' dfr_browser(m)
+#'
+#' # generate a second model and align its topics with the first for more
+#' # convenient comparisons
+#' m2 <- model_dfr_documents("citations.CSV", "wordcounts",
+#'     "stoplist.txt", n_topics=40)
+#' cl <- model_distances(list(m, m2), n_words=40) %>% align_topics()
+#' dfr_browser(m2, permute=match(cl$clusters[[1]], cl$clusters[[2]])))
+#' 
 #' }
 #'
 #' @export
