@@ -134,16 +134,7 @@ The counts are not quite ready to be passed on to MALLET. It's important to be a
 
     This is a no-op in this case: such features were all ranked below 20000.
 
-3. DfR wordcounts are already case-folded (all lowercase), but you may wish to transform the features further, by, for example, stripping accents, normalizing orthography, or stemming. These are straightforward operations with `dplyr`, and no functions are provided for this. As an example, however, here is how you might apply a popular stemmer:
-
-    ```{r eval=F}
-    # not run for this vignette's example
-    library("SnowballC")
-    counts <- counts %>%
-        mutate(word=wordStem(word)) # English stemmer
-    ```
-
-    (I have not used this here, however.)
+3. DfR wordcounts are already case-folded (all lowercase), but you may wish to transform the features further, by, for example, stripping accents, normalizing orthography, or stemming. Applying these transformations to `counts` is straightforward with `dplyr`, and no functions are provided for this. The [stringi](https://cran.r-project.org/web/packages/stringi/) library has powerful casefolding and Unicode normalization features which I often use in this context.^[A 2016 paper suggests that stemming does not improve the performance of topic models: Schofield and Mimno, "[Comparing Apples to Apple: The Effects of Stemmers on Topic Models](https://tacl2013.cs.columbia.edu/ojs/index.php/tacl/article/view/868)."]
 
 ## Preparing the MALLET input data format
 
@@ -453,5 +444,5 @@ I have included some functions for MALLET's "topic inference" functionality, whe
 
 The package also contains an *experimental* implementation of a posterior predictive check of the model fit which may help to diagnose the quality of individual topics and of the overall model. The check is described in the help files for `imi_check` and `mi_check`. I make no guarantee that the implementation is correct (and would welcome diagnoses or verifications).
 
-*Even more experimental* is a function for finding topics that are similar across models: `align_topics` (see the help file and references to other functions there). In order to make it possible to align models from other topic modeling packages, I supply some simple glue: the `foreign_model` function will "wrap" a model from the [topicmodels](http://cran.r-project.org/web/packages/topicmodels) or [stm](https://cran.r-project.org/web/packages/stm) packages in an object that can be used with this package's functions. Again I urge caution in using these functions, since I have yet carefully validated them.
+*Even more experimental* is a function for finding topics that are similar across models: `align_topics` (see the help file and references to other functions there). In order to make it possible to align models from other topic modeling packages, I supply some simple glue: the `foreign_model` function will "wrap" a model from the [topicmodels](http://cran.r-project.org/web/packages/topicmodels) or [stm](https://cran.r-project.org/web/packages/stm) packages in an object that can be used with this package's functions. Again I urge caution in using these functions, since I have not yet carefully validated them.
 

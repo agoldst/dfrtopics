@@ -55,12 +55,6 @@ counts <- counts %>%
     group_by(word) %>%
     filter(sum(weight) > 3)
 
-## ----eval=F--------------------------------------------------------------
-#  # not run for this vignette's example
-#  library("SnowballC")
-#  counts <- counts %>%
-#      mutate(word=wordStem(word)) # English stemmer
-
 ## ------------------------------------------------------------------------
 ilist <- wordcounts_instances(counts)
 
