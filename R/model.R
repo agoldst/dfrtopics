@@ -1250,12 +1250,13 @@ Sampling state will not be available after loading."
 read_state_bigmem <- function (simplified_state_file, K) {
     ss <- read_sampling_state(simplified_state_file)
 
-    docs <- bigtabulate::bigsplit(ss, c("doc", "topic"))
+    docs <- bigtabulate::bigsplit(ss, c("doc", "topic"),
+                                  splitcol=NA_real_)
     dtl <- vapply(docs, function (i) sum(ss[i, "count"]), integer(1))
     doc_topics <- matrix(dtl, ncol=K)
 
     words <- bigtabulate::bigsplit(ss, c("topic", "type"),
-                                   splitret="sparselist")
+                                   splitcol=NA_real_, splitret="sparselist")
     twl <- vapply(words, function (i) sum(ss[i, "count"]), integer(1))
     twl_ij <- stringr::str_split_fixed(names(twl), ":", 2)
     topic_words <- Matrix::sparseMatrix(
