@@ -231,5 +231,11 @@ test_that("different topic-word matrix types is okay", {
     expect_equal(model_distances(msmat, V)$d, dst$d)
 })
 
+test_that("naive_cluster is equivalent to naivest_cluster", {
+    cl <- align_topics(dst)
+    ncl <- dfrtopics:::naivest_cluster(dst)
+    expect_equal(cl$clusters, ncl)
+})
+
 message("random seed started at: ", s)
 

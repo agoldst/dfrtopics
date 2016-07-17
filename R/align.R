@@ -264,8 +264,8 @@ alignment_frame <- function (clusters) {
 #'
 #' @param x result from \code{\link{align_topics}}
 #'
-#' @return a vector whose \code{i}th element is the width of cluster \code{i}. 
-#' If there is no cluster with that number, the corresponding element is 
+#' @return a vector whose \code{i}th element is the width of cluster \code{i}.
+#' If there is no cluster with that number, the corresponding element is
 #' \code{NA}. Single-member clusters have a width of zero.
 #'
 #' @seealso \code{\link{align_topics}}, \code{\link{alignment_frame}}
@@ -279,4 +279,85 @@ widths.topic_alignment <- function (x) {
         unnest_model_distances(x$model_distances)
     )
 }
+
+# The naivest cluster algorithm
+#
+# For testing purposes, this function implements the single-linkage clustering
+# algorithm described in
+# \href{https://en.wikipedia.org/wiki/Single-linkage_clustering}{Wikipedia}.
+# It should yield the same clustering as \code{\link{align_topics}} (for the
+# sketch of a proof, see comments on the source code in \code{cluster.cpp}).
+#
+naivest_cluster <- function (dst, threshold=Inf, verbose=FALSE) {
+    K <- c(nrow(dst$d[[1]][[1]]),
+           vapply(dst$d[[1]], ncol, integer(1)))
+    M <- length(K)
+    # model membership indicator for topic sequence
+    ms <- rep(seq_along(K), times=K)
+    # topic indicator
+    ks <- do.call(c, lapply(K, seq))
+
+    # construct upper-tri distance matrix D (probably faster ways to do this)
+    D <- matrix(NA, nrow=sum(K), ncol=sum(K))
+    cumK <- c(0, cumsum(K))
+    for (m1 in 1:(M - 1))
+        for (m2 in (m1 + 1):M)
+            D[(1 + cumK[m1]):cumK[m1 + 1],
+              (1 + cumK[m2]):cumK[m2 + 1]] <- dst[m1, m2]
+    # copy to lower-tri
+    D[lower.tri(D)] <- t(D)[lower.tri(D)]
+
+    # initial singleton clusters
+    cl <- as.list(seq(sum(K)))
+
+    allowable <- function (ds)
+        length(intersect(ms[cl[[ds[1]]]], ms[cl[[ds[2]]]])) == 0
+
+    if (verbose) {
+        fmt <- function (i) paste(ms[cl[[i]]] - 1, ks[cl[[i]]] - 1,
+                                  sep=":", collapse=" ")
+        # emit logging information in form comparable to naive_cluster
+        blurt <- function (cl1, cl2, d)
+            message(fmt(cl1), " | ", fmt(cl2), " [", signif(d, 4), "] ",
+                    cl1 - 1, "/", cl2 - 1)
+    } else
+        blurt <- function (...) { }
+
+    done <- F
+    while (!done) {
+        done <- T
+        for (i in order(D)) {
+            if (D[i] > threshold || is.na(D[i]))
+                break
+            ds <- arrayInd(i, dim(D))
+            if (allowable(ds)) {
+                done <- F
+                break
+            }
+        }
+        if (!done) {
+            ds <- sort(ds) # ensure ds[1] is the smaller index
+            blurt(ds[1], ds[2], D[i])
+            # merge
+            cl[[ds[1]]] <- c(cl[[ds[1]]], cl[[ds[2]]])
+            cl[[ds[2]]] <- NULL
+            D[ds[1], ] <- pmin(D[ds[1], ], D[ds[2], ])
+            D <- D[-ds[2], -ds[2]]
+
+            # TODO heights
+        }
+    }
+
+    # unravel cl
+    result_flat <- numeric(sum(K))
+    for (i in seq_along(cl)) {
+        result_flat[cl[[i]]] <- i
+    }
+
+    lapply(seq(M), function (m)
+        result_flat[(1 + cumK[m]):cumK[m + 1]]
+    )
+
+}
+
 
