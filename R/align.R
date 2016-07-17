@@ -203,10 +203,12 @@ derive one from a list of models.")
     }
 
     cl <- naive_cluster(dst_flat, K, threshold)
+
     structure(
         list(
-            # naive_cluster numbers clusters from 0
-             clusters=lapply(cl$clusters, `+`, 1),
+            # relabel clusters as sequential numbers from 1
+             clusters=lapply(cl$clusters, match,
+                 sort(unique(unlist(cl$clusters)))),
              distances=cl$distances,
              model_distances=dst,
              threshold=threshold
