@@ -2,7 +2,7 @@ Package: dfrtopics
 Title: Tools for exploring topic models of text
 Description: This package provides tools for exploring topic models created by
     MALLET, with specialized functions for handling JSTOR Data for Research data.
-Version: 0.2.4.1
+Version: 0.2.4.2
 Author: Andrew Goldstone <andrew.goldstone@gmail.com>
 Maintainer: Andrew Goldstone <andrew.goldstone@gmail.com>
 Imports: 
