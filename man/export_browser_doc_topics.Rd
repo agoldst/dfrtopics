@@ -4,7 +4,8 @@
 \alias{export_browser_doc_topics}
 \title{Export document-topic file for dfr-browser}
 \usage{
-export_browser_doc_topics(file, dtm, digits = 4, zipped, overwrite, index)
+export_browser_doc_topics(file, dtm, digits = 4, zipped, overwrite, index,
+  permute)
 }
 \arguments{
 \item{file}{output file name}
@@ -19,6 +20,9 @@ export_browser_doc_topics(file, dtm, digits = 4, zipped, overwrite, index)
 
 \item{index}{if non-NULL, output is assumed to go into an element with ID
 \code{m__DATA__dt} in an HTML file at this path. \code{file} is ignored.}
+
+\item{permute}{if non-NULL, exported topic \code{k} will correspond to the
+topic numbered \code{permute[k]} in the data}
 }
 \description{
 Exports the \code{dt.json[.zip]} representation of the document-topic matrix as used by dfr-browser. Use this function to customize the output (e.g. by changing the weighting).

@@ -7,7 +7,7 @@
 export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
   n_scaled_words = 1000, supporting_files = FALSE, overwrite = FALSE,
   internalize = FALSE, info = NULL, proper = FALSE,
-  digits = getOption("digits"))
+  digits = getOption("digits"), permute = NULL)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or
@@ -50,6 +50,10 @@ in document length---and increase the storage space required).}
 decimal place, yielding a somewhat sparser doc-topics matrix (the topic-word
 matrix is more aggressively truncated anyway). Set to NULL for no rounding.
 Rounded weights are renormalized within dfr-browser itself.}
+
+\item{permute}{if non-NULL, specifies a renumbering of the topics: the new
+topic \code{k} is old topic \code{permute[k]}. (If you have the inverse, use
+\code{\link{order}(permute)} to invert it back.)}
 }
 \description{
 Transform and save modeling results in a format suitable for use by

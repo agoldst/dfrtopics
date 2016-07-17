@@ -20,8 +20,8 @@ than separate files. See Details.}
 \item{browse}{if TRUE, launch web browser after export for viewing}
 
 \item{...}{passed on to \code{\link{export_browser_data}}, q.v., especially
-the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, and
-\code{proper}}
+the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, 
+\code{proper}, and \code{permute}}
 }
 \description{
 Export model data and all supporting files needed to browse a model
@@ -56,6 +56,14 @@ m <- model_dfr_documents("citations.CSV", "wordcounts",
     "stoplist.txt", n_topics=40)
 # launch browser
 dfr_browser(m)
+
+# generate a second model and align its topics with the first for more
+# convenient comparisons
+m2 <- model_dfr_documents("citations.CSV", "wordcounts",
+    "stoplist.txt", n_topics=40)
+cl <- model_distances(list(m, m2), n_words=40) \%>\% align_topics()
+dfr_browser(m2, permute=match(cl$clusters[[1]], cl$clusters[[2]])))
+
 }
 
 }

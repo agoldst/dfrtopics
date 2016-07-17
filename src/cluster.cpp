@@ -22,6 +22,34 @@ struct pair_dist_cmp {
     }
 };
 
+// A straightforward algorithm for constrained single-linkage
+// clustering can be adapted from the generic single-linkage
+// algorithm given on Wikipedia s.v. single-linkage clustering
+// (the only change is a check at each merge step that the merger
+// is allowed). The routine below implements this slightly
+// differently for probably no performance gain at all. We simply
+// sort the list of pairwise distances and consider them in
+// sequence, merging clusters when the merger is allowed and the
+// cluster is not already merged.
+//
+// To see that this approach makes exactly the same sequence of
+// clusterings, suppose that OA (our approach) agrees with the
+// first N steps of the SA (straightforward algorithm). Let the
+// next merger made by OA be I1, J1 for some pair of points i1 in
+// I1, j1 in J1, and set d1 = d(i1, j1). Similarly, let the next
+// merger made by SA be I2, J2 at distance d2 = d(i2, j2), with
+// i2, j2 chosen from I2, J2 to minimize d2. Suppose first that
+// d2 < d1. Because OA considers distances in sequence, OA must
+// have already considered d(i2, j2) and merged I2, J2. But this
+// violates our inductive hypothesis. For the edge case d1 = d2
+// let us stipulate that we have a tiebreaking method that is
+// independent of clustering algorithm. That leaves d2 > d1. By
+// assumption I1, J1 are not already merged. Then again d(I1, J1)
+// <= d(i1, j1) = d1 < d2. So SA's next step can only be to merge
+// I1, J1 to avoid contradiction: I1 = I2, J1 = J2 (or indices
+// swapped). Thus the sequence of clusterings is the same, by
+// induction. Quod erat hand-wavandum.
+//
 // [[Rcpp::export]]
 List naive_cluster(NumericVector D, IntegerVector K, double threshold) {
     int M = K.size();

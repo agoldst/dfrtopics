@@ -10,8 +10,8 @@ widths(x)
 \item{x}{result from \code{\link{align_topics}}}
 }
 \value{
-a vector whose \code{i}th element is the width of cluster \code{i}. 
-If there is no cluster with that number, the corresponding element is 
+a vector whose \code{i}th element is the width of cluster \code{i}.
+If there is no cluster with that number, the corresponding element is
 \code{NA}. Single-member clusters have a width of zero.
 }
 \description{
