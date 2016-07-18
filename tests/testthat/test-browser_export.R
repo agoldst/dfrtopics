@@ -4,7 +4,8 @@ library(dplyr)
 library(Matrix)
 options(java.parameters="-Xmx2g",
         dfrtopics.mallet_logging="none",
-        dplyr.show_progress=FALSE)
+        dplyr.show_progress=FALSE,
+        dfrtopics.verbose=F)
 
 
 clear_files <- function (fs, ...) {
@@ -172,12 +173,15 @@ test_that("info parameter gets properly stored", {
 
 test_that("dfb copy works too", {
 
+    options(dfrtopics.verbose=T)
     expect_message(
         export_browser_data(m, out_dir=out_dir, zipped=T,
                             supporting_files=T,
                             n_scaled_words=100),
         "Copying"
     )
+
+    options(dfrtopics.verbose=F)
     dfb_files <- file.path(out_dir,
                            c("bin", "css", "fonts", "img",
                              "js", "lib", "index.html", "LICENSE",

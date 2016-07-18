@@ -1,7 +1,8 @@
 context("Sampling state")
 options(java.parameters="-Xmx2g",
         dfrtopics.mallet_logging="none",
-        dplyr.show_progress=FALSE)
+        dplyr.show_progress=FALSE,
+        dfrtopics.verbose=F)
 
 data_dir <- file.path(path.package("dfrtopics"),
                       "test-data", "pmla-modphil1905-1915")

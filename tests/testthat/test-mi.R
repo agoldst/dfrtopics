@@ -1,7 +1,8 @@
 context("Mutual Information")
 options(java.parameters="-Xmx2g",
         dfrtopics.mallet_logging="none",
-        dplyr.show_progress=FALSE)
+        dplyr.show_progress=FALSE,
+        dfrtopics.verbose=F)
 
 # 5 vectors summing to 1 
 p <- t(rmultinom(5, 100, runif(8)) / 100)
