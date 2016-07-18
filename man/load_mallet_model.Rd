@@ -37,6 +37,6 @@ piece of the puzzle.
 }
 \seealso{
 \code{\link{load_mallet_model_directory}},
-  \code{\link{load_from_mallet_state}},
+  \code{\link{load_from_mallet_state}}
 }
 

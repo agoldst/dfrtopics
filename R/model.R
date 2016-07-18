@@ -951,7 +951,7 @@ sampling state:         ", yesno("ss")
 #' @return a \code{mallet_model} object
 #'
 #' @seealso \code{\link{load_mallet_model_directory}},
-#'   \code{\link{load_from_mallet_state}},
+#'   \code{\link{load_from_mallet_state}}
 #'
 #' @export
 load_mallet_model <- function(
