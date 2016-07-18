@@ -55,8 +55,10 @@ Invokes MALLET's parallel topic modeling algorithm on a set of documents
 represented as an InstanceList.
 }
 \details{
-Create the instance list object with \code{\link{make_instances}}. This
-function prints MALLET's progress reporting to the console.
+Create the instance list object with \code{\link{make_instances}}. MALLET's
+progress reporting appears on the console by default; to change this, set
+the package option \code{dfrtopics.mallet_logging} (see
+\code{help("mallet-logging")}).
 
 If Java gives out-of-memory errors, try increasing the Java heap size to a
 large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")}
