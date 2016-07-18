@@ -123,15 +123,6 @@ simplify_state <- function (state_file, outfile,
     write(acc)
 }
 
-simplify_state_py <- function (state_file, outfile) {
-    if (Sys.which("python") == "") {
-        stop("This function requires python to run.")
-    }
-    scpt <- file.path(path.package("dfrtopics"), "python",
-                      "simplify_state.py")
-    system2("python", args=c(scpt, state_file), stdout=outfile)
-}
-
 # read MALLET sampling state rows from a .gz file. The exported
 # read_sampling_state is for simplified state files, and the main interface is
 # supposed to be load_sampling_state.
