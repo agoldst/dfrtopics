@@ -272,7 +272,8 @@ train_model <- function(instances, n_topics,
     rJava::.jcall(ptm, "V", "setNumThreads", as.integer(threads))
     if (!is.null(seed)) {
         rJava::.jcall(ptm, "V", "setRandomSeed", as.integer(seed))
-        blurt("MALLET random number seed set to ", seed)
+        if (getOption("dfrtopics.verbose"))
+            message("MALLET random number seed set to ", seed)
     }
 
     rJava::.jcall(trainer, "V", "loadDocuments", instances)
