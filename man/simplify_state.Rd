@@ -14,17 +14,20 @@ connection}
 \item{outfile}{the name of the output file (will be clobbered)}
 
 \item{chunk_size}{number of lines to read at a time (sometimes multiple
-chunks are written at once)}
+chunks are written at once). The total number of lines to read is the total
+number of tokens (plus three). A count of chunks read is displayed unless
+the package option \code{dfrtopics.verbose} is FALSE.}
 }
 \description{
-This function is principally for internal use. The main interface to the
-Gibbs sampling state output from MALLET is \code{\link{load_sampling_state}}
-(which calls this function when needed).  This function reads in the Gibbs
-sampling state output by MALLET (a gzipped text file) and writes a CSV file
-giving the number of times each word type in each document is assigned to
-each document. Because the MALLET state file is often too big to handle in
-memory all at once, the "simplification" is done by reading and writing in
-chunks. This will not be as fast as it should be (arRgh!).
+This function reads in the Gibbs sampling state output by MALLET (a gzipped
+text file) and writes a CSV file giving the number of times each word type
+in each document is assigned to each document. Because the MALLET state file
+is often too big to handle in memory all at once, the "simplification" is
+done by reading and writing in chunks. This will not be as fast as it should
+be (arRgh!). This function is principally for internal use; the main
+interfaces to the Gibbs sampling state output from MALLET are
+\code{\link{load_sampling_state}} and \code{\link{load_from_mallet_state}}
+(which call this function when needed).
 }
 \details{
 The resulting file has a header \code{document,word,topic,count} describing

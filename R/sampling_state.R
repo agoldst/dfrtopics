@@ -25,14 +25,15 @@ write_mallet_state <- function(m, outfile="state.gz") {
 
 #' Reduce a MALLET sampling state on disk to a simplified form
 #'
-#' This function is principally for internal use. The main interface to the
-#' Gibbs sampling state output from MALLET is \code{\link{load_sampling_state}}
-#' (which calls this function when needed).  This function reads in the Gibbs
-#' sampling state output by MALLET (a gzipped text file) and writes a CSV file
-#' giving the number of times each word type in each document is assigned to
-#' each document. Because the MALLET state file is often too big to handle in
-#' memory all at once, the "simplification" is done by reading and writing in
-#' chunks. This will not be as fast as it should be (arRgh!).
+#' This function reads in the Gibbs sampling state output by MALLET (a gzipped
+#' text file) and writes a CSV file giving the number of times each word type
+#' in each document is assigned to each document. Because the MALLET state file
+#' is often too big to handle in memory all at once, the "simplification" is
+#' done by reading and writing in chunks. This will not be as fast as it should
+#' be (arRgh!). This function is principally for internal use; the main
+#' interfaces to the Gibbs sampling state output from MALLET are
+#' \code{\link{load_sampling_state}} and \code{\link{load_from_mallet_state}}
+#' (which call this function when needed).
 #'
 #' The resulting file has a header \code{document,word,topic,count} describing
 #' its columns.  Note that this file uses zero-based indices for topics, words,
@@ -52,7 +53,9 @@ write_mallet_state <- function(m, outfile="state.gz") {
 #' @param outfile the name of the output file (will be clobbered)
 #'
 #' @param chunk_size number of lines to read at a time (sometimes multiple
-#' chunks are written at once)
+#' chunks are written at once). The total number of lines to read is the total
+#' number of tokens (plus three). A count of chunks read is displayed unless
+#' the package option \code{dfrtopics.verbose} is FALSE.
 #'
 #' @seealso \code{\link{load_sampling_state}}, \code{\link{sampling_state}},
 #' \code{\link{read_sampling_state}}
@@ -97,7 +100,20 @@ simplify_state <- function (state_file, outfile,
         count=integer())
     n <- -1
 
+    if (getOption("dfrtopics.verbose")) {
+        tick <- (function () {
+            i <- 0
+            function () {
+                i <<- i + 1
+                cat("\rChunks read: ", i, sep="")
+                utils::flush.console()
+            }
+        })()
+    } else
+        tick <- function () { }
+
     while (n != 0) {
+        tick()
         chunk <- read_gibbs(state_file, nrows=chunk_size)
         n <- nrow(chunk)
         if (n > 0) {
