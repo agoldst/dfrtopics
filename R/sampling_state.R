@@ -214,7 +214,13 @@ read_sampling_state <- function(filename,
     if (!requireNamespace("bigmemory", quietly=TRUE)) {
         stop("The bigmemory package is needed to work with sampling states.")
     }
-    message("Loading ", filename, " to a big.matrix...")
+    if (getOption("dfrtopics.verbose"))
+        blurt <- message
+    else
+        blurt <- function (...) { }
+
+    blurt("Loading ", filename, " to a big.matrix...")
+
     state <- bigmemory::read.big.matrix(
         filename, type=data_type, header=TRUE, sep=",",
         backingpath=big_workdir,
@@ -222,7 +228,7 @@ read_sampling_state <- function(filename,
         backingfile=basename(tempfile("state", tmpdir=big_workdir, ".bin")),
         descriptorfile=basename(tempfile("state", tmpdir=big_workdir, ".desc"))
     )
-    message("Done.")
+    blurt("Done.")
 
     # change mallet's 0-based indices to 1-based
     state[ , 1] <- state[ , 1] + 1L     # docs
@@ -299,19 +305,25 @@ load_sampling_state <- function (m,
         tmp_ms <- TRUE
     }
 
+    if (getOption("dfrtopics.verbose"))
+        blurt <- message
+    else
+        blurt <- function (...) { }
+
+
     if (!file.exists(simplified_state_file)) {
         if (!file.exists(mallet_state_file)) {
-            message("Writing MALLET state to ",
+            blurt("Writing MALLET state to ",
                 ifelse(tmp_ms, "temporary file", mallet_state_file))
             write_mallet_state(m, mallet_state_file)
         }
 
-        message("Writing simplified sampling state to ",
+        blurt("Writing simplified sampling state to ",
             ifelse(tmp_ss, "temporary file", simplified_state_file))
 
         simplify_state(mallet_state_file, simplified_state_file)
         if (tmp_ms)  {
-            message("Removing temporary MALLET state file")
+            blurt("Removing temporary MALLET state file")
             unlink(mallet_state_file)
         }
     }
@@ -319,7 +331,7 @@ load_sampling_state <- function (m,
     sampling_state(m) <- read_sampling_state(simplified_state_file)
 
     if (tmp_ss) {
-        message("Removing temporary simplified state file")
+        blurt("Removing temporary simplified state file")
         unlink(simplified_state_file)
     }
     m

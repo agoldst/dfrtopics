@@ -155,17 +155,17 @@ read_instances <- function (filename) {
 #'
 #' @export
 #'
-instances_Matrix <- function (instances, verbose=FALSE) {
-    if (verbose) {
-        log <- message
-    }
-    else {
-        log <- function (...) { NULL }
-    }
+instances_Matrix <- function (instances,
+                              verbose=getOption("dfrtopics.verbose")) {
 
-    log("Retrieving instances")
+    if (verbose)
+        blurt <- message
+    else
+        blurt <- function (...) { }
+
+    blurt("Retrieving instances")
     if (class(instances) == "character") {
-        log("Loading from ", instances)
+        blurt("Loading from ", instances)
         instances <- read_instances(instances)
     }
     nwords <- rJava::.jcall(
@@ -178,11 +178,11 @@ instances_Matrix <- function (instances, verbose=FALSE) {
         evalArray=TRUE, simplify=TRUE
     )
 
-    log("Compiling tdm")
+    blurt("Compiling tdm")
 
     # ugh. Solution from:
     # http://stackoverflow.com/questions/8843700/creating-sparse-matrix-from-a-list-of-sparse-vectors
-    log("Tabulating instances into sparseVector list")
+    blurt("Tabulating instances into sparseVector list")
 
     instance_tf <- function (inst) {
         counts <- tabulate(instance_vector(inst))
@@ -213,7 +213,7 @@ instances_Matrix <- function (instances, verbose=FALSE) {
         stopifnot(is(vs[[k]], "sparseVector"))
     }
 
-    log("Building sparseMatrix parameters")
+    blurt("Building sparseMatrix parameters")
     for (k in seq_along(vs)) {
         l <- n_x[k]
         if (l == 0) {
@@ -228,7 +228,7 @@ instances_Matrix <- function (instances, verbose=FALSE) {
         a <- a + l
     }
 
-    log("Constructing sparseMatrix")
+    blurt("Constructing sparseMatrix")
 
     result <- Matrix::sparseMatrix(i=rs, j=cs, x=xs)
 

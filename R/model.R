@@ -112,40 +112,46 @@ write_mallet_model <- function(m, output_dir=".",
                           save_scaled=FALSE,
                           save_state=TRUE,
                           simplify_state=TRUE) {
+
+    if (getOption("dfrtopics.verbose"))
+        blurt <- message
+    else
+        blurt <- function (...) { }
+
     if(!file.exists(output_dir)) {
-        message("Creating output directory ",output_dir)
+        blurt("Creating output directory ",output_dir)
         dir.create(output_dir)
     }
 
     tw_f <- file.path(output_dir, "topic_words.csv")
     write_matrix_csv(topic_words(m), tw_f)
-    message("Wrote ",tw_f)
+    blurt("Wrote ",tw_f)
 
     vocab_f <- file.path(output_dir, "vocabulary.txt")
     writeLines(vocabulary(m), vocab_f)
-    message("Wrote ",vocab_f)
+    blurt("Wrote ",vocab_f)
 
     params <- modeling_parameters(m)
     hyper <- hyperparameters(m)
 
     params_f <- file.path(output_dir, "params.txt")
     dput(list(params=params, hyper=hyper), params_f)
-    message("Wrote ", params_f)
+    blurt("Wrote ", params_f)
 
     keys_f <- file.path(output_dir, "top_words.csv")
     write.table(top_words(m, n_top_words), keys_f,
                 quote=FALSE, sep=",", row.names=FALSE, col.names=TRUE)
-    message("Wrote ", keys_f)
+    blurt("Wrote ", keys_f)
 
     dt_f <- file.path(output_dir,"doc_topics.csv")
     write.table(doc_topics(m), dt_f,
                 quote=FALSE, sep=",", row.names=FALSE, col.names=FALSE)
-    message("Wrote ", dt_f)
+    blurt("Wrote ", dt_f)
 
     if (save_state) {
         state_f <- file.path(output_dir, "mallet_state.gz")
         write_mallet_state(m, state_f)
-        message("Wrote ", state_f)
+        blurt("Wrote ", state_f)
     }
 
     if (simplify_state) {
@@ -155,7 +161,7 @@ write_mallet_model <- function(m, output_dir=".",
         }
         ss_f <- file.path(output_dir, "state.csv")
         simplify_state(state_f, ss_f)
-        message("Wrote ", ss_f)
+        blurt("Wrote ", ss_f)
 
         if (!save_state) {
             unlink(state_f)
@@ -164,23 +170,23 @@ write_mallet_model <- function(m, output_dir=".",
 
     diag_f <- file.path(output_dir, "diagnostics.xml")
     write_diagnostics(m, diag_f, n_top_words=n_top_words)
-    message("Wrote ", diag_f)
+    blurt("Wrote ", diag_f)
 
     id_map_f <- file.path(output_dir, "doc_ids.txt")
     writeLines(doc_ids(m), id_map_f)
-    message("Wrote ", id_map_f)
+    blurt("Wrote ", id_map_f)
 
     if (save_instances) {
         inst_f <- file.path(output_dir, "instances.mallet")
         write_instances(instances(m), inst_f)
-        message("Wrote ", inst_f)
+        blurt("Wrote ", inst_f)
     }
 
     if (save_scaled) {
         scaled_f <- file.path(output_dir,"topic_scaled.csv")
         write.table(topic_scaled_2d(m), scaled_f,
                     quote=FALSE, sep=",", row.names=FALSE, col.names=FALSE)
-        message("Wrote ", scaled_f)
+        blurt("Wrote ", scaled_f)
     }
 }
 
@@ -266,7 +272,7 @@ train_model <- function(instances, n_topics,
     rJava::.jcall(ptm, "V", "setNumThreads", as.integer(threads))
     if (!is.null(seed)) {
         rJava::.jcall(ptm, "V", "setRandomSeed", as.integer(seed))
-        message("MALLET random number seed set to ", seed)
+        blurt("MALLET random number seed set to ", seed)
     }
 
     rJava::.jcall(trainer, "V", "loadDocuments", instances)

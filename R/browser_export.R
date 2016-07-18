@@ -9,6 +9,11 @@
 write_dfb_file <- function (txt, f, zip=TRUE,
                        overwrite=FALSE, index=NULL) {
 
+    if (getOption("dfrtopics.verbose"))
+        blurt <- message
+    else
+        blurt <- function (...) { }
+
     # internalize if index specified
     if (!is.null(index)) {
         if (!file.exists(index)) {
@@ -36,7 +41,9 @@ write_dfb_file <- function (txt, f, zip=TRUE,
         writeLines(
             c(src[1:(ins - 1)], txt, src[ins:length(src)]),
             index)
-        message("Rewrote ", index, " with ", basename(f), " data")
+
+        blurt("Rewrote ", index, " with ", basename(f), " data")
+
         return()
     }
 
@@ -54,7 +61,7 @@ write_dfb_file <- function (txt, f, zip=TRUE,
         f_out <- paste0(f, ".zip")
         if (file.exists(f_out)) {
             if (overwrite) {
-                message("Removing existing ", f_out)
+                blurt("Removing existing ", f_out)
                 unlink(f_out)
             } else {
                 stop(f_out, " already exists and overwrite=FALSE")
@@ -62,15 +69,15 @@ write_dfb_file <- function (txt, f, zip=TRUE,
         }
         status <- zip(f_out, f_temp, flags="-9Xj")
         if (status != 0) {
-            message("zip ", f_out, " failed")
+            blurt("zip ", f_out, " failed")
         }
         unlink(f_temp)
     }
 
     if (file.exists(f_out)) {
-        message("Saved ", f_out)
+        blurt("Saved ", f_out)
     } else {
-        message("Unable to save ", f_out)
+        blurt("Unable to save ", f_out)
     }
 }
 
@@ -198,6 +205,12 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
         stop("To export internalized data, supporting_files must be TRUE.")
     }
 
+    if (getOption("dfrtopics.verbose"))
+        blurt <- message
+    else
+        blurt <- function (...) { }
+
+
     if (internalize) {
         index <- file.path(out_dir, "index.html")
     } else {
@@ -226,7 +239,7 @@ Set overwrite=TRUE to overwrite existing files."
             }
         }
 
-        message("Copying dfr-browser supporting files...")
+        blurt("Copying dfr-browser supporting files...")
         file.copy(file.path(path.package("dfrtopics"), "dfb", dfb_files),
                   out_dir,
                   recursive=TRUE, overwrite=overwrite)
@@ -342,9 +355,9 @@ display may not work as expected. See ?export_browser_data for details."
     info_file <- paste0(file.path(out_dir, "info"), ".json")
     write_info <- TRUE
     if (!internalize && is.null(info)) {
-        message("Checking for info.json file...")
+        blurt("Checking for info.json file...")
         write_info <- !file.exists(info_file)
-        if (!write_info) message(info_file, " ok")
+        if (!write_info) blurt(info_file, " ok")
     }
     if (write_info) {
         if (is.null(info)) {

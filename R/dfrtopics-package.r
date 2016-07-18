@@ -171,6 +171,9 @@ to get Java working."
 #' package="mallet"), "cc/mallet/util/resources/logging.properties",
 #' junkpaths=T)}.
 #' }}
+#' dfrtopics does some additional messaging of its own, which can be suppressed
+#' as usual with \code{\link[base]{suppressMessages}} or globally by setting
+#' \code{options(dfrtopics.verbose=F)}.
 #'
 #' @name mallet-logging
 NULL

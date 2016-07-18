@@ -45,7 +45,10 @@ topic_report <- function (m,
         filename <- file.path(output_dir,
                               sprintf("%03d.png", topic))
         png(file=filename, width=w, height=h)
-        message("Saving ", filename)
+
+        if (getOption("dfrtopics.verbose"))
+            message("Saving ", filename)
+
         grid::grid.newpage()
         grid::pushViewport(grid::viewport(layout=grid::grid.layout(1, 2)))
 
