@@ -165,16 +165,14 @@ read_gibbs <- function (f, nrows=-1) {
 #' \code{document,word,topic,count} rows to a
 #' \code{\link[bigmemory]{big.matrix}}. This gives the model's assignments of
 #' words to topics within documents. MALLET itself remembers token order, but
-#' this is meaningless when working with JSTOR wordcounts file, and more
-#' generally in ordinary LDA the words are assumed exchangeable within
-#' documents.
+#' in ordinary LDA the words are assumed exchangeable within documents. The
+#' recommended interface to this sampling state is
+#' \code{\link{load_sampling_state}}, which calls this function.
 #'
-#'
-#' for reading MALLET \code{InstanceList}s: \code{\link{instances_vocabulary}}
-#' and \code{\link{instances_ids}}. \emph{N.B.} the MALLET sampling state, and
-#' the "simplified state" output by this function to disk, index documents,
-#' words, and topics from zero, but the dataframe returned by this function
-#' indexes these from one for convenience within R.
+#' \emph{N.B.} The MALLET sampling state, and the "simplified state" output by
+#' this function to disk, index documents, words, and topics from zero, but the
+#' dataframe returned by this function indexes these from one, for convenience
+#' within R.
 #'
 #' @return a \code{big.matrix} with four columns,
 #'   \code{document,word,topic,count}. Documents, words, and topics are
@@ -186,17 +184,20 @@ read_gibbs <- function (f, nrows=-1) {
 #'   with header row and four columns, \code{document,word,topic,count}, where
 #'   the documents, words, and topics are \emph{zero-index}. Create the file
 #'   from MALLET output using \code{\link{simplify_state}}.
+#'
 #' @param data_type the C++ type to store the data in. If all values have
 #'   magnitude less than \eqn{2^15}, you can get away with \code{"short"}, but
 #'   guess what? Linguistic data hates you, and a typical vocabulary can easily
 #'   include more word types than that, so the default is \code{"integer"}.
+#'
 #' @param big_workdir the working directory where
 #'   \code{\link[bigmemory]{read.big.matrix}} will store its temporary files. By
 #'   default, uses \code{\link[base]{tempdir}}, but if you have more scratch
 #'   space elsewhere, use that for handling large sampling states.
 #'
-#' @seealso \code{\link{simplify_state}}, \code{\link{write_mallet_state}},
-#' \code{\link{tdm_topic}}, \pkg{bigmemory}
+#' @seealso \code{\link{load_mallet_state}},  \code{\link{write_mallet_state}},
+#' \code{\link{tdm_topic}}, \code{\link{simplify_state}}, and package
+#' \pkg{bigmemory}.
 #'
 #' @export
 #'
@@ -231,9 +232,9 @@ sampling_state <- function (m) UseMethod("sampling_state")
 sampling_state.mallet_model <- function (m) {
     if (is.null(m$ss) && !is.null(m$model)) {
         message(
-'The sampling state is unavailable directly. To retrieve the state, use:
+'To retrieve the sampling state, it must first be loaded:
 
-m <- load_state(m)'
+m <- load_sampling_state(m)'
         )
     }
     m$ss
@@ -250,38 +251,57 @@ m <- load_state(m)'
 
 #' Load Gibbs sampling state into model object
 #'
-#' This is a convenience function for loading the sampling state into a model
-#' object. If no file names are supplied, the state information will be written
-#' to (possibly very large) temporary files before being read back into memory.
+#' Load the Gibbs sampling state into a model object for access via
+#' \code{\link{sampling_state}}. The state must be available for loading,
+#' \emph{either} from MALLET's own model object in memory, \emph{or} in a
+#' sampling state file from MALLET, \emph{or} in a simplified sampling state
+#' file. The latter two files (which can be very large) will be created if
+#' necessary.
 #'
-#' @param m \code{mallet_model} object
-#' @param simplified_state_file Name of simplified state file (from
-#'   \code{\link{simplify_state}}. If NULL, a temporary file will be created
-#' @param mallet_state_file Name of file with mallet's own gzipped
-#'   sampling-state output (from \code{\link{write_mallet_state}} or
-#'   command-line mallet). If NULL, the state will be written to a temporary
-#'   file
+#' @param m \code{mallet_model} object. Either its
+#' \code{\link{ParallelTopicModel}} must be available or one of the other two
+#' parameters must be an already-existing file
 #'
-#' @return a copy \code{m} with the sampling state loaded (available via
-#'   \code{sampling_state(m)}
+#' @param simplified_state_file name of simplified sampling state file. If the
+#' file exists, it is read in. If it does not exist, it is created; if this
+#' parameter is NULL, a temporary file is used instead
+#'
+#' @param mallet_state_file name of file with MALLET's own gzipped
+#' sampling-state output (from \code{\link{write_mallet_state}} or command-line
+#' mallet). If this file does not exist, it will be created if necessary (i.e.
+#' if \code{simplified_state_file} does not already exist); if this parameter
+#' is NULL, a temporary is used.
+#'
+#' @return a copy of \code{m} with the sampling state loaded (available via
+#' \code{sampling_state(m)}
 #'
 #' @export
 #'
 load_sampling_state <- function (m,
                                  simplified_state_file=NULL,
                                  mallet_state_file=NULL) {
-    tmp_ss <- F
-    tmp_ms <- F
+    tmp_ss <- FALSE
+    tmp_ms <- FALSE
     if (is.null(simplified_state_file)) {
         simplified_state_file <- tempfile()
-        tmp_ss <- T
-        if (is.null(mallet_state_file)) {
-            mallet_state_file <- tempfile()
-            tmp_ms <- T
-            message("Writing MALLET state to temporary file")
+        tmp_ss <- TRUE
+    }
+
+    if (is.null(mallet_state_file)) {
+        mallet_state_file <- tempfile()
+        tmp_ms <- TRUE
+    }
+
+    if (!file.exists(simplified_state_file)) {
+        if (!file.exists(mallet_state_file)) {
+            message("Writing MALLET state to ",
+                ifelse(tmp_ms, "temporary file", mallet_state_file))
             write_mallet_state(m, mallet_state_file)
         }
-        message("Writing simplified sampling state to temporary file")
+
+        message("Writing simplified sampling state to",
+            ifelse(tmp_ss, "temporary file", mallet_state_file))
+
         simplify_state(mallet_state_file, simplified_state_file)
         if (tmp_ms)  {
             message("Removing temporary MALLET state file")
@@ -297,8 +317,6 @@ load_sampling_state <- function (m,
     }
     m
 }
-
-
 
 #' The term-document matrix for a topic
 #'

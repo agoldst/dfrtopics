@@ -8,23 +8,30 @@ load_sampling_state(m, simplified_state_file = NULL,
   mallet_state_file = NULL)
 }
 \arguments{
-\item{m}{\code{mallet_model} object}
+\item{m}{\code{mallet_model} object. Either its
+\code{\link{ParallelTopicModel}} must be available or one of the other two
+parameters must be an already-existing file}
 
-\item{simplified_state_file}{Name of simplified state file (from
-\code{\link{simplify_state}}. If NULL, a temporary file will be created}
+\item{simplified_state_file}{name of simplified sampling state file. If the
+file exists, it is read in. If it does not exist, it is created; if this
+parameter is NULL, a temporary file is used instead}
 
-\item{mallet_state_file}{Name of file with mallet's own gzipped
-sampling-state output (from \code{\link{write_mallet_state}} or
-command-line mallet). If NULL, the state will be written to a temporary
-file}
+\item{mallet_state_file}{name of file with MALLET's own gzipped
+sampling-state output (from \code{\link{write_mallet_state}} or command-line
+mallet). If this file does not exist, it will be created if necessary (i.e.
+if \code{simplified_state_file} does not already exist); if this parameter
+is NULL, a temporary is used.}
 }
 \value{
-a copy \code{m} with the sampling state loaded (available via
-  \code{sampling_state(m)}
+a copy of \code{m} with the sampling state loaded (available via
+\code{sampling_state(m)}
 }
 \description{
-This is a convenience function for loading the sampling state into a model
-object. If no file names are supplied, the state information will be written
-to (possibly very large) temporary files before being read back into memory.
+Load the Gibbs sampling state into a model object for access via
+\code{\link{sampling_state}}. The state must be available for loading,
+\emph{either} from MALLET's own model object in memory, \emph{or} in a
+sampling state file from MALLET, \emph{or} in a simplified sampling state
+file. The latter two files (which can be very large) will be created if
+necessary.
 }
 

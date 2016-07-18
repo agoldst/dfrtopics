@@ -35,19 +35,19 @@ This function reads in a Gibbs sampling state represented by
 \code{document,word,topic,count} rows to a
 \code{\link[bigmemory]{big.matrix}}. This gives the model's assignments of
 words to topics within documents. MALLET itself remembers token order, but
-this is meaningless when working with JSTOR wordcounts file, and more
-generally in ordinary LDA the words are assumed exchangeable within
-documents.
+in ordinary LDA the words are assumed exchangeable within documents. The
+recommended interface to this sampling state is
+\code{\link{load_sampling_state}}, which calls this function.
 }
 \details{
-for reading MALLET \code{InstanceList}s: \code{\link{instances_vocabulary}}
-and \code{\link{instances_ids}}. \emph{N.B.} the MALLET sampling state, and
-the "simplified state" output by this function to disk, index documents,
-words, and topics from zero, but the dataframe returned by this function
-indexes these from one for convenience within R.
+\emph{N.B.} The MALLET sampling state, and the "simplified state" output by
+this function to disk, index documents, words, and topics from zero, but the
+dataframe returned by this function indexes these from one, for convenience
+within R.
 }
 \seealso{
-\code{\link{simplify_state}}, \code{\link{write_mallet_state}},
-\code{\link{tdm_topic}}, \pkg{bigmemory}
+\code{\link{load_mallet_state}},  \code{\link{write_mallet_state}},
+\code{\link{tdm_topic}}, \code{\link{simplify_state}}, and package
+\pkg{bigmemory}.
 }
 
