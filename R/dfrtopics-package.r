@@ -196,7 +196,8 @@ VIS=list(
     )
 )
         ),
-        dfrtopics.mallet_logging="default"
+        dfrtopics.mallet_logging="default",
+        dfrtopics.state_chunk_size=10000L
     )
 
     to_set <- !(names(op_ours) %in% names(op))
