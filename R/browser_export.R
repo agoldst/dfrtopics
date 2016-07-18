@@ -67,7 +67,12 @@ write_dfb_file <- function (txt, f, zip=TRUE,
                 stop(f_out, " already exists and overwrite=FALSE")
             }
         }
-        status <- zip(f_out, f_temp, flags="-9Xj")
+        if (getOption("dfrtopics.verbose"))
+            flags <- "-9Xj"
+        else
+            flags <- "-9Xjq"
+
+        status <- zip(f_out, f_temp, flags=flags)
         if (status != 0) {
             blurt("zip ", f_out, " failed")
         }
