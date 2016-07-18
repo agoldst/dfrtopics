@@ -98,8 +98,7 @@ simplify_state <- function (state_file, outfile,
     n <- -1
 
     while (n != 0) {
-        # read_delim doesn't play nicely with the gzcon
-        chunk <- read_gibbs(state_file, nrows=chunk_size, readr=FALSE)
+        chunk <- read_gibbs(state_file, nrows=chunk_size)
         n <- nrow(chunk)
         if (n > 0) {
             last <- chunk$doc[n]
@@ -131,6 +130,33 @@ simplify_state_py <- function (state_file, outfile) {
     scpt <- file.path(path.package("dfrtopics"), "python",
                       "simplify_state.py")
     system2("python", args=c(scpt, state_file), stdout=outfile)
+}
+
+# read MALLET sampling state rows from a .gz file. The exported
+# read_sampling_state is for simplified state files, and the main interface is
+# supposed to be load_sampling_state.
+read_gibbs <- function (f, nrows=-1) {
+    # it would be nice to use readr, but it doesn't like already-opened
+    # gzcon(file()) streams
+    #
+    # result <- readr::read_delim(f, delim=" ", quote="", comment="#",
+    #     col_names=c("doc", "type", "topic"), col_types="i__i_i", n_max=nrows)
+
+    # neither does read.table, but readLines manages okay
+    ll <- readLines(f, n=nrows)
+    if (length(ll) > 0) {
+        result <- read.table(text=ll, nrows=nrows,
+            header=FALSE, sep="", quote="", row.names=NULL,
+            col.names=c("doc", "src", "pos", "type", "word", "topic"),
+            as.is=TRUE,
+            colClasses=c("integer", "NULL", "NULL",
+                         "integer", "NULL", "integer"),
+            comment.char="#")
+    } else {
+        result <- data.frame()
+    }
+
+    result
 }
 
 #' Read in a Gibbs sampling state
