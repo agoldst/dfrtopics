@@ -1142,11 +1142,9 @@ load_mallet_model_legacy <- function (
 #' @param metadata_file metadata file (CSV or TSV; optional here)
 #' @param bigmemory If TRUE (default), the \pkg{bigmemory} and
 #' \pkg{bigtabulate} packages will be used to read and store the Gibbs sampling
-#' state. Some users report errors with this on Windows. In that case, try
-#' \code{bigmemory=F}, but note that this can be much more memory-intensive, as
-#' it requires loading the entire contents of \code{mallet_state_file} into
-#' memory; also, the result will not hold the sampling state
-#' (\code{\link{sampling_state}} will be NULL).
+#' state. If for some reason this does not work, try \code{bigmemory=F}, but
+#' note that this will be more memory-intensive, and the result will not hold
+#' the sampling state (\code{\link{sampling_state}} will be NULL).
 #' @return a \code{\link{mallet_model}} object.
 #'
 #' @examples
@@ -1172,9 +1170,9 @@ load_from_mallet_state <- function (
         metadata_file=NULL,
         bigmemory=TRUE) {
 
-    gzf <- gzfile(mallet_state_file)
-    pp <- readLines(gzf, n=3)
+    gzf <- gzcon(file(mallet_state_file, "rb"))
     on.exit(close(gzf))
+    pp <- readLines(gzf, n=3)
     a <- stringr::str_match(pp[2], "^#alpha : ([0-9. ]+)$")
     b <- stringr::str_match(pp[3], "^#beta : ([0-9. ]+)$")
     if (is.na(a) || is.na(b)) {
@@ -1197,7 +1195,7 @@ mallet train-topics --output-state?"
         ss_temp <- TRUE
     }
 
-    simplify_state(mallet_state_file, simplified_state_file) 
+    simplify_state(mallet_state_file, simplified_state_file)
 
     if (!requireNamespace("bigtabulate", quietly=TRUE)) {
         bigmemory <- FALSE
@@ -1209,7 +1207,7 @@ Sampling state will not be available after loading."
 
     if (!bigmemory) {
         keep_sampling_state <- FALSE
-        st <- read_state_nobigmem(mallet_state_file)
+        st <- read_state_nobigmem(simplified_state_file)
     } else {
         st <- read_state_bigmem(simplified_state_file, K=length(hyper$alpha))
     }
@@ -1274,34 +1272,20 @@ read_state_bigmem <- function (simplified_state_file, K) {
 }
 
 # read mallet state directly without using bigmemory functions
-read_state_nobigmem <- function (mallet_state_file) { 
+read_state_nobigmem <- function (simplified_state_file) {
     if (requireNamespace("readr", quietly=TRUE)) {
-        gibbs <- readr::read_delim(mallet_state_file,
-            delim=" ",
-            quote="",
-            comment="#",
-            col_names=c("doc", "type", "topic"),
-            col_types="i__i_i"
-        ) 
+        gibbs <- readr::read_csv(simplified_state_file, col_types="iiii")
     } else {
-        gzf <- gzfile(mallet_state_file)
-        pp <- readLines(gzf, n=3)
-        on.exit(close(gzf))
-    
-        gibbs <- read.table(gzf,
-            header=FALSE, sep="", quote="", row.names=NULL,
-            col.names=c("doc", "src", "pos", "type", "word", "topic"),
-            as.is=TRUE,
-            colClasses=c("integer", "NULL", "NULL",
-                         "integer", "NULL", "integer"),
-            comment.char="#")
+        gibbs <- read.csv(simplified_state_file, header=TRUE,
+            row.names=NULL, colClasses=rep("integer", 4))
     }
+
     dtl <- dplyr::group_by_(gibbs, ~ doc, ~ topic)
-    dtl <- dplyr::ungroup(dplyr::summarize_(dtl, count=~ n()))
+    dtl <- dplyr::ungroup(dplyr::summarize_(dtl, count=~ sum(count)))
     dtl <- dplyr::mutate_(dtl, doc=~ doc + 1L, topic=~ topic + 1L)
 
     twl <- dplyr::group_by_(gibbs, ~ topic, ~ type)
-    twl <- dplyr::ungroup(dplyr::summarize_(twl, count=~ n()))
+    twl <- dplyr::ungroup(dplyr::summarize_(twl, count=~ sum(count)))
     twl <- dplyr::mutate_(twl, type=~ type + 1L, topic=~ topic + 1L)
 
     doc_topics <- matrix(0, nrow=max(dtl$doc),
@@ -1317,3 +1301,4 @@ read_state_nobigmem <- function (mallet_state_file) {
         topic_words=topic_words
     )
 }
+

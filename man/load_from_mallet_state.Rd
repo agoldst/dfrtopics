@@ -27,11 +27,9 @@ reference to the sampling state \code{big.matrix} as well.}
 
 \item{bigmemory}{If TRUE (default), the \pkg{bigmemory} and
 \pkg{bigtabulate} packages will be used to read and store the Gibbs sampling
-state. Some users report errors with this on Windows. In that case, try
-\code{bigmemory=F}, but note that this can be much more memory-intensive, as
-it requires loading the entire contents of \code{mallet_state_file} into
-memory; also, the result will not hold the sampling state
-(\code{\link{sampling_state}} will be NULL).}
+state. If for some reason this does not work, try \code{bigmemory=F}, but
+note that this will be more memory-intensive, and the result will not hold
+the sampling state (\code{\link{sampling_state}} will be NULL).}
 }
 \value{
 a \code{\link{mallet_model}} object.
