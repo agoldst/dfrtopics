@@ -25,30 +25,106 @@ write_mallet_state <- function(m, outfile="state.gz") {
 
 #' Reduce a MALLET sampling state on disk to a simplified form
 #'
-#' This function reads in the sampling state output by MALLET and writes a CSV
-#' file giving the assignments of word types to topics in each document. Because
-#' the MALLET state file is often too big to handle in memory using R, the
-#' "simplification" is done using a very simple python script instead.
+#' This function is principally for internal use. The main interface to the
+#' Gibbs sampling state output from MALLET is \code{\link{load_sampling_state}}
+#' (which calls this function when needed).  This function reads in the Gibbs
+#' sampling state output by MALLET (a gzipped text file) and writes a CSV file
+#' giving the number of times each word type in each document is assigned to
+#' each document. Because the MALLET state file is often too big to handle in
+#' memory all at once, the "simplification" is done by reading and writing in
+#' chunks. This will not be as fast as it should be (arRgh!).
 #'
 #' The resulting file has a header \code{document,word,topic,count} describing
-#' its columns. Use \code{\link{read_sampling_state}} to access the result in R
-#' if it is too large to handle in memory. (If the file is big but fits in
-#' memory, I recommend \code{read_csv} from the \code{readr} package, which will
-#' yield an ordinary data frame.)
+#' its columns.  Note that this file uses zero-based indices for topics, words,
+#' and documents, not 1-based indices. It can be loaded with
+#' \code{\link{read_sampling_state}}, but the recommended interface is
+#' \code{\link{load_sampling_state}} (q.v.).
 #'
-#' Note that this file uses zero-based indices for topics, words, and documents,
-#' not 1-based indices.
+#' This function formerly relied on a Python script, but in order to reduce
+#' external dependencies it now uses R code only. However, R's gzip support is
+#' somewhat flaky. If this function reports errors from \code{gzcon} or
+#' \code{zlib} or similar, try manually decompressing the file and passing
+#' \code{state_file=file("unzipped-state.txt")}.
 #'
+#' @param state_file the MALLET state file. Supply either a file name or a
+#' connection
 #'
-#' @param state_file the MALLET state (assumed to be gzipped)
 #' @param outfile the name of the output file (will be clobbered)
-#' @return the return value from the python script
 #'
-#' @seealso \code{\link{read_sampling_state}}
+#' @param chunk_size number of lines to read at a time (sometimes multiple
+#' chunks are written at once)
+#'
+#' @seealso \code{\link{load_sampling_state}}, \code{\link{sampling_state}},
+#' \code{\link{read_sampling_state}}
 #'
 #' @export
 #'
-simplify_state <- function (state_file, outfile) {
+simplify_state <- function (state_file, outfile,
+        chunk_size=getOption("dfrtopics.state_chunk_size")) {
+
+    if (is.character(state_file)) {
+        state_file <- gzcon(file(state_file, "rb"))
+        on.exit(close(state_file))
+    } else {
+        if (!inherits(state_file, "connection")) {
+            stop(
+    'state_file should either be an input file name, like "state.gz",
+    or a connection'
+            )
+        }
+        if (!isOpen(state_file)) {
+            open(state_file, "r")
+            on.exit(close(state_file))
+        }
+    }
+
+    # header
+    writeLines("doc,type,topic,count", outfile)
+
+    # if available, use readr::write_csv for faster write
+    if (requireNamespace("readr", quietly=TRUE))
+        write <- function (x) readr::write_csv(x, outfile, append=TRUE)
+    else
+        write <- function (x) write.table(x, outfile, sep=",",
+            row.names=FALSE, col.names=FALSE, append=TRUE)
+
+    # Sampling state is in document order. We can't write doc, type, topic
+    # triples for a document until we're sure we're done getting rows for that
+    # doc, so we'll always hold the last document in a chunk for writing when
+    # we're sure we won't see any more rows for that doc
+
+    acc <- data.frame(doc=integer(), type=integer(), topic=integer(),
+        count=integer())
+    n <- -1
+
+    while (n != 0) {
+        # read_delim doesn't play nicely with the gzcon
+        chunk <- read_gibbs(state_file, nrows=chunk_size, readr=FALSE)
+        n <- nrow(chunk)
+        if (n > 0) {
+            last <- chunk$doc[n]
+            # aggregate rows of token topic assignments into counts
+            chunk <- dplyr::count_(chunk, c("doc", "type", "topic"))
+            names(chunk)[4] <- "count"
+
+            # join acc to chunk; group-summarize should only affect one group,
+            # so this is wasteful but simple to write
+            acc <- dplyr::bind_rows(acc, chunk)
+            acc <- dplyr::group_by_(acc, ~ doc, ~ type, ~ topic)
+            acc <- dplyr::summarize_(acc, count= ~ sum(count))
+
+            # split off the last doc and keep it in acc for the next round
+            to_write <- acc$doc != last
+            write(acc[to_write, ])
+            acc <- acc[!to_write, ]
+        }
+    }
+
+    # write the final chunk
+    write(acc)
+}
+
+simplify_state_py <- function (state_file, outfile) {
     if (Sys.which("python") == "") {
         stop("This function requires python to run.")
     }

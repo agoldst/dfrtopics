@@ -4,33 +4,43 @@
 \alias{simplify_state}
 \title{Reduce a MALLET sampling state on disk to a simplified form}
 \usage{
-simplify_state(state_file, outfile)
+simplify_state(state_file, outfile,
+  chunk_size = getOption("dfrtopics.state_chunk_size"))
 }
 \arguments{
-\item{state_file}{the MALLET state (assumed to be gzipped)}
+\item{state_file}{the MALLET state file. Supply either a file name or a
+connection}
 
 \item{outfile}{the name of the output file (will be clobbered)}
-}
-\value{
-the return value from the python script
+
+\item{chunk_size}{number of lines to read at a time (sometimes multiple
+chunks are written at once)}
 }
 \description{
-This function reads in the sampling state output by MALLET and writes a CSV
-file giving the assignments of word types to topics in each document. Because
-the MALLET state file is often too big to handle in memory using R, the
-"simplification" is done using a very simple python script instead.
+This function is principally for internal use. The main interface to the
+Gibbs sampling state output from MALLET is \code{\link{load_sampling_state}}
+(which calls this function when needed).  This function reads in the Gibbs
+sampling state output by MALLET (a gzipped text file) and writes a CSV file
+giving the number of times each word type in each document is assigned to
+each document. Because the MALLET state file is often too big to handle in
+memory all at once, the "simplification" is done by reading and writing in
+chunks. This will not be as fast as it should be (arRgh!).
 }
 \details{
 The resulting file has a header \code{document,word,topic,count} describing
-its columns. Use \code{\link{read_sampling_state}} to access the result in R
-if it is too large to handle in memory. (If the file is big but fits in
-memory, I recommend \code{read_csv} from the \code{readr} package, which will
-yield an ordinary data frame.)
+its columns.  Note that this file uses zero-based indices for topics, words,
+and documents, not 1-based indices. It can be loaded with
+\code{\link{read_sampling_state}}, but the recommended interface is
+\code{\link{load_sampling_state}} (q.v.).
 
-Note that this file uses zero-based indices for topics, words, and documents,
-not 1-based indices.
+This function formerly relied on a Python script, but in order to reduce
+external dependencies it now uses R code only. However, R's gzip support is
+somewhat flaky. If this function reports errors from \code{gzcon} or
+\code{zlib} or similar, try manually decompressing the file and passing
+\code{state_file=file("unzipped-state.txt")}.
 }
 \seealso{
+\code{\link{load_sampling_state}}, \code{\link{sampling_state}},
 \code{\link{read_sampling_state}}
 }
 
