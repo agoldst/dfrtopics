@@ -1,7 +1,8 @@
 context("Modeling")
 options(java.parameters="-Xmx2g",
         dfrtopics.mallet_logging="none",
-        dplyr.show_progress=FALSE)
+        dplyr.show_progress=FALSE,
+        dfrtopics.verbose=F)
 
 data_dir <- file.path(path.package("dfrtopics"),
                       "test-data", "pmla-modphil1905-1915")
@@ -62,6 +63,7 @@ test_that("Modeling on some sample data works", {
 
 test_that("Convenience function model_dfr_documents completes", {
     # the modeling run: we'll also check for valid messaging
+    options(dfrtopics.verbose=T)
     expect_message(
         (
             m <- model_dfr_documents(
@@ -74,7 +76,7 @@ test_that("Convenience function model_dfr_documents completes", {
         ),
         "MALLET random number seed set to 42"
     )
-
+    options(dfrtopics.verbose=F)
 
     # remembered the seed?
     expect_that(modeling_parameters(m)$seed, equals(42))
