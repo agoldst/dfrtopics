@@ -25,7 +25,9 @@ export_browser_doc_topics(file, dtm, digits = 4, zipped, overwrite, index,
 topic numbered \code{permute[k]} in the data}
 }
 \description{
-Exports the \code{dt.json[.zip]} representation of the document-topic matrix as used by dfr-browser. Use this function to customize the output (e.g. by changing the weighting).
+Exports the \code{dt.json[.zip]} representation of the document-topic matrix
+as used by dfr-browser. Use this function to customize the output (e.g. by
+changing the weighting).
 }
 \seealso{
 \code{\link{export_browser_data}} for a more automated export of

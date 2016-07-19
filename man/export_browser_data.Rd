@@ -17,7 +17,9 @@ export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
 exported data files will go in a \code{"data"} directory under
 \code{out_dir}.}
 
-\item{zipped}{should the larger data files be zipped?}
+\item{zipped}{should the larger data files be zipped? (If TRUE, uses
+\code{\link[utils]{zip}}, which requires the \code{zip} utility be
+available.)}
 
 \item{n_top_words}{how many top words per topic to save?}
 

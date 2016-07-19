@@ -18,7 +18,8 @@ and \eqn{n} rows for each topic (as in the result of \code{\link{top_words}}}
 parameter is not meaningful, supply a vector of zeroes \emph{of length equal
 to} \eqn{K}.}
 
-\item{digits}{numerical rounding (passed on to \code{\link[jsonlite]{toJSON}})}
+\item{digits}{numerical rounding (passed on to
+\code{\link[jsonlite]{toJSON}})}
 
 \item{overwrite}{clobber existing file?}
 
@@ -29,7 +30,9 @@ to} \eqn{K}.}
 topic numbered \code{permute[k]} in the data}
 }
 \description{
-Exports the \code{tw.json} representation of the topic-word matrix as used by dfr-browser. Use this to customize the output (e.g. by changing the weighting of words in topics).
+Exports the \code{tw.json} representation of the topic-word matrix as used
+by dfr-browser. Use this to customize the output (e.g. by changing the
+weighting of words in topics).
 }
 \seealso{
 \code{\link{export_browser_data}} for a more automated export of
