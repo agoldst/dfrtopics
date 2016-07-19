@@ -16,7 +16,8 @@ connection}
 \item{chunk_size}{number of lines to read at a time (sometimes multiple
 chunks are written at once). The total number of lines to read is the total
 number of tokens (plus three). A count of chunks read is displayed unless
-the package option \code{dfrtopics.verbose} is FALSE.}
+the package option \code{dfrtopics.verbose} is FALSE. The chunk size appears
+to make little difference to performance.}
 }
 \description{
 This function reads in the Gibbs sampling state output by MALLET (a gzipped
@@ -24,10 +25,11 @@ text file) and writes a CSV file giving the number of times each word type
 in each document is assigned to each document. Because the MALLET state file
 is often too big to handle in memory all at once, the "simplification" is
 done by reading and writing in chunks. This will not be as fast as it should
-be (arRgh!). This function is principally for internal use; the main
-interfaces to the Gibbs sampling state output from MALLET are
-\code{\link{load_sampling_state}} and \code{\link{load_from_mallet_state}}
-(which call this function when needed).
+be (arRgh!); on a fast personal computer, performing this operation on a
+model of a 60 million-word corpus takes six or seven minutes. This function
+is not meant to be called directly; the main interfaces to the Gibbs
+sampling state output from MALLET are \code{\link{load_sampling_state}} and
+\code{\link{load_from_mallet_state}} (which call this function when needed).
 }
 \details{
 The resulting file has a header \code{document,word,topic,count} describing

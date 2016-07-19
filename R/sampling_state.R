@@ -31,9 +31,9 @@ write_mallet_state <- function(m, outfile="state.gz") {
 #' is often too big to handle in memory all at once, the "simplification" is
 #' done by reading and writing in chunks. This will not be as fast as it should
 #' be (arRgh!); on a fast personal computer, performing this operation on a
-#' model of a 60 million-word corpus takes around ten minutes. This function is
-#' not meant to be called directly; the main interfaces to the Gibbs sampling
-#' state output from MALLET are \code{\link{load_sampling_state}} and
+#' model of a 60 million-word corpus takes six or seven minutes. This function
+#' is not meant to be called directly; the main interfaces to the Gibbs
+#' sampling state output from MALLET are \code{\link{load_sampling_state}} and
 #' \code{\link{load_from_mallet_state}} (which call this function when needed).
 #'
 #' The resulting file has a header \code{document,word,topic,count} describing
@@ -56,7 +56,8 @@ write_mallet_state <- function(m, outfile="state.gz") {
 #' @param chunk_size number of lines to read at a time (sometimes multiple
 #' chunks are written at once). The total number of lines to read is the total
 #' number of tokens (plus three). A count of chunks read is displayed unless
-#' the package option \code{dfrtopics.verbose} is FALSE.
+#' the package option \code{dfrtopics.verbose} is FALSE. The chunk size appears
+#' to make little difference to performance.
 #'
 #' @seealso \code{\link{load_sampling_state}}, \code{\link{sampling_state}},
 #' \code{\link{read_sampling_state}}
@@ -104,10 +105,10 @@ simplify_state <- function (state_file, outfile,
     # doc, so we'll always hold the last document in a chunk for writing when
     # we're sure we won't see any more rows for that doc
 
-    acc <- data.frame(doc=integer(), type=integer(), topic=integer(),
-        count=integer())
+    acc <- data.frame(doc=integer(), type=integer(), topic=integer())
     n <- -1
 
+    # progress counter (console flush trick from dplyr::Progress)
     if (getOption("dfrtopics.verbose")) {
         tick <- (function () {
             i <- 0
@@ -126,25 +127,26 @@ simplify_state <- function (state_file, outfile,
         n <- nrow(chunk)
         if (n > 0) {
             last <- chunk$doc[n]
-            # aggregate rows of token topic assignments into counts
-            chunk <- dplyr::count_(chunk, c("doc", "type", "topic"))
-            names(chunk)[4] <- "count"
 
-            # join acc to chunk; group-summarize should only affect one group,
-            # so this is wasteful but simple to write
-            acc <- dplyr::bind_rows(acc, chunk)
-            acc <- dplyr::group_by_(acc, ~ doc, ~ type, ~ topic)
-            acc <- dplyr::summarize_(acc, count= ~ sum(count))
+            if (nrow(acc) > 0 && acc$doc[nrow(acc)] == last) {
+                # last doc in chunk is also first: accumulate and continue
+                acc <- dplyr::bind_rows(acc, chunk)
+            } else {
+                # tally and write all in acc and chunk except doc number `last`
+                cutpt <- match(last, chunk$doc)
+                if (cutpt > 1L) {
+                    acc <- dplyr::bind_rows(acc, chunk[seq.int(cutpt - 1L), ])
+                    chunk <- chunk[seq.int(cutpt, n), ]
+                }
 
-            # split off the last doc and keep it in acc for the next round
-            to_write <- acc$doc != last
-            write(acc[to_write, ])
-            acc <- acc[!to_write, ]
+                write(dplyr::count_(acc, c("doc", "type", "topic")))
+                acc <- chunk
+            }
         }
     }
 
-    # write the final chunk
-    write(acc)
+    # tally and write the final chunk
+    write(dplyr::count_(acc, c("doc", "type", "topic")))
 }
 
 # read MALLET sampling state rows from a .gz file. The exported

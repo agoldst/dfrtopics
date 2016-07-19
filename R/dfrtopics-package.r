@@ -200,7 +200,7 @@ VIS=list(
 )
         ),
         dfrtopics.mallet_logging="default",
-        dfrtopics.state_chunk_size=3000L,
+        dfrtopics.state_chunk_size=20000L,
         dfrtopics.verbose=TRUE
     )
 
