@@ -27,7 +27,6 @@ Suggests:
     tidyr,
     knitr,
     rmarkdown
-SystemRequirements: python
 License: MIT | file LICENSE
 LazyData: true
 VignetteBuilder: knitr
