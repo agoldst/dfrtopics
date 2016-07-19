@@ -30,10 +30,11 @@ write_mallet_state <- function(m, outfile="state.gz") {
 #' in each document is assigned to each document. Because the MALLET state file
 #' is often too big to handle in memory all at once, the "simplification" is
 #' done by reading and writing in chunks. This will not be as fast as it should
-#' be (arRgh!). This function is principally for internal use; the main
-#' interfaces to the Gibbs sampling state output from MALLET are
-#' \code{\link{load_sampling_state}} and \code{\link{load_from_mallet_state}}
-#' (which call this function when needed).
+#' be (arRgh!); on a fast personal computer, performing this operation on a
+#' model of a 60 million-word corpus takes around ten minutes. This function is
+#' not meant to be called directly; the main interfaces to the Gibbs sampling
+#' state output from MALLET are \code{\link{load_sampling_state}} and
+#' \code{\link{load_from_mallet_state}} (which call this function when needed).
 #'
 #' The resulting file has a header \code{document,word,topic,count} describing
 #' its columns.  Note that this file uses zero-based indices for topics, words,
@@ -91,6 +92,13 @@ simplify_state <- function (state_file, outfile,
         write <- function (x) write.table(x, outfile, sep=",",
             row.names=FALSE, col.names=FALSE, append=TRUE)
 
+    # advance file pointer past header
+    cmt <- readLines(state_file, n=3)
+    if (!all.equal(grep("^#", cmt), 1:3)) {
+        warning(
+"Didn't find expected header lines. Is this really a MALLET state file?"
+        )
+    }
     # Sampling state is in document order. We can't write doc, type, topic
     # triples for a document until we're sure we're done getting rows for that
     # doc, so we'll always hold the last document in a chunk for writing when
@@ -143,27 +151,23 @@ simplify_state <- function (state_file, outfile,
 # read_sampling_state is for simplified state files, and the main interface is
 # supposed to be load_sampling_state.
 read_gibbs <- function (f, nrows=-1) {
-    # it would be nice to use readr, but it doesn't like already-opened
-    # gzcon(file()) streams
-    #
-    # result <- readr::read_delim(f, delim=" ", quote="", comment="#",
-    #     col_names=c("doc", "type", "topic"), col_types="i__i_i", n_max=nrows)
-
-    # neither does read.table, but readLines manages okay
+    # readr and read.table don't like already-opened gzcon(file()) streams,
+    # but readLines manages okay
     ll <- readLines(f, n=nrows)
-    if (length(ll) > 0) {
-        result <- read.table(text=ll, nrows=nrows,
-            header=FALSE, sep="", quote="", row.names=NULL,
-            col.names=c("doc", "src", "pos", "type", "word", "topic"),
-            as.is=TRUE,
-            colClasses=c("integer", "NULL", "NULL",
-                         "integer", "NULL", "integer"),
-            comment.char="#")
-    } else {
-        result <- data.frame()
-    }
 
-    result
+    if (length(ll) == 0) {
+        data.frame()
+    } else {
+        # surprisingly, read.table is faster than the alternatives I tried:
+        # str_split and read_delim(str_c(ll, collapse="\n"))
+        read.table(text=ll,
+             header=FALSE, sep=" ", quote="", row.names=NULL,
+             col.names=c("doc", "src", "pos", "type", "word", "topic"),
+             as.is=TRUE,
+             colClasses=c("integer", "NULL", "NULL",
+                          "integer", "NULL", "integer"),
+             comment.char="")
+    }
 }
 
 #' Read in a Gibbs sampling state
