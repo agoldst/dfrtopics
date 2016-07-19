@@ -17,7 +17,7 @@ stoplist_file <- file.path(path.package("dfrtopics"), "stoplist",
 
 n_topics <- 8
 insts <- read_wordcounts(fs) %>%
-    wordcounts_remove_rare(10000) %>%
+    wordcounts_remove_rare(200) %>%
     wordcounts_texts() %>%
     make_instances(stoplist_file)
 
@@ -70,6 +70,11 @@ test_that("simplify_state generates the right file", {
     ss_frame <- read.csv(ss_file, as.is=T)
     expect_equal(ss_frame, read.csv(ss2, as.is=T),
                  info="simplify_state on connection also works")
+
+    # test for inconvenient edge cases in simplify_state
+    simplify_state(state_file, ss2, chunk_size=1L)
+    expect_equal(ss_frame, read.csv(ss2, as.is=T),
+                 info="simplify_state one line at a time works")
 
     expect_equal(sum(ss_frame$count),
                  sum(doc_topics(m)),
