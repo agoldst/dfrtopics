@@ -152,22 +152,19 @@ simplify_state <- function (state_file, outfile,
 # supposed to be load_sampling_state.
 read_gibbs <- function (f, nrows=-1) {
     # readr and read.table don't like already-opened gzcon(file()) streams,
-    # but readLines manages okay
-    ll <- readLines(f, n=nrows)
+    # but scan manages okay because it never tries to pushBack
 
-    if (length(ll) == 0) {
-        data.frame()
-    } else {
-        # surprisingly, read.table is faster than the alternatives I tried:
-        # str_split and read_delim(str_c(ll, collapse="\n"))
-        read.table(text=ll,
-             header=FALSE, sep=" ", quote="", row.names=NULL,
-             col.names=c("doc", "src", "pos", "type", "word", "topic"),
-             as.is=TRUE,
-             colClasses=c("integer", "NULL", "NULL",
-                          "integer", "NULL", "integer"),
-             comment.char="")
-    }
+    # surprisingly, read.table was faster than the alternatives I tried:
+    # str_split and read_delim(str_c(ll, collapse="\n")). We use scan to save
+    # a little more time.
+    result <- scan(f, nmax=nrows, sep=" ", quote="",
+         what=list(
+             integer(), NULL, NULL, integer(), NULL, integer()
+         ),
+         multi.line=FALSE, flush=TRUE, quiet=TRUE
+    )[c(1, 4, 6)]
+    names(result) <- c("doc", "type", "topic")
+    dplyr::as_data_frame(result)
 }
 
 #' Read in a Gibbs sampling state
