@@ -14,9 +14,9 @@ This is too messy for CRAN. The easiest way to install is to first install the [
 devtools::install_github("agoldst/dfrtopics")
 ```
 
-(This should work even if you don't have git or a github account.)
+(You don't need to have git or a github account for this to work.) I have been profligate with dependencies on other R packages. This package contains C++ code, so R must be able to build it from source. Mac users should install XCode; Windows users need [RTools](https://cran.r-project.org/bin/windows/Rtools/).
 
-I have been profligate with dependencies. Note, however, that the [mallet](http://cran.r-project.org/web/packages/mallet) package is *not* a formal dependency of the package, so as to make it possible to use other parts of the passage without loading the Java VM. To make use of the topic-modeling functions, however, mallet must be installed. It is available in two versions. To install from CRAN, use
+Note, however, that the [mallet](http://cran.r-project.org/web/packages/mallet) package is *not* a formal dependency of the package, so as to make it possible to use other parts of the passage without loading the Java VM. To make use of the topic-modeling functions, however, mallet must be installed. It is available in two versions. To install from CRAN, use
 
 ```R
 install.packages("mallet")
@@ -30,9 +30,15 @@ devtools::install_github("mimno/RMallet", subdir="mallet")
 
 Either command will also install rJava, which mallet depends on. If you use RStudio, getting rJava and mallet to load can be a messy business. Mac users, see my [blog post on rJava and RStudio on MacOS X](http://andrewgoldstone.com/blog/2015/02/03/rjava/).
 
+To install this package together with its optional as well as required dependencies (CRAN mallet included), use
+
+```R
+devtools::install_github("agoldst/dfrtopics", dependencies=T)
+```
+
 ## Browsing the model interactively
 
-Now in alpha release: another project of mine, [dfr-browser](http://agoldst.github.io/dfr-browser), which makes topic models of DfR data into a javascript-based interactive browser. To export results from this model as a browser, use the package function `dfr_browser` (see the function documentation for more detail).
+Now in alpha release: another project of mine, [dfr-browser](http://agoldst.github.io/dfr-browser), which makes topic models of DfR data into a javascript-based interactive browser. To browse a model created in dfrtopics, use the package function `dfr_browser` (see the function documentation for more detail).
 
 ## A note on licensing
 
@@ -48,7 +54,7 @@ v0.2.4
  : 4/26/16. Compatibility with `mallet` package versions 1.0 and 1.1+. *Very experimental* topic alignment functions.
 
 v0.2.3
- : 4/19/16. An adjusted dfr-browser export via `dfr_browser()` for one-line interactive browsing. `export_browser_data` is still avaiable for more control. `wordcounts_instances` introduced to help express "no, MALLET, no more tokenizing!"
+ : 4/19/16. An adjusted dfr-browser export via `dfr_browser()` for one-line interactive browsing. `export_browser_data` is still available for more control. `wordcounts_instances` introduced to help express "no, MALLET, no more tokenizing!"
 
 v0.2.2
  : 2/10/16. New (beta) feature: functions for the mutual information of words and documents within topics, and for using this in a posterior predictive check of the model fit: `imi_topic`, `mi_topic`, `imi_check`, `mi_check`. Introduces a dependency on RcppEigen.
