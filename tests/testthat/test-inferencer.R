@@ -34,7 +34,7 @@ test_that("read/write inferencer produces a file", {
     f <- tempfile()
     write_inferencer(inf, f)
     expect_true(file.exists(f))
-    expect_more_than(file.size(f), 0)
+    expect_gt(file.size(f), 0)
 
     inf <- read_inferencer(f)
     expect_is(inf, "jobjRef")
