@@ -12,7 +12,7 @@
 
 <meta name="author" content="Andrew Goldstone" />
 
-<meta name="date" content="2016-07-12" />
+<meta name="date" content="2016-07-23" />
 
 <title>Introduction to dfrtopics</title>
 
@@ -67,14 +67,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 
 
-<div class="fluid-row" id="header">
 
-
-<h1 class="title">Introduction to dfrtopics</h1>
+<h1 class="title toc-ignore">Introduction to dfrtopics</h1>
 <h4 class="author"><em>Andrew Goldstone</em></h4>
-<h4 class="date"><em>2016-07-12</em></h4>
+<h4 class="date"><em>2016-07-23</em></h4>
 
-</div>
 
 
 <p>This package seeks to provide some help creating and exploring topic models using <a href="http://mallet.cs.umass.edu">MALLET</a> from R. It builds on the <a href="http://cran.r-project.org/web/packages/mallet">mallet</a> package. Parts of this package are specialized for working with the metadata and pre-aggregated text data supplied by JSTOR’s <a href="http://dfr.jstor.org">Data for Research</a> service; the topic-modeling parts are independent of this, however.</p>
@@ -133,10 +130,9 @@ counts %&gt;%
 <span class="st">    </span><span class="kw">group_by</span>(id) %&gt;%
 <span class="st">    </span><span class="kw">summarize</span>(<span class="dt">total=</span><span class="kw">sum</span>(weight),
               <span class="dt">stopped=</span><span class="kw">sum</span>(weight[word %in%<span class="st"> </span>stoplist]))</code></pre></div>
-<pre><code>## Source: local data frame [605 x 3]
-## 
+<pre><code>## # A tibble: 605 x 3
 ##                 id total stopped
-##              (chr) (int)   (int)
+##              &lt;chr&gt; &lt;int&gt;   &lt;int&gt;
 ## 1  10.2307/3693731 10073    3028
 ## 2  10.2307/3693732  6855    3798
 ## 3  10.2307/3693733  4791    2554
@@ -147,7 +143,7 @@ counts %&gt;%
 ## 8  10.2307/3693738  7248    4213
 ## 9  10.2307/3693739   739     399
 ## 10  10.2307/432387  5692    3132
-## ..             ...   ...     ...</code></pre>
+## # ... with 595 more rows</code></pre>
 <p>As always, Zipf’s law is rather remarkable. In any case, we can remove stopwords now with a simple <code>filter</code> or (equivalently) <code>wordcounts_remove_stopwords</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">counts &lt;-<span class="st"> </span>counts %&gt;%<span class="st"> </span><span class="kw">wordcounts_remove_stopwords</span>(stoplist)</code></pre></div></li>
 <li><p>Filter infrequent words. OCR’d text in particular is littered with hapax legomena. The long tail of one-off features means a lot of noise for the modeling process, and you’ll likely want to get rid of these.</p>
@@ -270,10 +266,9 @@ counts %&gt;%
 <h1>Exploring model results</h1>
 <p>A good sanity check on a model is to examine the list of the words most frequently assigned to each topic. This is easily obtained from the topic-word matrix, but this is such a common operation that we have a shortcut.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">top_words</span>(m, <span class="dt">n=</span><span class="dv">10</span>) <span class="co"># n is the number of words to return for each topic</span></code></pre></div>
-<pre><code>## Source: local data frame [400 x 3]
-## 
+<pre><code>## # A tibble: 400 x 3
 ##    topic     word weight
-##    (int)    (chr)  (int)
+##    &lt;int&gt;    &lt;chr&gt;  &lt;int&gt;
 ## 1      1      two   3602
 ## 2      1 evidence   1779
 ## 3      1 original   1472
@@ -284,7 +279,7 @@ counts %&gt;%
 ## 8      1     line   1086
 ## 9      1    given   1029
 ## 10     1 question    968
-## ..   ...      ...    ...</code></pre>
+## # ... with 390 more rows</code></pre>
 <p>This data frame is in fact separately saved to disk and stored, even if the full topic-word matrix is not available. It is in essence a sparse representation of the topic-word matrix.<a href="#fn5" class="footnoteRef" id="fnref5"><sup>5</sup></a></p>
 <p>As even this data frame is too long to read if you have more than few topics, a conveniently human-readable summary can be generated from</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">topic_labels</span>(m, <span class="dt">n=</span><span class="dv">8</span>)</code></pre></div>
@@ -361,7 +356,7 @@ counts %&gt;%
 ## 6     1 1911-01-01 0.07378674</code></pre>
 <p>This is a “long” data frame suitable for plotting, which we turn to shortly. But it is important to underline that <code>topic_series</code> is a special case of the more general operation of combining modeled topic scores for <em>groups</em> of documents. That is, one of the main uses of a topic model is to consider estimated topics as dependent variables, and metadata as independent variables.<a href="#fn7" class="footnoteRef" id="fnref7"><sup>7</sup></a></p>
 <p>To make this more general operation a little easier, I have supplied generalized aggregator functions <code>sum_row_groups</code> and <code>sum_col_groups</code> which take a matrix and a grouping factor. As a simple example, suppose we wanted to tabulate the way topics are split up between the two journals in our corpus:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">journal &lt;-<span class="st"> </span><span class="kw">factor</span>(<span class="kw">metadata</span>(m)$journal)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">journal &lt;-<span class="st"> </span><span class="kw">factor</span>(<span class="kw">metadata</span>(m)$journaltitle)
 <span class="kw">doc_topics</span>(m) %&gt;%
 <span class="st">    </span><span class="kw">sum_row_groups</span>(journal) %&gt;%
 <span class="st">    </span><span class="kw">normalize_cols</span>()</code></pre></div>
@@ -435,7 +430,7 @@ bin/server</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sampling_state</span>(m)</code></pre></div>
 <pre><code>## An object of class &quot;big.matrix&quot;
 ## Slot &quot;address&quot;:
-## &lt;pointer: 0x7feadded4df0&gt;</code></pre>
+## &lt;pointer: 0x111c64530&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">dim</span>(<span class="kw">sampling_state</span>(m))</code></pre></div>
 <pre><code>## [1] 693350      4</code></pre>
 <p>What we now want is to examine the topic-document matrix <em>conditional on</em> the word poem. This is easy to do with the <code>mwhich</code> function from <code>bigmemory</code>, but as a convenience this package provides a function for this particular application (as well as the the term-document matrices conditioned on a topic, <code>tdm_topic</code>):</p>

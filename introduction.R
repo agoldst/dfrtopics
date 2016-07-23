@@ -66,7 +66,7 @@ m <- train_model(ilist, n_topics=40,
                  # many more parameters...
                  )
 
-## ----message=F-----------------------------------------------------------
+## ----message=F, results="hide"-------------------------------------------
 write_mallet_model(m, "modeling_results")
 
 ## ----eval=F--------------------------------------------------------------
@@ -102,7 +102,7 @@ srs <- topic_series(m, breaks="years")
 head(srs)
 
 ## ------------------------------------------------------------------------
-journal <- factor(metadata(m)$journal)
+journal <- factor(metadata(m)$journaltitle)
 doc_topics(m) %>%
     sum_row_groups(journal) %>%
     normalize_cols()
