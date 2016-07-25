@@ -38,6 +38,11 @@
 make_instances <- function (docs, stoplist_file=NULL, ...) {
     load_mallet()
 
+    # TODO support putting labels ("targets") on instances as well. Have to
+    # bypass mallet::mallet.import and RTopicModel.addInstances for that
+    # then we can support Labeled LDA:
+    # http://www.mimno.org/articles/labelsandpatterns/
+
     no_stop <- is.null(stoplist_file)
     if (!no_stop && !file.exists(stoplist_file)) {
         warning("Stoplist file not found. Using an empty stoplist.")
