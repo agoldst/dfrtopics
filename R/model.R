@@ -260,7 +260,7 @@ train_model <- function(instances, n_topics,
         as.numeric(alpha_sum),
         as.numeric(beta))
 
-   if (rJava::.jinstanceof(trainer, "cc.mallet.topics.ParallelTopicModel")) {
+    if (rJava::.jinstanceof(trainer, "cc.mallet.topics.ParallelTopicModel")) {
         # new mallet: RTopicModel IS a ParallelTopicModel
         ptm <- trainer
     } else {
