@@ -105,10 +105,7 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' This package includes a copy of the dfr-browser files necessary to run the
 #' browser. By default, this routine only exports data files. To also copy
 #' over the dfr-browser source (javascript, HTML, and CSS), pass
-#' \code{supporting_files=T}. To insert the data directly into the main
-#' \code{index.html} file, also passed \code{internalize=T}. I recommend this
-#' last option for local viewing only, not for web hosting; in the latter case,
-#' separate data files will allow for asynchronous loading.
+#' \code{supporting_files=T}. 
 #'
 #' @section Metadata format:
 #'
@@ -134,6 +131,12 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' eliminate such columns automatically, but this more conservative approach
 #' aims to allow you more flexibility about what gets exported.
 #'
+#' @section Deprecated option:
+#'
+#' To insert the data directly into the main \code{index.html} file, pass
+#' \code{internalize=T}. This behavior is now deprecated and will be removed
+#' in a future version.
+#'
 #' @param m \code{mallet_model} object from \code{\link{train_model}} or
 #'   \code{\link{load_mallet_model}}
 #' @param out_dir directory for output. If \code{supporting_files} is TRUE, the
@@ -150,8 +153,9 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #'   exported data placed appropriately. From a shell in \code{out_dir},
 #'   run \code{bin/server} to launch a local web server.
 #' @param overwrite if TRUE, this will clobber existing files
-#' @param internalize if TRUE, write data directly into the browser's
-#' \code{index.html} source instead of into a series of separate files.
+#' @param internalize always set to FALSE. If TRUE, model data is in the
+#' browser home page rather than separate files, but this behavior is
+#' deprecated. See Details.
 #' @param info a list of dfr-browser parameters. Converted to JSON with
 #' \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
 #' default values (\code{getOption("dfrtopics.browser_info")}) are used. No
@@ -587,25 +591,12 @@ export_browser_info <- function (file, info, overwrite, index) {
 
 #' Create and launch a model browser
 #'
-#' Export model data and all supporting files needed to browse a model
-#' or models interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser},
-#' then (optionally) open a web browser. It is also possible to browse a list of models.
+#' Export model data and all supporting files needed to browse a model or
+#' models interactively using
+#' \href{http://agoldst.github.io/dfr-browser}{dfr-browser}, then (optionally)
+#' open a web browser. It is also possible to browse a list of models.
 #'
-#' There are two ways to store the model data in the exported files. Either the
-#' data can be part of the source for the web page (\code{internalize=TRUE}) or
-#' it can be filed in separate files (\code{internalize=FALSE}).  For web
-#' hosting, the latter is better, because dfr-browser can load data
-#' asynchronously rather than all at once, resulting in a more responsive
-#' initial page view for web visitors.  The former, "internalized" option is
-#' intended to be more convenient for local browsing, since a web browser can
-#' simply be pointed to the file on disk (this is what \code{browse=TRUE} does).
-#' However, this method may not always work, depending on your system's
-#' implementation of \code{\link[utils]{browseURL}} and your web browser. Thus,
-#' RStudio appears to launch a web server to serve files given by a
-#' \code{file://} URL. This allows for browsing regardless of
-#' \code{internalize}. By contrast, opening an \code{internalize}d dfr-browser's
-#' \code{index.html} file directly currently works in Firefox but not Chrome
-#' (which refuses to load the associated Web Worker from disk).
+#' If \code{browse=T}, the function attempts to start a local webserver and open a web browser pointing to the appropriate URL. This functionality requires the \code{servr} package. 
 #'
 #' For more control over the export, including the option to export data files
 #' only, if for example you have modified the HTML/CSS/JS of an existing
@@ -616,8 +607,7 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' dfr-browser can be configured to retrieve data from more than one model, or
 #' to show topic proportions in a single model conditioned on more than one
 #' metadata variable, or both. \code{dfr_browser} can generate the necessary
-#' data and configuration files, though \code{internalize=TRUE} is currently
-#' not supported in this case. Passing \code{dfr_browser} a list of model
+#' data and configuration files. Passing \code{dfr_browser} a list of model
 #' objects will generate a single dfr-browser with a menu for swapping among
 #' the models. Passing a single \code{mallet_model} and a vector of variable
 #' names as \code{condition} will generate a dfr-browser with a menu for
@@ -633,13 +623,25 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' models and specifying a \code{topic_ids} vector for each model in the
 #' \code{sub_info} parameter.
 #'
+#' @section Deprecated option:
+#'
+#' \code{internalize=TRUE} will cause all model data to be stored in the
+#' index.html file, whence it can be loaded by dfr-browser. This behavior is no
+#' longer useful; the model data should always be exported as separate files
+#' for asynchronous loading by dfr-browser. (In former days one could avoid
+#' having to launch a web server and simply point a browser at the index.html
+#' file. dfr-browser no longer works in this circumstance because it relies on
+#' a Web Worker, which modern web browsers will refuse to load from a
+#' \code{file:///} URL.)
+#'
 #' @param m \code{mallet_model} object from \code{\link{train_model}} or
 #'   \code{\link{load_mallet_model}}
 #' @param out_dir directory for output. By default, files are saved to a
 #'   temporary directory
 #' @param browse if TRUE, launch web browser after export for viewing
-#' @param internalize if TRUE, model data is in the browser home page rather
-#'   than separate files. See Details.
+#' @param internalize always set to FALSE. If TRUE, model data is in the
+#' browser home page rather than separate files, but this behavior is
+#' deprecated. See Details.
 #' @param condition dfr-browser displays topic proportions conditioned on (bins
 #' of) a chosen metadata variable (by default, publication date). Any variable
 #' in \code{metadata(m)} may be specified. A vector or list of such variables
@@ -679,7 +681,7 @@ dfr_browser <- function (m, ...) UseMethod("dfr_browser")
 
 #' @export
 dfr_browser.mallet_model <- function (m, out_dir=tempfile("dfr-browser"),
-        internalize=TRUE, browse=TRUE, condition="pubdate", ...) {
+        internalize=FALSE, browse=TRUE, condition="pubdate", ...) {
 
     if (length(condition) > 1) {
         # then it's a multi-model and we'll hand this off
@@ -818,9 +820,18 @@ suggest_date_interval <- function (xs, breaks=nclass.Sturges(xs)) {
 }
 
 # internal function for launching a browser
-browse_dfb <- function (out_dir) browseURL(
-    paste0("file://", file.path(normalizePath(out_dir), "index.html"))
-)
+browse_dfb <- function (out_dir) {
+    if (requireNamespace("servr", quietly=TRUE)) {
+        servr::httd(out_dir, browser=TRUE)
+    } else {
+        warning(
+"dfr-browser requires a running web server. Try
+    install.packages(\"servr\")
+and re-run dfr_browser(), or start the web server of your choice from ",
+            out_dir
+        )
+    }
+}
 
 # internal function for getting default filenames for dfb data files (used with 
 # multimodel export)
