@@ -59,4 +59,3 @@ divergences calculated by \code{\link{topic_divergences}}}
 
 }
 }
-

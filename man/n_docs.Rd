@@ -15,4 +15,3 @@ The number of documents.
 \description{
 Returns the number of documents modeled.
 }
-

@@ -17,4 +17,3 @@ A new data frame with stopwords removed
 \description{
 Filter out a vector of words from a wordcounts dataframe.
 }
-

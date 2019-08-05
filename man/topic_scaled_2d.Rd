@@ -32,4 +32,3 @@ century of classics journals. \emph{ACM J. Comput. Cult. Herit.} 5, no. 1
 \seealso{
 \code{\link{row_dists}}, \code{\link{topic_divergences}}
 }
-

@@ -31,7 +31,7 @@ write_dfb_file <- function (txt, f, zip=TRUE,
         # use jsonlite to escape the string, then stuff in script element
         txt <- paste0(
             '<script type="application/json" id="m__DATA__',
-            gsub("\\..*$", "", basename(f)),
+            gsub("\\..*$", "", gsub("/", "_", f)),
             '">',
             jsonlite::toJSON(paste(txt, collapse="\n"), auto_unbox=TRUE),
             '</script>'
@@ -153,8 +153,9 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' @param internalize if TRUE, write data directly into the browser's
 #' \code{index.html} source instead of into a series of separate files.
 #' @param info a list of dfr-browser parameters. Converted to JSON with
-#'   \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
-#'   default values (\code{getOption("dfrtopics.browser_info")}) are used.
+#' \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
+#' default values (\code{getOption("dfrtopics.browser_info")}) are used. No
+#' file is written if \code{info=FALSE}.
 #' @param proper if TRUE, the document-topic and topic-word matrices will be
 #' smoothed by the hyperparameters alpha and beta (respectively) and normalized
 #' before export, instead of the "raw" sampling weights (which is the default).
@@ -203,7 +204,8 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
                                  info=NULL,
                                  proper=FALSE,
                                  digits=getOption("digits"),
-                                 permute=NULL) {
+                                 permute=NULL,
+                                 data_dir) {
     if (!requireNamespace("jsonlite", quietly=TRUE)) {
         stop("jsonlite package required for browser export. Install from CRAN.")
     }
@@ -233,32 +235,17 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
     }
 
     if (supporting_files) {
-        dfb_files <- list.files(file.path(path.package("dfrtopics"), "dfb"))
+        export_dfb_supporting_files(out_dir, overwrite)
+    }
+    if (missing(data_dir)) {
+        if (supporting_files) 
+            data_dir <- file.path(out_dir, "data")
+        else
+            data_dir <- out_dir
+    }
 
-        if (!overwrite) {
-            for (f in file.path(out_dir, list.files(dfb_files,
-                                                    recursive=TRUE))) {
-                if (file.exists(f)) {
-                    stop(paste(f, "already exists.
-Set overwrite=TRUE to overwrite existing files."
-                    ))
-                }
-            }
-        }
-
-        blurt("Copying dfr-browser supporting files...")
-        file.copy(file.path(path.package("dfrtopics"), "dfb", dfb_files),
-                  out_dir,
-                  recursive=TRUE, overwrite=overwrite)
-
-        # the server script doesn't download with execute permission, so:
-        server <- file.path(out_dir, "bin", "server")
-        Sys.chmod(server, mode=file.info(server)$mode | "0744")
-
-        out_dir <- file.path(out_dir, "data")
-        if (!file.exists(out_dir)) {
-            dir.create(out_dir)
-        }
+    if (!file.exists(data_dir)) {
+        dir.create(data_dir)
     }
 
     # validate permute
@@ -277,7 +264,7 @@ Set overwrite=TRUE to overwrite existing files."
     }
     if (!is.null(keys)) {
         export_browser_topic_words(
-            file=paste0(file.path(out_dir, "tw"), ".json"),
+            file=paste0(file.path(data_dir, "tw"), ".json"),
             keys=keys,
             alpha=hyperparameters(m)$alpha,
             digits=digits,  # irrelevant unless proper is TRUE
@@ -303,7 +290,7 @@ Set overwrite=TRUE to overwrite existing files."
         }
 
         export_browser_doc_topics(
-            file=paste0(file.path(out_dir, "dt"), ".json"),
+            file=paste0(file.path(data_dir, "dt"), ".json"),
             dtm=dtm, 
             digits=digits,  # irrelevant unless proper is TRUE
             zip=zipped,
@@ -333,7 +320,7 @@ display may not work as expected. See ?export_browser_data for details."
         }
 
         export_browser_metadata(
-            file=paste0(file.path(out_dir, "meta"), ".csv"),
+            file=paste0(file.path(data_dir, "meta"), ".csv"),
             meta=md_frame,
             zip=zipped,
             overwrite=overwrite || internalize,
@@ -347,7 +334,7 @@ display may not work as expected. See ?export_browser_data for details."
 
     if (!is.null(topic_words(m))) {
         export_browser_topic_scaled( 
-            file=paste0(file.path(out_dir, "topic_scaled"), ".csv"),
+            file=paste0(file.path(data_dir, "topic_scaled"), ".csv"),
             scaled=topic_scaled_2d(m, n_scaled_words),
             overwrite=overwrite || internalize,
             index=index,
@@ -359,9 +346,9 @@ display may not work as expected. See ?export_browser_data for details."
         )
     }
 
-    info_file <- paste0(file.path(out_dir, "info"), ".json")
-    write_info <- TRUE
-    if (!internalize && is.null(info)) {
+    info_file <- paste0(file.path(data_dir, "info"), ".json")
+    write_info <- !identical(info, FALSE)
+    if (write_info && !internalize && is.null(info)) {
         blurt("Checking for info.json file...")
         write_info <- !file.exists(info_file)
         if (!write_info) blurt(info_file, " ok")
@@ -378,6 +365,32 @@ display may not work as expected. See ?export_browser_data for details."
             index=index
         )
     }
+}
+
+export_dfb_supporting_files <- function (out_dir, overwrite) {
+    dfb_files <- list.files(file.path(path.package("dfrtopics"), "dfb"))
+
+    if (!overwrite) {
+        for (f in file.path(out_dir, list.files(dfb_files,
+                                                recursive=TRUE))) {
+            if (file.exists(f)) {
+                stop(paste(f, "already exists.
+Set overwrite=TRUE to overwrite existing files."
+                ))
+            }
+        }
+    }
+
+    if (getOption("dfrtopics.verbose"))
+        message("Copying dfr-browser supporting files...")
+
+    file.copy(file.path(path.package("dfrtopics"), "dfb", dfb_files),
+              out_dir,
+              recursive=TRUE, overwrite=overwrite)
+
+    # the server script doesn't download with execute permission, so:
+    server <- file.path(out_dir, "bin", "server")
+    Sys.chmod(server, mode=file.info(server)$mode | "0744")
 }
 
 #' Export topic-word file for dfr-browser
@@ -575,8 +588,8 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' Create and launch a model browser
 #'
 #' Export model data and all supporting files needed to browse a model
-#' interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser},
-#' then open a web browser.
+#' or models interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser},
+#' then (optionally) open a web browser. It is also possible to browse a list of models.
 #'
 #' There are two ways to store the model data in the exported files. Either the
 #' data can be part of the source for the web page (\code{internalize=TRUE}) or
@@ -598,6 +611,28 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' only, if for example you have modified the HTML/CSS/JS of an existing
 #' dfr-browser, use \code{\link{export_browser_data}}.
 #'
+#' @section Browsing multiple models at once:
+#'
+#' dfr-browser can be configured to retrieve data from more than one model, or
+#' to show topic proportions in a single model conditioned on more than one
+#' metadata variable, or both. \code{dfr_browser} can generate the necessary
+#' data and configuration files, though \code{internalize=TRUE} is currently
+#' not supported in this case. Passing \code{dfr_browser} a list of model
+#' objects will generate a single dfr-browser with a menu for swapping among
+#' the models. Passing a single \code{mallet_model} and a vector of variable
+#' names as \code{condition} will generate a dfr-browser with a menu for
+#' swapping among covariates (internally, dfr-browser treats these two
+#' possibilities the same). Passing both a list of models and a vector of
+#' variable names will generate all the model-covariate pairs. Passing a list
+#' of models and a list of the same length of variable names will use the
+#' corresponding element of \code{condition} as the chosen covariate options
+#' for the given model. Finally, in place of a list of models, you can supply
+#' the result of \code{\link{align_topics}}. In that case the topics in each
+#' model are relabeled according to their assigned cluster number. It is
+#' possible to achieve the same result more manually by passing a list of
+#' models and specifying a \code{topic_ids} vector for each model in the
+#' \code{sub_info} parameter.
+#'
 #' @param m \code{mallet_model} object from \code{\link{train_model}} or
 #'   \code{\link{load_mallet_model}}
 #' @param out_dir directory for output. By default, files are saved to a
@@ -605,6 +640,15 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' @param browse if TRUE, launch web browser after export for viewing
 #' @param internalize if TRUE, model data is in the browser home page rather
 #'   than separate files. See Details.
+#' @param condition dfr-browser displays topic proportions conditioned on (bins
+#' of) a chosen metadata variable (by default, publication date). Any variable
+#' in \code{metadata(m)} may be specified. A vector or list of such variables
+#' may also be supplied (see Details). To adjust the binning of continuous or
+#' time covariates, change the dfr-browser configuration via \code{info} or
+#' \code{sub_info}.
+#' @param ids character vector. If multiple models are specified in \code{m},
+#' the corresponding element of \code{ids} is used as a model ID in
+#' dfr-browser.
 #' @param ... passed on to \code{\link{export_browser_data}}, q.v., especially
 #' the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, 
 #' \code{proper}, and \code{permute}
@@ -631,13 +675,173 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' }
 #'
 #' @export
-dfr_browser <- function(m, out_dir=tempfile("dfr-browser"),
-        internalize=TRUE, browse=TRUE, ...) {
+dfr_browser <- function (m, ...) UseMethod("dfr_browser")
+
+#' @export
+dfr_browser.mallet_model <- function (m, out_dir=tempfile("dfr-browser"),
+        internalize=TRUE, browse=TRUE, condition="pubdate", ...) {
+
+    if (length(condition) > 1) {
+        # then it's a multi-model and we'll hand this off
+        dfr_browser(list(m),
+            out_dir=out_dir, ids=condition,
+            condition=list(condition),
+            internalize=internalize,
+            browse=browse, ...
+        )
+        return()
+    }
 
     export_browser_data(m, out_dir, supporting_files=TRUE,
         internalize=internalize, ...)
-    if (browse) {
-        browseURL(paste0("file://",
-            file.path(normalizePath(out_dir), "index.html")))
+
+    if (browse)
+        browse_dfb(out_dir)
+}
+
+#' @export
+dfr_browser.list <- function (m, out_dir, ids=seq_along(m),
+                              condition="pubdate", sub_info=NULL,
+                              browse=TRUE, info=NULL, overwrite=TRUE, ...) {
+
+    if (!all(vapply(inherits, m, TRUE, "mallet_model"))) {
+        stop(
+"The first argument to dfr_browser() must be a list of mallet_model objects,
+a topic_alignment object, or a single mallet_model object"
+        )
     }
+
+    if (is.null(info)) {
+        info <- getOption("dfrtopics.browser_info")
+        info$VIS <- NULL
+    }
+    info$models <- list()
+
+    if (is.character(condition)) {
+        condition <- rep(list(condition), length(m))
+    }
+    if (is.null(sub_info)) {
+        sub_info <- rep(vector("list", length(condition)), length(m))
+    }
+
+    export_dfb_supporting_files(out_dir, overwrite)
+    for (i in seq_along(m)) {
+        subdir <- file.path(out_dir, "data", ids[i])
+
+        # export model data files (but not info.json)
+        export_browser_data(m, out_dir=subdir,
+            info=FALSE, internalize=FALSE, supporting_files=FALSE,
+            metadata_header=TRUE, ...)
+
+        # we generate an info.json for each model + var combo
+        mods <- browser_model_files(subdir, condition[[i]], ids[i])
+        info$models <- c(info$models, mods)
+
+        for (j in seq_along(condition[[i]])) {
+            var <- condition[[i]][j]
+            subi <- sub_info[[ids[i]]][[var]]
+            subi$metadata <- subi$metadata %n% list()
+
+            subi$metadata$type <- "base"
+            cond <- subi$condition %n% list()
+            cond$spec <- cond$spec %n% list()
+            cond$spec$field <- var
+            mv <- metadata(m[[i]])[[var]]
+            if (is.null(cond$type)) {
+                if (is.numeric(mv)) {
+                    cond$type <- "continuous"
+                } else if (inherits(mv, "Date")) {
+                    cond$type <- "date"
+                } else { # default to ordinal
+                    cond$type <- "ordinal"
+                }
+            }
+            if (is.null(cond$spec$step)) {
+                if (cond$type == "continuous") {
+                    # default binning uses nclass.Sturges via hist
+                    cond$spec$step <- cond$spec$step %n% diff(
+                        hist(mv, plot=FALSE)$breaks[1:2]
+                    )
+                } else if (cond$type == "date") {
+                    cond$spec$step <- 1
+                    cond$spec$unit <- "year"
+                    cond$spec$format <- "%Y"
+                }
+            }
+
+            subi$condition <- cond
+            export_browser_info(mods[[j]]$files$info, subi, ...)
+        }
+    }
+
+    export_browser_info(file.path(out_dir, "data", "info.json"), info)
+
+    if (browse)
+        browse_dfb(out_dir)
+}
+
+#' @export
+#' 
+dfr_browser.topic_alignment <- function (m, out_dir, ids,
+                                         condition="pubdate", sub_info=NULL, ...) {
+    if (is.character(condition)) {
+        condition <- rep(list(condition), length(m$clusters))
+    }
+
+    if (is.null(sub_info)) {
+        sub_info <- rep(vector("list", length(condition)), length(m$clusters))
+    }
+
+    # default model ids are m1k40, m2k50, etc. where k is no. of topics
+    if (missing(ids)) {
+        ids <- paste0("m", seq_along(m$clusters), "k",
+                      vapply(m$clusters, length, 1))
+    }
+    
+    for (i in seq_along(m$clusters)) {
+        sub_info[[i]] <- lapply(sub_info[[i]], function (s) {
+            s$topic_ids <- m$clusters[[i]]
+            s
+        })
+    }
+
+    dfr_browser(m$dst$ms, out_dir, ids, condition, sub_info, ...)
+}
+
+#' @export
+#'
+suggest_date_interval <- function (xs, breaks=nclass.Sturges(xs)) {
+    lv <- sort(levels(cut.Date(xs, breaks)))[1:2]
+    stp <- round(difftime(lv[2], lv[1]))
+    list(step=as.double(stp),
+         unit=units(stp))
+}
+
+# internal function for launching a browser
+browse_dfb <- function (out_dir) browseURL(
+    paste0("file://", file.path(normalizePath(out_dir), "index.html"))
+)
+
+# internal function for getting default filenames for dfb data files (used with 
+# multimodel export)
+browser_model_files <- function (out_dir, vars, id) {
+    result <- vector("list", length(vars))
+    for (i in seq_along(vars)) {
+        files <- list(info=paste0("info-", vars[i], ".json"),
+                      meta="meta.csv.zip",
+                      dt="dt.json.zip",
+                      tw="tw.json",
+                      topic_scaled="topic_scaled.csv")
+        files <- lapply(files, function (f) file.path(out_dir, f))
+        result[[i]] <- list(
+            id=paste0(id, "-", vars[i]),
+            files=files
+        )
+    }
+    # but simplify to plain old info.json if there's only one variable
+    if (length(result) == 1) {
+        result[[1]]$files$info <- file.path(out_dir, "info.json")
+    }
+
+    result
 }

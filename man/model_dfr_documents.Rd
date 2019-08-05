@@ -51,4 +51,3 @@ This function simply calls in sequence
   \code{\link{train_model}}. To write results to disk, use
   \code{\link{write_mallet_model}}
 }
-

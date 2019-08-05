@@ -15,4 +15,3 @@ The number of topics.
 \description{
 Returns the number of topics in a model.
 }
-

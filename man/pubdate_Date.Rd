@@ -31,4 +31,3 @@ publication are assigned to the 1st and to January; and in any case
 periodical publication dates often have a complex relationship to the
 realities of foot-dragging contributors, dilatory printers, etc.
 }
-

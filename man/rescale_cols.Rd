@@ -20,4 +20,3 @@ Just a mnemonic for matrix multiplication.
 \seealso{
 \code{\link{rescale_rows}}
 }
-

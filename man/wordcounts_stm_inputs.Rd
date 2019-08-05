@@ -46,4 +46,3 @@ m <- stm(documents=corpus$documents,
 \code{\link{foreign_model}} for using this package's
   model-exploration utilities in conjunction with an STM.
 }
-

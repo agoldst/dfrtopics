@@ -37,4 +37,3 @@ doc-topics matrix into memory, rather than the full topic-word matrix.
 \seealso{
 \code{\link{tw_blei_lafferty}}, \code{\link{tw_sievert_shirley}}
 }
-

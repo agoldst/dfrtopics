@@ -51,4 +51,3 @@ Extra parameters to this function are passed on to \code{read.csv} or
 \seealso{
 \code{\link{read_dfr_metadata}}, \code{\link{pubdate_Date}}
 }
-

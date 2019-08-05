@@ -31,4 +31,4 @@ License: MIT | file LICENSE
 LazyData: true
 VignetteBuilder: knitr
 LinkingTo: Rcpp, RcppEigen
-RoxygenNote: 5.0.1
+RoxygenNote: 6.1.1

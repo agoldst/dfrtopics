@@ -17,4 +17,3 @@ Given a sparse matrix in which each row is a discrete probability
 distribution over the index, takes the entropy \eqn{-\sum_j x_j \log_2 x_j}
 row-wise (considering only non-zero entries).
 }
-

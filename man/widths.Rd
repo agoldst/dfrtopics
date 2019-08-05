@@ -21,4 +21,3 @@ help to diagnose cluster quality.
 \seealso{
 \code{\link{align_topics}}, \code{\link{alignment_frame}}
 }
-

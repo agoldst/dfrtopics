@@ -22,4 +22,3 @@ combined dataframe. Most of the work is done by
 \seealso{
 \code{\link{read_dfr_citations}}
 }
-

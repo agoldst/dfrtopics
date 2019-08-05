@@ -15,4 +15,3 @@ reference to Java topic inferencer object
 \description{
 Loads a topic-inferencer saved to disk back into memory
 }
-

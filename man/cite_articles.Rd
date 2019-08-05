@@ -46,4 +46,3 @@ cite_articles(metadata(m)[doc_ids(m) == "10.2307/432680", ])
 }
 
 }
-

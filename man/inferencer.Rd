@@ -17,4 +17,3 @@ Extracts a reference to a topic-inferencer Java object from a topic model.
 The model have its \code{\link{ParallelTopicModel}} object available (see
 \code{\link{train_model}}.
 }
-

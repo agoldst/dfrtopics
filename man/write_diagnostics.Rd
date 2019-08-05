@@ -20,4 +20,3 @@ Write MALLET's model diagnostics to an XML file.
 \seealso{
 \code{\link{read_diagnostics}}
 }
-

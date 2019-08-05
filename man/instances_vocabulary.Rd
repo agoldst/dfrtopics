@@ -25,4 +25,3 @@ more quickly with an \code{RTopicModel} method:
 \code{trainer$getVocabulary()}. But every \code{InstanceList} knows its
 vocabulary.
 }
-

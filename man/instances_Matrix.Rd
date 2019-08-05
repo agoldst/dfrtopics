@@ -37,4 +37,3 @@ on to commit the Ultimate Sin and use a \code{for} loop. Pass
 \code{\link{read_wordcounts}} for access to unprocessed wordcounts data (i.e.
 before stopword removal, etc.).
 }
-

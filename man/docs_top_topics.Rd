@@ -36,4 +36,3 @@ weighting.
 \seealso{
 \code{\link{doc_topics}}
 }
-

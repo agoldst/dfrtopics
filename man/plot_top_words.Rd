@@ -35,4 +35,3 @@ top_words (m, n=10, weighting=tw_blei_lafferty(m) \%>\%
 \seealso{
 \code{\link{top_words}}
 }
-

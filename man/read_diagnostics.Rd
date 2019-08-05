@@ -44,4 +44,3 @@ David Mimno et al. Optimizing Semantic Coherence in Topic Models.
 \seealso{
 \code{\link{write_diagnostics}}
 }
-

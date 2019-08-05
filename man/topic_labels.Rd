@@ -18,4 +18,3 @@ a character vector, one label for each topic
 These "labels" simply name each topic by its 1-indexed number and the top
 \code{n} words by weight.
 }
-

@@ -4,29 +4,39 @@
 \alias{dfr_browser}
 \title{Create and launch a model browser}
 \usage{
-dfr_browser(m, out_dir = tempfile("dfr-browser"), internalize = TRUE,
-  browse = TRUE, ...)
+dfr_browser(m, ...)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or
 \code{\link{load_mallet_model}}}
 
+\item{...}{passed on to \code{\link{export_browser_data}}, q.v., especially
+the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, 
+\code{proper}, and \code{permute}}
+
 \item{out_dir}{directory for output. By default, files are saved to a
 temporary directory}
+
+\item{browse}{if TRUE, launch web browser after export for viewing}
 
 \item{internalize}{if TRUE, model data is in the browser home page rather
 than separate files. See Details.}
 
-\item{browse}{if TRUE, launch web browser after export for viewing}
+\item{condition}{dfr-browser displays topic proportions conditioned on (bins
+of) a chosen metadata variable (by default, publication date). Any variable
+in \code{metadata(m)} may be specified. A vector or list of such variables
+may also be supplied (see Details). To adjust the binning of continuous or
+time covariates, change the dfr-browser configuration via \code{info} or
+\code{sub_info}.}
 
-\item{...}{passed on to \code{\link{export_browser_data}}, q.v., especially
-the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, 
-\code{proper}, and \code{permute}}
+\item{ids}{character vector. If multiple models are specified in \code{m},
+the corresponding element of \code{ids} is used as a model ID in
+dfr-browser.}
 }
 \description{
 Export model data and all supporting files needed to browse a model
-interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser},
-then open a web browser.
+or models interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser},
+then (optionally) open a web browser. It is also possible to browse a list of models.
 }
 \details{
 There are two ways to store the model data in the exported files. Either the
@@ -49,6 +59,30 @@ For more control over the export, including the option to export data files
 only, if for example you have modified the HTML/CSS/JS of an existing
 dfr-browser, use \code{\link{export_browser_data}}.
 }
+\section{Browsing multiple models at once}{
+
+
+dfr-browser can be configured to retrieve data from more than one model, or
+to show topic proportions in a single model conditioned on more than one
+metadata variable, or both. \code{dfr_browser} can generate the necessary
+data and configuration files, though \code{internalize=TRUE} is currently
+not supported in this case. Passing \code{dfr_browser} a list of model
+objects will generate a single dfr-browser with a menu for swapping among
+the models. Passing a single \code{mallet_model} and a vector of variable
+names as \code{condition} will generate a dfr-browser with a menu for
+swapping among covariates (internally, dfr-browser treats these two
+possibilities the same). Passing both a list of models and a vector of
+variable names will generate all the model-covariate pairs. Passing a list
+of models and a list of the same length of variable names will use the
+corresponding element of \code{condition} as the chosen covariate options
+for the given model. Finally, in place of a list of models, you can supply
+the result of \code{\link{align_topics}}. In that case the topics in each
+model are relabeled according to their assigned cluster number. It is
+possible to achieve the same result more manually by passing a list of
+models and specifying a \code{topic_ids} vector for each model in the
+\code{sub_info} parameter.
+}
+
 \examples{
 
 \dontrun{
@@ -72,4 +106,3 @@ dfr_browser(m2, permute=match(cl$clusters[[1]], cl$clusters[[2]])))
   files, \code{\link{model_dfr_documents}}, \code{\link{train_model}},
   \code{\link{topic_scaled_2d}}
 }
-

@@ -28,4 +28,3 @@ before summing and normalizing.
 
 See the package vignette for an example of this function in use.
 }
-

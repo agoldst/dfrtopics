@@ -33,4 +33,3 @@ and that is the default. TODO: actually implement the alternative weighting.
 \seealso{
 \code{\link{topic_words}}
 }
-

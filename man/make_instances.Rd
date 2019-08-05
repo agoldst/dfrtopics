@@ -46,4 +46,3 @@ large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")}
 \seealso{
 \code{\link{train_model}}, \code{\link{write_instances}}
 }
-

@@ -19,4 +19,3 @@ This shortcut function returns the numeric indices of specific words in the
 model's vocabulary (corresponding to column indices in the topic-word
 matrix).
 }
-

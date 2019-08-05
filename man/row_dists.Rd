@@ -35,4 +35,3 @@ divergence, so I have supplied one in \code{\link{JS_divergence}}.
 \seealso{
 \code{\link{topic_divergences}}, \code{\link{JS_divergence}}, \code{\link{doc_topic_cor}},
 }
-

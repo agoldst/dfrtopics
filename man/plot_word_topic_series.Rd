@@ -26,4 +26,3 @@ The Gibbs sampling state must be loaded. Many analogous plots that
 condition word weights on two or more variables are possible; see the
 package vignette for a description of how they can be constructed.
 }
-

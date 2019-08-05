@@ -30,4 +30,3 @@ be meaningless.
 \code{\link{instances_vocabulary}}, \code{\link{wordcounts_texts}},
 \code{\link{instance_text}}
 }
-

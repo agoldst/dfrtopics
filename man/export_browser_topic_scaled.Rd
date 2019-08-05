@@ -30,4 +30,3 @@ different dimension-reduction method, like t-SNE).
 \code{\link{export_browser_data}} for a more automated export of
 all model information at once
 }
-

@@ -31,4 +31,3 @@ a \code{simple_triplet_matrix}.
 \code{\link{read_wordcounts}}, \code{\link{instances_Matrix}} for
   the same conversion from MALLET's format
 }
-

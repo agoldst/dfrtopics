@@ -115,4 +115,3 @@ alignment_frame()
   \code{\link{wordcounts_stm_inputs}} to prepare wordcount data for input to
   these other packages' modeling procedures.
 }
-

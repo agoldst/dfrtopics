@@ -16,4 +16,3 @@ a character vector
 Extracts a character vector of IDs of the modeled documents from a
 \code{mallet_model} model.
 }
-

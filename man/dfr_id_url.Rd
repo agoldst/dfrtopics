@@ -17,4 +17,3 @@ figure).}
 \description{
 For viewing a document on JSTOR. This works often, but not always.
 }
-

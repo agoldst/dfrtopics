@@ -52,4 +52,3 @@ groupings and words within the topic.
 \code{\link{imi_topic}}, \code{\link{imi_check}},
   \code{\link{mi_check}}
 }
-

@@ -39,4 +39,3 @@ dfrtopics does some additional messaging of its own, which can be suppressed
 as usual with \code{\link[base]{suppressMessages}} or globally by setting
 \code{options(dfrtopics.verbose=F)}.
 }
-

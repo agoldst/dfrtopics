@@ -33,4 +33,3 @@ dfr-browser.
 \code{\link{export_browser_data}} for a more automated export of
 all model information at once
 }
-

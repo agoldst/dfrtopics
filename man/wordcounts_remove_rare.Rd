@@ -25,4 +25,3 @@ It's often useful to prune documents of one-off words (many of which are
 OCR errors) before building MALLET instances. This is a convenience function
 for doing so.
 }
-

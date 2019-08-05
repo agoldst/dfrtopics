@@ -16,4 +16,3 @@ a character vector
 Extracts a character vector of the word types included in a \code{mallet_model}
 model.
 }
-

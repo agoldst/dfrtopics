@@ -61,4 +61,3 @@ Alignment for Assessing Topic Model Stability." NAACL HLT.
 \seealso{
 \code{\link{model_distances}}, \code{\link{alignment_frame}}
 }
-

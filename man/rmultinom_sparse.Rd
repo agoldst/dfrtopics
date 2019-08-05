@@ -52,4 +52,3 @@ The equivalent of \code{rmultinom(n, size, prob)} is
 \seealso{
 \code{\link{imi_check}} and \code{\link{mi_check}} which use this
 }
-

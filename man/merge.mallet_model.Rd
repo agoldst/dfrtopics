@@ -21,4 +21,3 @@ This function joins together two models that share enough parameters for this
 operation to make some sense, for example, an ordinary topic model and a
 model of further documents created by \code{\link{infer_topics}}.
 }
-

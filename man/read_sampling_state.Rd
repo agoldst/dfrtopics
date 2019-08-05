@@ -50,4 +50,3 @@ within R.
 \code{\link{tdm_topic}}, \code{\link{simplify_state}}, and package
 \pkg{bigmemory}.
 }
-

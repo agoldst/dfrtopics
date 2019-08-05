@@ -39,4 +39,3 @@ m <- matrix(1:4, ncol=2, byrow=TRUE)
 gather_matrix(m)
 
 }
-

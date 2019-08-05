@@ -31,4 +31,3 @@ I have referred to a helpful note by David Mimno here:
 \code{\link{imi_topic}} which calls this; see under "Details" there
   for more detail on IMI
 }
-

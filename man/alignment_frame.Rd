@@ -20,4 +20,3 @@ Many other ways of investigating a clustering are of course possible.
 \seealso{
 \code{\link{align_topics}}, \code{\link{widths}}
 }
-

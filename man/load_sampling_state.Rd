@@ -34,4 +34,3 @@ sampling state file from MALLET, \emph{or} in a simplified sampling state
 file. The latter two files (which can be very large) will be created if
 necessary.
 }
-

@@ -29,4 +29,3 @@ topic_scaled_2d(m) \%>\% plot_topic_scaled()
 \seealso{
 \code{\link{topic_scaled_2d}}, \code{\link[stats]{cmdscale}}
 }
-

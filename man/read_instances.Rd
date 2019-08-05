@@ -19,4 +19,3 @@ Reads a mallet \code{InstanceList} object from a file.
 \code{\link{write_instances}}, \code{\link{make_instances}}
   \code{\link{train_model}}
 }
-

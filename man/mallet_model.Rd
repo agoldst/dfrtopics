@@ -3,13 +3,14 @@
 \name{mallet_model}
 \alias{mallet_model}
 \alias{print.mallet_model}
-\alias{print.mallet_model_summary}
 \alias{summary.mallet_model}
+\alias{print.mallet_model_summary}
 \title{The model object}
 \usage{
 mallet_model(doc_topics = NULL, doc_ids = NULL, vocab = NULL,
-  top_words = NULL, topic_words = NULL, params = NULL, hyper = NULL,
-  metadata = NULL, model = NULL, ss = NULL, instances = NULL)
+  top_words = NULL, topic_words = NULL, params = NULL,
+  hyper = NULL, metadata = NULL, model = NULL, ss = NULL,
+  instances = NULL)
 
 print.mallet_model(x)
 
@@ -58,4 +59,3 @@ into R's memory.
 Any of the parameters to the constructor can be omitted. No validation is
 performed.
 }
-

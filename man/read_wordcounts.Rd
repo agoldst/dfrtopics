@@ -49,4 +49,3 @@ below 100,000 articles of typical length.
 \code{\link{wordcounts_texts}}, \code{\link{instances_Matrix}} for
   word counts \emph{after} stopword removal (etc.).
 }
-

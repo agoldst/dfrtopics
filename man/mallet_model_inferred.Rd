@@ -17,4 +17,3 @@ function that requires the presence of model outputs other than the
 document-topic matrix will not work. Note also that MALLET supplies smoothed
 and normalized topic weights for documents.
 }
-

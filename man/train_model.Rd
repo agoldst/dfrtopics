@@ -68,4 +68,3 @@ large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")}
 \code{\link{make_instances}}, \code{\link{make_instances}},
   \code{\link{model_dfr_documents}}, \code{\link{write_mallet_model}}
 }
-

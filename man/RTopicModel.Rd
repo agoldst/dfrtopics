@@ -26,4 +26,3 @@ In earlier versions of MALLET, this object had a data member of class
 ParallelTopicModel instance. In the latest MALLET, RTopicModel inherits from
 ParallelTopicModel.
 }
-

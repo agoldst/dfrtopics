@@ -15,4 +15,3 @@ an integer vector
 \description{
 Given an InstanceList, this gives a vector of total (stopped) word lengths.
 }
-

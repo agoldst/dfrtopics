@@ -80,4 +80,3 @@ Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models.
 \code{\link{mi_topic}}, \code{\link{calc_imi_topic}} for the
   calculation
 }
-

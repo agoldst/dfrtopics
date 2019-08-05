@@ -49,4 +49,3 @@ Mimno, D., and Blei, D. 2011. Bayesian Checking for Topic Models.
 \seealso{
 \code{\link{imi_check}}, \code{\link{mi_topic}}
 }
-

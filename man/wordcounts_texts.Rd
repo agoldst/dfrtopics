@@ -45,4 +45,3 @@ MALLET.
 \seealso{
 \code{\link{read_wordcounts}}
 }
-

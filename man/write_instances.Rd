@@ -18,4 +18,3 @@ equivalent to \code{mallet import-dirs} or similar at the command line.
 \seealso{
 \code{\link{read_instances}}, \code{\link{make_instances}}
 }
-

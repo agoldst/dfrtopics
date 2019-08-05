@@ -30,4 +30,3 @@ The expected filenames are \code{doc_topics.csv}, \code{doc_ids.txt},
 \code{\link{load_mallet_model}},
   \code{\link{load_from_mallet_state}}
 }
-

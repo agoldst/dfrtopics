@@ -32,4 +32,3 @@ The new InstanceList object can be written to disk with
 \seealso{
 \code{\link{infer_topics}}
 }
-

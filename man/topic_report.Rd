@@ -35,4 +35,3 @@ of this package will probably break too.
 \href{http://agoldst.github.io/dfr-browser}{dfr-browser} web-browser-based
 topic model explorer
 }
-

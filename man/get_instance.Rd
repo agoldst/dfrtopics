@@ -29,4 +29,3 @@ To subscript an InstanceList by position, use its own accessor:
 \code{instances$get(3L)}. The index is zero-based and must be an integer (not
 numeric).
 }
-

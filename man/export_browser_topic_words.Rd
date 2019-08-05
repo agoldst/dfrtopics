@@ -4,8 +4,8 @@
 \alias{export_browser_topic_words}
 \title{Export topic-word file for dfr-browser}
 \usage{
-export_browser_topic_words(file, keys, alpha, digits = 4, overwrite, index,
-  permute)
+export_browser_topic_words(file, keys, alpha, digits = 4, overwrite,
+  index, permute)
 }
 \arguments{
 \item{file}{output file name}
@@ -38,4 +38,3 @@ weighting of words in topics).
 \code{\link{export_browser_data}} for a more automated export of
 all model information at once
 }
-

@@ -28,4 +28,3 @@ posterior check in \code{\link{mi_check}} (q.v.).
 \seealso{
 \code{\link{mi_check}}, \code{\link{imi_simulate}}
 }
-

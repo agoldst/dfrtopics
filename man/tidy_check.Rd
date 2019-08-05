@@ -22,4 +22,3 @@ form.
 \seealso{
 \code{\link{mi_check}}, \code{\link{imi_check}}
 }
-

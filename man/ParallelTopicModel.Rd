@@ -19,4 +19,3 @@ model in MALLET.
 \seealso{
 \code{\link{RTopicModel}}
 }
-

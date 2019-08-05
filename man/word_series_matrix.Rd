@@ -61,4 +61,3 @@ gather_matrix(sm10[word_ids(c("solid", "flesh", "melt")), ],
   \emph{transpose}), \code{\link{tdm_topic}}, and
   \code{\link{instances_Matrix}} for possible matrices to supply here
 }
-

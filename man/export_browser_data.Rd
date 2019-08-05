@@ -7,7 +7,7 @@
 export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
   n_scaled_words = 1000, supporting_files = FALSE, overwrite = FALSE,
   internalize = FALSE, info = NULL, proper = FALSE,
-  digits = getOption("digits"), permute = NULL)
+  digits = getOption("digits"), permute = NULL, data_dir)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or
@@ -38,7 +38,8 @@ run \code{bin/server} to launch a local web server.}
 
 \item{info}{a list of dfr-browser parameters. Converted to JSON with
 \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
-default values (\code{getOption("dfrtopics.browser_info")}) are used.}
+default values (\code{getOption("dfrtopics.browser_info")}) are used. No
+file is written if \code{info=FALSE}.}
 
 \item{proper}{if TRUE, the document-topic and topic-word matrices will be
 smoothed by the hyperparameters alpha and beta (respectively) and normalized
@@ -106,6 +107,7 @@ metadata columns that are not used by the visualization: for example,
 eliminate such columns automatically, but this more conservative approach
 aims to allow you more flexibility about what gets exported.
 }
+
 \examples{
 
 \dontrun{
@@ -131,4 +133,3 @@ for outputting individual custom files:
 \code{\link{export_browser_topic_scaled}},
 \code{\link{export_browser_info}}.
 }
-

@@ -36,4 +36,3 @@ within-topic term-document matrices.
   \code{\link{load_sampling_state}}, \code{\link{top_n_row}},
   \code{\link{sum_col_groups}}
 }
-

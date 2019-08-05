@@ -38,4 +38,3 @@ setting \eqn{x log x = 0} by definition.
 \code{\link{topic_divergences}}, \code{\link{row_dists}},
 \code{\link{model_distances}}
 }
-

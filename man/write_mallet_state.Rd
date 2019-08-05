@@ -18,4 +18,3 @@ which produces a ginormous gzipped textfile.
 \seealso{
 \code{\link{read_sampling_state}}
 }
-

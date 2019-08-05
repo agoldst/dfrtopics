@@ -10,4 +10,3 @@ modeling_parameters(m)
 Returns a list of modeling parameters (number of iterations, initial
 hyperparameter values, etc.) used to create the model.
 }
-

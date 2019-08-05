@@ -214,3 +214,6 @@ VIS=list(
 .onUnload <- function (libpath) {
     library.dynam.unload("dfrtopics", libpath)
 }
+
+# utility operator
+`%n%` <- function (x, y) if (is.null(x)) y else x

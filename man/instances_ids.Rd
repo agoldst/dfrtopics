@@ -17,4 +17,3 @@ a character vector of document ID's
 Returns a vector of id's ("names") from an \code{InstanceList}, in the order
 MALLET keeps them in.
 }
-

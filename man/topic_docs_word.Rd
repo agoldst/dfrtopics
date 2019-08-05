@@ -30,4 +30,3 @@ distribute the word among topics uniformly across the corpus.
   \code{\link{mallet_model}}, \code{\link{load_sampling_state}},
   \code{\link{top_n_row}}, \code{\link{sum_col_groups}}
 }
-

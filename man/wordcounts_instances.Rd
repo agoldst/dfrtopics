@@ -40,4 +40,3 @@ and adjust the \code{token_regex} accordingly.
 \code{\link{make_instances}} which this wraps, 
   \code{\link{train_model}}, \code{\link{write_instances}}
 }
-

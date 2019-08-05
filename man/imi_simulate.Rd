@@ -32,4 +32,3 @@ topic). These simulations are the basis for the posterior check in
 \seealso{
 \code{\link{imi_check}}
 }
-

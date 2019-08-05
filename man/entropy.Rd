@@ -16,4 +16,3 @@ entropy(x)
 This function computes the entropy of a vector, understood as a discrete
 distribution over the index.
 }
-

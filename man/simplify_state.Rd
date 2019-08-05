@@ -48,4 +48,3 @@ somewhat flaky. If this function reports errors from \code{gzcon} or
 \code{\link{load_sampling_state}}, \code{\link{sampling_state}},
 \code{\link{read_sampling_state}}
 }
-

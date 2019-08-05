@@ -16,4 +16,3 @@ a reference to the InstanceList object, or NULL if not available
 MALLET models store a reference to their source documents. This is an
 accessor function for that reference.
 }
-

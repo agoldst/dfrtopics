@@ -18,4 +18,3 @@ Get or set the estimates for the model hyperparameters \eqn{\alpha} and
 \eqn{\beta}. These are used in smoothing the document-topic and topic-word
 matrices respectively.
 }
-

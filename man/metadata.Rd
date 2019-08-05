@@ -21,4 +21,3 @@ Get or set the metadata for an \code{mallet_model} model.
 The setter method drops any metadata rows that do not match the document IDs
 for the model.
 }
-

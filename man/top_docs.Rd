@@ -54,4 +54,3 @@ top_docs(m, 3) \%>\%
 \seealso{
 \code{\link{doc_topics}}, \code{\link{dt_smooth_normalize}}
 }
-

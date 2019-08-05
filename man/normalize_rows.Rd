@@ -27,4 +27,3 @@ to set the rows to have a unit Euclidean norm (L2 normalization).
 \seealso{
 \code{\link{normalize_cols}}
 }
-

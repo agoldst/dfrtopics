@@ -23,4 +23,3 @@ word type. This is just a convenience function for a straightforward
   \code{\link{instances_Matrix}} for word counts
   \emph{after} stopword removal (etc.).
 }
-

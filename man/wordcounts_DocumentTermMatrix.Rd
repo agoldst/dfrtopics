@@ -16,4 +16,3 @@ function converts a data frame of word counts to this form.
   on a model from \pkg{topicmodels}, \code{\link{wordcounts_Matrix}} which
   underlies this function.
 }
-

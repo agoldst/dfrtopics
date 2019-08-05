@@ -31,4 +31,3 @@ factor of those deviations (e.g. variation over time).
 \code{\link{mi_topic}}, \code{\link{mi_check}},
   \code{\link{plot_imi_check}}
 }
-

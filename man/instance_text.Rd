@@ -29,4 +29,3 @@ Repeated calls will be much faster if you retrieve the vocabulary separately
 and pass that in as \code{vocab}. An \code{InstanceList} guarantees that all
 \code{Instances} have the same vocabulary.
 }
-

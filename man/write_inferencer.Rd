@@ -15,4 +15,3 @@ file)}
 \description{
 Saves an inferencer from \code{\link{inferencer}} to disk for later use.
 }
-

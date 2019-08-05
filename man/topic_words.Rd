@@ -23,4 +23,3 @@ unsmoothed weights as the "raw" form of the model; it is easier to reason
 about and to do post-hoc calculations with, even if not rigorously correct.
 It is up to the user to apply normalization and smoothing where appropriate.
 }
-

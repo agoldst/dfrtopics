@@ -2,8 +2,8 @@
 % Please edit documentation in R/model.R
 \name{load_doc_topics}
 \alias{load_doc_topics}
-\alias{load_top_words}
 \alias{load_topic_words}
+\alias{load_top_words}
 \title{Load model elements into a model object}
 \usage{
 load_doc_topics(m)
@@ -32,4 +32,3 @@ doc_topics(m)            # will return stored values
 }
 
 }
-

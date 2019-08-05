@@ -32,4 +32,3 @@ scores indicate departures from the multinomial assumption of the model.
 \code{\link{imi_topic}}, \code{\link{imi_check}} 
   \code{\link{plot_imi_check}}
 }
-
