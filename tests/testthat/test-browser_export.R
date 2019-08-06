@@ -18,7 +18,7 @@ clear_files <- function (fs, ...) {
 
 expect_files <- function (fs, desc="") {
     for (f in fs) {
-        expect_that(file.exists(f), is_true(),
+        expect_true(file.exists(f),
                     info=paste(desc, "file:", f))
     }
 }
@@ -54,18 +54,33 @@ m <- train_model(
     metadata=read_dfr_metadata(file.path(data_dir, "citations.tsv"))
 )
 
+# a second model for multimodel tests
+
+m2 <- train_model(
+    insts,
+    n_topics=n_topics + 2,
+    n_iters=200,
+    threads=1, 
+    alpha_sum=5,
+    beta=0.01,
+    n_hyper_iters=20,
+    n_burn_in=20,
+    n_max_iters=10,
+    metadata=read_dfr_metadata(file.path(data_dir, "citations.tsv"))
+)
 
 out_dir <- file.path(tempdir(), "browser_export")
 if (!file.exists(out_dir)) {
     dir.create(out_dir, recursive=T)
 }
 
-out_files <- file.path(out_dir, c(
+dfb_data_files <- c(
     "dt.json.zip",
     "info.json",
     "meta.csv.zip",
     "topic_scaled.csv",
-    "tw.json"))
+    "tw.json")
+out_files <- file.path(out_dir, dfb_data_files)
 out_files_non_zip <- gsub("\\.zip$", "", out_files)
 
 test_that("dfr-browser export produces the right files", {
@@ -260,19 +275,6 @@ test_that("dfr_browser does internalized export", {
     clear_files(out_dir, recursive=T)
 })
 
-
-test_that("dfr_browser would launch browser on the right file", {
-    brow <- getOption("browser")
-    options(browser=function (x) message("browser: ", x))
-
-    expect_message(dfr_browser(m, out_dir=out_dir, n_scaled_words=100),
-        paste0("browser: file://",
-               normalizePath(file.path(out_dir, "index.html"))))
-
-    clear_files(out_dir, recursive=T) 
-    options(browser=brow)
-})
-
 test_that("proper doc-topics actually are", { 
     clear_files(out_files_non_zip)
 
@@ -327,4 +329,53 @@ test_that("permuted export behaves correctly", {
     expect_equal(twj$tw[[2]]$weights, tw2$weight)
     expect_equal(twj$tw[[2]]$words, tw2$word)
     clear_files(out_files_non_zip)
+})
+
+test_that(
+    "multimodel browser export generates appropriate files for a list of models", {
+    dfr_browser(list(m, m2), browse=F, out_dir=out_dir)
+    expect_files(file.path(out_dir, "data", "info.json"))
+    expect_files(file.path(out_dir, "data", "model1", dfb_data_files))
+    expect_files(file.path(out_dir, "data", "model2", dfb_data_files))
+    clear_files(out_dir, recursive=T)
+})
+
+test_that(
+    "multimodel browser export generates appropriate files for a list of conditions", {
+    dfr_browser(m, condition=c("pubdate", "journaltitle"),
+                browse=F, out_dir=out_dir)
+    expect_files(file.path(out_dir, "data", dfb_data_files))
+    expect_files(file.path(out_dir, "data", "info-pubdate.json"))
+    expect_files(file.path(out_dir, "data", "info-journaltitle.json"))
+    clear_files(out_dir, recursive=T)
+})
+
+test_that(
+    "multimodel browser export generates appropriate files for a list of models and multiple conditions", {
+    dfr_browser(list(m, m2), condition=c("pubdate", "journaltitle"),
+                browse=F, out_dir=out_dir)
+    expect_files(file.path(out_dir, "data", "info.json"))
+    ff <- c(setdiff(dfb_data_files, "info.json"),
+            "info-pubdate.json", "info-journaltitle.json")
+    expect_files(file.path(out_dir, "data", "model1", ff))
+    expect_files(file.path(out_dir, "data", "model2", ff))
+    clear_files(out_dir, recursive=T)
+})
+
+test_that(
+    "aligned models browser export generates appropriate files", {
+    dst <- model_distances(list(m, m2), n=length(vocabulary(m)))
+    cl <- align_topics(dst)
+    dfr_browser(cl, browse=F, out_dir=out_dir)
+    expect_files(file.path(out_dir, "data", "info.json"))
+    expect_files(file.path(out_dir, "data",
+                           paste0("m1k", n_topics(m)), dfb_data_files))
+    expect_files(file.path(out_dir, "data",
+                           paste0("m2k", n_topics(m2)), dfb_data_files))
+
+    expect_equal(jsonlite::fromJSON(file.path(out_dir, "data", 
+                           paste0("m2k", n_topics(m2)), "info.json"))$topic_ids,
+                 cl$clusters[[2]])
+
+    clear_files(out_dir, recursive=T)
 })
