@@ -638,19 +638,28 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' \code{file:///} URL.)
 #'
 #' @param m \code{mallet_model} object from \code{\link{train_model}} or
-#'   \code{\link{load_mallet_model}}
+#' \code{\link{load_mallet_model}}, or a list of such models, or the results of
+#' \code{\link{align_topics}}; see Details.
 #' @param out_dir directory for output. By default, files are saved to a
-#'   temporary directory
-#' @param browse if TRUE, launch web browser after export for viewing
+#'   temporary directory.
+#' @param browse if TRUE, launch web browser after export for viewing (requires
+#' \pkg{servr} package).
 #' @param internalize always set to FALSE. If TRUE, model data is in the
 #' browser home page rather than separate files, but this behavior is
 #' deprecated. See Details.
+#' @param overwrite if TRUE (default), overwrite any pre-existing files.
 #' @param condition dfr-browser displays topic proportions conditioned on (bins
 #' of) a chosen metadata variable (by default, publication date). Any variable
 #' in \code{metadata(m)} may be specified. A vector or list of such variables
 #' may also be supplied (see Details). To adjust the binning of continuous or
 #' time covariates, change the dfr-browser configuration via \code{info} or
 #' \code{sub_info}.
+#' @param info dfr-browser configuration object (see
+#' \code{\link{export_browser_data}}).
+#' @param sub_info list of lists of browser configurations (multiple-model
+#' display only). The elements of this list should have names corresponding to
+#' \code{ids}, and each of the elements of its elements should have names
+#' corresponding to \code{condition}. If NULL, default values are used.
 #' @param ids character vector. If multiple models are specified in \code{m},
 #' the corresponding element of \code{ids} is used as a model ID in
 #' dfr-browser.
@@ -684,17 +693,29 @@ dfr_browser <- function (m, ...) UseMethod("dfr_browser")
 
 #' @export
 dfr_browser.mallet_model <- function (m, out_dir=tempfile("dfr-browser"),
-        internalize=FALSE, browse=TRUE, condition="pubdate", ...) {
+                                      browse=TRUE,
+                                      internalize=FALSE,
+                                      overwrite=TRUE,
+                                      condition="pubdate",
+                                      info=NULL, ...) {
 
     if (length(condition) > 1) {
         # then it's a multi-model and we'll hand this off
         dfr_browser(list(m),
-            out_dir=out_dir, ids=condition,
+            out_dir=out_dir,
             condition=list(condition),
-            internalize=internalize,
             browse=browse, ...
         )
         return()
+    }
+
+    if (is.null(info)) {
+        info <- getOption("dfrtopics.browser_info")
+        info$VIS <- browser_condition_config(
+            info=info$VIS,
+            var=condition,
+            data=metadata(m)[condition]
+        )
     }
 
     export_browser_data(m, out_dir, supporting_files=TRUE,
@@ -704,10 +725,70 @@ dfr_browser.mallet_model <- function (m, out_dir=tempfile("dfr-browser"),
         browse_dfb(out_dir)
 }
 
+# internal function for generating default dfr-browser configuration settings
+# for a metadata variable. A modified copy of the info parameter is returned.
+# For a single-model browser, this should be assigned to the VIS property of
+# the overall contents of info.json; for a multi-model browser, it should be
+# the contents of the model-specific info.json.
+browser_condition_config <- function (info, var, data) {
+    info <- info %n% list()
+
+    info$metadata <- info$metadata %n% list()
+
+    info$metadata$type <- info$metadata$type %n% "dfr"
+    info$bib$type <- info$bib$type %n% "dfr"
+    cond <- info$condition %n% list()
+    cond$spec <- cond$spec %n% list()
+    if (info$metadata$type == "dfr") {
+        # deal with my own stupid choice to rename some default dfr field names
+        # in dfr-browser but not here
+
+        # TODO clean this horrible mess up
+        if (var == "pubdate")
+            var <- "date"
+
+        if (var == "journaltitle")
+            var <- "journal"
+    }
+    cond$spec$field <- var
+    if (is.null(cond$type)) {
+        if (is.numeric(data)) {
+            cond$type <- "continuous"
+        } else if (inherits(data, "Date")) {
+            cond$type <- "time"
+            info$metadata$spec <- list(date_field=var)
+        } else { # default to ordinal
+            cond$type <- "ordinal"
+        }
+    }
+    if (is.null(cond$spec$n)) {
+        if (cond$type == "continuous") {
+            # default binning uses nclass.Sturges via hist
+            cond$spec$n <- cond$spec$n %n% diff(
+                hist(data, plot=FALSE)$breaks[1:2]
+            )
+        } else if (cond$type == "time") {
+            # dates: single years by default
+            cond$spec$n <- 1
+            cond$spec$unit <- "year"
+            cond$spec$format <- "%Y"
+        }
+    }
+
+    info$condition <- cond
+    info
+}
+
 #' @export
-dfr_browser.list <- function (m, out_dir, ids=seq_along(m),
-                              condition="pubdate", sub_info=NULL,
-                              browse=TRUE, info=NULL, overwrite=TRUE, ...) {
+dfr_browser.list <- function (m, out_dir=tempfile("dfr-browser"),
+                              browse=TRUE, 
+                              condition="pubdate", 
+                              overwrite=TRUE,
+                              ids=paste0("model", seq_along(m)),
+                              info=NULL,
+                              sub_info=NULL,
+                              metadata_header=FALSE,
+                              ...) {
 
     if (!all(vapply(m, inherits, TRUE, "mallet_model"))) {
         stop(
@@ -718,15 +799,11 @@ a topic_alignment object, or a single mallet_model object"
 
     if (is.null(info)) {
         info <- getOption("dfrtopics.browser_info")
-        info$VIS <- NULL
     }
     info$models <- list()
 
     if (is.character(condition)) {
         condition <- rep(list(condition), length(m))
-    }
-    if (is.null(sub_info)) {
-        sub_info <- rep(vector("list", length(condition)), length(m))
     }
 
     if (file.exists(out_dir)) {
@@ -737,69 +814,67 @@ a topic_alignment object, or a single mallet_model object"
         dir.create(out_dir)
     }
 
-    export_dfb_supporting_files(out_dir, overwrite)
+    export_dfb_supporting_files(out_dir, overwrite=overwrite)
 
     data_dir <- file.path(out_dir, "data")
     if (!dir.exists(data_dir)) {
         dir.create(data_dir)
     }
 
+    # set up sub_info: empty by default
+    sub_info <- sub_info %n% list()
+    if (length(m) == 1 && identical(names(sub_info), condition)) {
+        # OR if single model and sub_info has elements named for each of the 
+        # conditions, create the necessary single extra layer of hierarchy
+        sub_info <- list(ids=sub_info)
+    } else if (length(condition) == 1 && identical(names(sub_info), ids)) {
+        # ditto if single condition and sub_info has elements named for each
+        # of the models
+        for (i in seq_along(sub_info)) {
+            sub_info[[i]] <- setNames(list(sub_info[[i]]), condition)
+        }
+    }
+
     for (i in seq_along(m)) {
-        subdir <- file.path("data", ids[i])
+        # if only one model but multiple conditions, we won't use separate
+        # subdirectories for each configuration, just separate info-*.json files
+        if (length(m) == 1) {
+            subdir <- "data"
+        } else {
+            # otherwise, one subdirectory per model
+            subdir <- file.path("data", ids[i])
+        }
 
         # export model data files (but not info.json)
         export_browser_data(m[[i]], out_dir=file.path(out_dir, subdir),
             info=FALSE, internalize=FALSE, supporting_files=FALSE,
-            metadata_header=TRUE, ...)
+            overwrite=overwrite,
+            metadata_header=metadata_header, ...)
 
-        # we generate an info.json for each model + var combo
         mods <- browser_model_files(subdir, condition[[i]], ids[i])
+        # build up model list for overall data/info.json
         info$models <- c(info$models, mods)
 
+        sub_info[[ids[i]]] <- sub_info[[ids[i]]] %n% list()
+
+        # generate an info.json for each model + var combo
         for (j in seq_along(condition[[i]])) {
             var <- condition[[i]][j]
-            subi <- sub_info[[ids[i]]][[var]]
-            subi$metadata <- subi$metadata %n% list()
-
-            subi$metadata$type <- subi$metadata$type %n% "base"
-            subi$bib$type <- subi$bib$type %n% "base"
-            cond <- subi$condition %n% list()
-            cond$spec <- cond$spec %n% list()
-            cond$spec$field <- var
-            mv <- metadata(m[[i]])[[var]]
-            if (is.null(cond$type)) {
-                if (is.numeric(mv)) {
-                    cond$type <- "continuous"
-                } else if (inherits(mv, "Date")) {
-                    cond$type <- "time"
-                    if (subi$metadata$type == "base") {
-                        subi$metadata$spec <- list(date_field=var)
-                    }
-                } else { # default to ordinal
-                    cond$type <- "ordinal"
-                }
-            }
-            if (is.null(cond$spec$step)) {
-                if (cond$type == "continuous") {
-                    # default binning uses nclass.Sturges via hist
-                    cond$spec$step <- cond$spec$step %n% diff(
-                        hist(mv, plot=FALSE)$breaks[1:2]
-                    )
-                } else if (cond$type == "time") {
-                    cond$spec$step <- 1
-                    cond$spec$unit <- "year"
-                    cond$spec$format <- "%Y"
-                }
-            }
-
-            subi$condition <- cond
+            subi <- sub_info[[ids[i]]][[var]] %n% list()
+            subi <- browser_condition_config(
+                info=subi,
+                var=var,
+                data=metadata(m[[i]])[[var]]
+            )
             export_browser_info(
                 file.path(out_dir, mods[[j]]$files$info),
-                subi, index=NULL, ...)
+                subi, index=NULL, overwrite=overwrite, ...)
         }
     }
 
-    export_browser_info(file.path(data_dir, "info.json"), info, index=NULL)
+    # export overall data/info.json
+    export_browser_info(file.path(data_dir, "info.json"), info, index=NULL,
+                        overwrite=overwrite)
 
     if (browse)
         browse_dfb(out_dir)
@@ -807,14 +882,11 @@ a topic_alignment object, or a single mallet_model object"
 
 #' @export
 #' 
-dfr_browser.topic_alignment <- function (m, out_dir, ids,
-                                         condition="pubdate", sub_info=NULL, ...) {
+dfr_browser.topic_alignment <- function (m, ids,
+                                         condition="pubdate",
+                                         sub_info=NULL, ...) {
     if (is.character(condition)) {
         condition <- rep(list(condition), length(m$clusters))
-    }
-
-    if (is.null(sub_info)) {
-        sub_info <- rep(vector("list", length(condition)), length(m$clusters))
     }
 
     # default model ids are m1k40, m2k50, etc. where k is no. of topics
@@ -823,14 +895,20 @@ dfr_browser.topic_alignment <- function (m, out_dir, ids,
                       vapply(m$clusters, length, 1))
     }
     
-    for (i in seq_along(m$clusters)) {
-        sub_info[[i]] <- lapply(sub_info[[i]], function (s) {
-            s$topic_ids <- m$clusters[[i]]
-            s
-        })
+    sub_info <- sub_info %n% list()
+
+    names(m$clusters) <- ids
+    for (i in ids) {
+        sub_info[[i]] <- sub_info[[i]] %n% list()
+        for (cond in condition) {
+            sub_info[[i]][[cond]] <- sub_info[[i]][[cond]] %n% list()
+            sub_info[[i]][[cond]]$topic_ids <- m$clusters[[i]]
+        }
     }
 
-    dfr_browser(m$dst$ms, out_dir, ids, condition, sub_info, ...)
+    # hand off to dfr_browser.list
+    dfr_browser(m$model_distances$ms, ids=ids,
+                condition=condition, sub_info=sub_info, ...)
 }
 
 #' @export
@@ -860,21 +938,21 @@ and re-run dfr_browser(), or start the web server of your choice from ",
 # multimodel export)
 browser_model_files <- function (out_dir, vars, id) {
     result <- vector("list", length(vars))
+    univar <- length(vars) == 1
     for (i in seq_along(vars)) {
-        files <- list(info=paste0("info-", vars[i], ".json"),
+        files <- list(info=if (univar)
+                               "info.json"
+                           else
+                               paste0("info-", vars[i], ".json"),
                       meta="meta.csv.zip",
                       dt="dt.json.zip",
                       tw="tw.json",
                       topic_scaled="topic_scaled.csv")
         files <- lapply(files, function (f) file.path(out_dir, f))
         result[[i]] <- list(
-            id=paste0(id, "-", vars[i]),
+            id=if (univar) id else paste0(id, "-", vars[i]),
             files=files
         )
-    }
-    # but simplify to plain old info.json if there's only one variable
-    if (length(result) == 1) {
-        result[[1]]$files$info <- file.path(out_dir, "info.json")
     }
 
     result

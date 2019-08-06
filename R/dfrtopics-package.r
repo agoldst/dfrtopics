@@ -185,18 +185,8 @@ NULL
         dfrtopics.browser_info=list(
 title="Model Browser",
 meta_info=paste0(
-    "<p>Topic model browser generated for ",
-    Sys.getenv("USER"), "</p>"
-),
-VIS=list(
-    condition=list(
-        type="time",
-        spec=list(
-            field="date",
-            "unit"="year",
-            n=1
-        )
-    )
+    "<p>A topic model browser generated for ",
+    Sys.getenv("USER"), " by dfrtopics.</p>"
 )
         ),
         dfrtopics.mallet_logging="default",

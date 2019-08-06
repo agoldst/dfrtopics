@@ -8,20 +8,24 @@ dfr_browser(m, ...)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or
-\code{\link{load_mallet_model}}}
+\code{\link{load_mallet_model}}, or a list of such models, or the results of
+\code{\link{align_topics}}; see Details.}
 
 \item{...}{passed on to \code{\link{export_browser_data}}, q.v., especially
 the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, 
 \code{proper}, and \code{permute}}
 
 \item{out_dir}{directory for output. By default, files are saved to a
-temporary directory}
+temporary directory.}
 
-\item{browse}{if TRUE, launch web browser after export for viewing}
+\item{browse}{if TRUE, launch web browser after export for viewing (requires
+\pkg{servr} package).}
 
 \item{internalize}{always set to FALSE. If TRUE, model data is in the
 browser home page rather than separate files, but this behavior is
 deprecated. See Details.}
+
+\item{overwrite}{if TRUE (default), overwrite any pre-existing files.}
 
 \item{condition}{dfr-browser displays topic proportions conditioned on (bins
 of) a chosen metadata variable (by default, publication date). Any variable
@@ -29,6 +33,14 @@ in \code{metadata(m)} may be specified. A vector or list of such variables
 may also be supplied (see Details). To adjust the binning of continuous or
 time covariates, change the dfr-browser configuration via \code{info} or
 \code{sub_info}.}
+
+\item{info}{dfr-browser configuration object (see
+\code{\link{export_browser_data}}).}
+
+\item{sub_info}{list of lists of browser configurations (multiple-model
+display only). The elements of this list should have names corresponding to
+\code{ids}, and each of the elements of its elements should have names
+corresponding to \code{condition}. If NULL, default values are used.}
 
 \item{ids}{character vector. If multiple models are specified in \code{m},
 the corresponding element of \code{ids} is used as a model ID in
