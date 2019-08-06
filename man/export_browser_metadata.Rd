@@ -4,7 +4,8 @@
 \alias{export_browser_metadata}
 \title{Export metadata file for dfr-browser}
 \usage{
-export_browser_metadata(file, meta, zipped, overwrite, index)
+export_browser_metadata(file, meta, zipped, overwrite, index,
+  header = FALSE)
 }
 \arguments{
 \item{file}{output file name}
@@ -17,6 +18,9 @@ export_browser_metadata(file, meta, zipped, overwrite, index)
 
 \item{index}{if non-NULL, output is assumed to go into an element with ID
 \code{m__DATA__meta} in an HTML file at this path. \code{file} is ignored.}
+
+\item{header}{if TRUE, output header row (by default, dfr-browser does not
+expect one)}
 }
 \description{
 Exports the \code{meta.csv[.zip]} metadata file for dfr-browser. This is a

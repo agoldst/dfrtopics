@@ -19,8 +19,9 @@ temporary directory}
 
 \item{browse}{if TRUE, launch web browser after export for viewing}
 
-\item{internalize}{if TRUE, model data is in the browser home page rather
-than separate files. See Details.}
+\item{internalize}{always set to FALSE. If TRUE, model data is in the
+browser home page rather than separate files, but this behavior is
+deprecated. See Details.}
 
 \item{condition}{dfr-browser displays topic proportions conditioned on (bins
 of) a chosen metadata variable (by default, publication date). Any variable
@@ -34,26 +35,13 @@ the corresponding element of \code{ids} is used as a model ID in
 dfr-browser.}
 }
 \description{
-Export model data and all supporting files needed to browse a model
-or models interactively using \href{http://agoldst.github.io/dfr-browser}{dfr-browser},
-then (optionally) open a web browser. It is also possible to browse a list of models.
+Export model data and all supporting files needed to browse a model or
+models interactively using
+\href{http://agoldst.github.io/dfr-browser}{dfr-browser}, then (optionally)
+open a web browser. It is also possible to browse a list of models.
 }
 \details{
-There are two ways to store the model data in the exported files. Either the
-data can be part of the source for the web page (\code{internalize=TRUE}) or
-it can be filed in separate files (\code{internalize=FALSE}).  For web
-hosting, the latter is better, because dfr-browser can load data
-asynchronously rather than all at once, resulting in a more responsive
-initial page view for web visitors.  The former, "internalized" option is
-intended to be more convenient for local browsing, since a web browser can
-simply be pointed to the file on disk (this is what \code{browse=TRUE} does).
-However, this method may not always work, depending on your system's
-implementation of \code{\link[utils]{browseURL}} and your web browser. Thus,
-RStudio appears to launch a web server to serve files given by a
-\code{file://} URL. This allows for browsing regardless of
-\code{internalize}. By contrast, opening an \code{internalize}d dfr-browser's
-\code{index.html} file directly currently works in Firefox but not Chrome
-(which refuses to load the associated Web Worker from disk).
+If \code{browse=T}, the function attempts to start a local webserver and open a web browser pointing to the appropriate URL. This functionality requires the \code{servr} package.
 
 For more control over the export, including the option to export data files
 only, if for example you have modified the HTML/CSS/JS of an existing
@@ -65,8 +53,7 @@ dfr-browser, use \code{\link{export_browser_data}}.
 dfr-browser can be configured to retrieve data from more than one model, or
 to show topic proportions in a single model conditioned on more than one
 metadata variable, or both. \code{dfr_browser} can generate the necessary
-data and configuration files, though \code{internalize=TRUE} is currently
-not supported in this case. Passing \code{dfr_browser} a list of model
+data and configuration files. Passing \code{dfr_browser} a list of model
 objects will generate a single dfr-browser with a menu for swapping among
 the models. Passing a single \code{mallet_model} and a vector of variable
 names as \code{condition} will generate a dfr-browser with a menu for
@@ -81,6 +68,19 @@ model are relabeled according to their assigned cluster number. It is
 possible to achieve the same result more manually by passing a list of
 models and specifying a \code{topic_ids} vector for each model in the
 \code{sub_info} parameter.
+}
+
+\section{Deprecated option}{
+
+
+\code{internalize=TRUE} will cause all model data to be stored in the
+index.html file, whence it can be loaded by dfr-browser. This behavior is no
+longer useful; the model data should always be exported as separate files
+for asynchronous loading by dfr-browser. (In former days one could avoid
+having to launch a web server and simply point a browser at the index.html
+file. dfr-browser no longer works in this circumstance because it relies on
+a Web Worker, which modern web browsers will refuse to load from a
+\code{file:///} URL.)
 }
 
 \examples{

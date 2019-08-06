@@ -174,6 +174,8 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' @param permute if non-NULL, specifies a renumbering of the topics: the new
 #' topic \code{k} is old topic \code{permute[k]}. (If you have the inverse, use
 #' \code{\link{order}(permute)} to invert it back.)
+#' @param metadata_header if TRUE (FALSE is default), the exported metadata CSV
+#' will have a header row (not expected by dfr-browser by default)
 #'
 #' @examples
 #'
@@ -209,7 +211,7 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
                                  proper=FALSE,
                                  digits=getOption("digits"),
                                  permute=NULL,
-                                 data_dir) {
+                                 metadata_header=FALSE) {
     if (!requireNamespace("jsonlite", quietly=TRUE)) {
         stop("jsonlite package required for browser export. Install from CRAN.")
     }
@@ -240,12 +242,9 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
 
     if (supporting_files) {
         export_dfb_supporting_files(out_dir, overwrite)
-    }
-    if (missing(data_dir)) {
-        if (supporting_files) 
-            data_dir <- file.path(out_dir, "data")
-        else
-            data_dir <- out_dir
+        data_dir <- file.path(out_dir, "data")
+    } else {
+        data_dir <- out_dir
     }
 
     if (!file.exists(data_dir)) {
@@ -328,7 +327,8 @@ display may not work as expected. See ?export_browser_data for details."
             meta=md_frame,
             zip=zipped,
             overwrite=overwrite || internalize,
-            index=index
+            index=index,
+            header=metadata_header
         )
     } else {
         warning(
@@ -504,19 +504,22 @@ export_browser_doc_topics <- function (file, dtm, digits=4,
 #' @param overwrite clobber existing file?
 #' @param index if non-NULL, output is assumed to go into an element with ID
 #' \code{m__DATA__meta} in an HTML file at this path. \code{file} is ignored.
+#' @param header if TRUE, output header row (by default, dfr-browser does not
+#' expect one)
 #'
 #' @seealso \code{\link{export_browser_data}} for a more automated export of
 #' all model information at once
 #' @export
 #'
-export_browser_metadata <- function (file, meta, zipped, overwrite, index) {
+export_browser_metadata <- function (file, meta, zipped, overwrite, index,
+                                     header=FALSE) {
     if (!is.null(index)) {
         file <- "meta.csv"
     }
     md_txt <- capture.output(
         write.table(meta,
                     quote=TRUE, sep=",",
-                    col.names=FALSE, row.names=FALSE,
+                    col.names=header, row.names=FALSE,
                     # d3.csv.* expects RFC 4180 compliance
                     qmethod="double")
     )
@@ -706,7 +709,7 @@ dfr_browser.list <- function (m, out_dir, ids=seq_along(m),
                               condition="pubdate", sub_info=NULL,
                               browse=TRUE, info=NULL, overwrite=TRUE, ...) {
 
-    if (!all(vapply(inherits, m, TRUE, "mallet_model"))) {
+    if (!all(vapply(m, inherits, TRUE, "mallet_model"))) {
         stop(
 "The first argument to dfr_browser() must be a list of mallet_model objects,
 a topic_alignment object, or a single mallet_model object"
@@ -726,12 +729,26 @@ a topic_alignment object, or a single mallet_model object"
         sub_info <- rep(vector("list", length(condition)), length(m))
     }
 
+    if (file.exists(out_dir)) {
+        if (!file.info(out_dir)$isdir) {
+            stop(paste(out_dir, "exists and is a file; expected a directory"))
+        }
+    } else {
+        dir.create(out_dir)
+    }
+
     export_dfb_supporting_files(out_dir, overwrite)
+
+    data_dir <- file.path(out_dir, "data")
+    if (!dir.exists(data_dir)) {
+        dir.create(data_dir)
+    }
+
     for (i in seq_along(m)) {
-        subdir <- file.path(out_dir, "data", ids[i])
+        subdir <- file.path("data", ids[i])
 
         # export model data files (but not info.json)
-        export_browser_data(m, out_dir=subdir,
+        export_browser_data(m[[i]], out_dir=file.path(out_dir, subdir),
             info=FALSE, internalize=FALSE, supporting_files=FALSE,
             metadata_header=TRUE, ...)
 
@@ -744,7 +761,8 @@ a topic_alignment object, or a single mallet_model object"
             subi <- sub_info[[ids[i]]][[var]]
             subi$metadata <- subi$metadata %n% list()
 
-            subi$metadata$type <- "base"
+            subi$metadata$type <- subi$metadata$type %n% "base"
+            subi$bib$type <- subi$bib$type %n% "base"
             cond <- subi$condition %n% list()
             cond$spec <- cond$spec %n% list()
             cond$spec$field <- var
@@ -753,7 +771,10 @@ a topic_alignment object, or a single mallet_model object"
                 if (is.numeric(mv)) {
                     cond$type <- "continuous"
                 } else if (inherits(mv, "Date")) {
-                    cond$type <- "date"
+                    cond$type <- "time"
+                    if (subi$metadata$type == "base") {
+                        subi$metadata$spec <- list(date_field=var)
+                    }
                 } else { # default to ordinal
                     cond$type <- "ordinal"
                 }
@@ -764,7 +785,7 @@ a topic_alignment object, or a single mallet_model object"
                     cond$spec$step <- cond$spec$step %n% diff(
                         hist(mv, plot=FALSE)$breaks[1:2]
                     )
-                } else if (cond$type == "date") {
+                } else if (cond$type == "time") {
                     cond$spec$step <- 1
                     cond$spec$unit <- "year"
                     cond$spec$format <- "%Y"
@@ -772,11 +793,13 @@ a topic_alignment object, or a single mallet_model object"
             }
 
             subi$condition <- cond
-            export_browser_info(mods[[j]]$files$info, subi, ...)
+            export_browser_info(
+                file.path(out_dir, mods[[j]]$files$info),
+                subi, index=NULL, ...)
         }
     }
 
-    export_browser_info(file.path(out_dir, "data", "info.json"), info)
+    export_browser_info(file.path(data_dir, "info.json"), info, index=NULL)
 
     if (browse)
         browse_dfb(out_dir)

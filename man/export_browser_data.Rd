@@ -7,7 +7,8 @@
 export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
   n_scaled_words = 1000, supporting_files = FALSE, overwrite = FALSE,
   internalize = FALSE, info = NULL, proper = FALSE,
-  digits = getOption("digits"), permute = NULL, data_dir)
+  digits = getOption("digits"), permute = NULL,
+  metadata_header = FALSE)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or
@@ -33,8 +34,9 @@ run \code{bin/server} to launch a local web server.}
 
 \item{overwrite}{if TRUE, this will clobber existing files}
 
-\item{internalize}{if TRUE, write data directly into the browser's
-\code{index.html} source instead of into a series of separate files.}
+\item{internalize}{always set to FALSE. If TRUE, model data is in the
+browser home page rather than separate files, but this behavior is
+deprecated. See Details.}
 
 \item{info}{a list of dfr-browser parameters. Converted to JSON with
 \code{\link[jsonlite]{toJSON}} and stored in \code{info.json}. If omitted,
@@ -57,6 +59,9 @@ Rounded weights are renormalized within dfr-browser itself.}
 \item{permute}{if non-NULL, specifies a renumbering of the topics: the new
 topic \code{k} is old topic \code{permute[k]}. (If you have the inverse, use
 \code{\link{order}(permute)} to invert it back.)}
+
+\item{metadata_header}{if TRUE (FALSE is default), the exported metadata CSV
+will have a header row (not expected by dfr-browser by default)}
 }
 \description{
 Transform and save modeling results in a format suitable for use by
@@ -77,10 +82,7 @@ technical notes at \url{http://github.com/agoldst/dfr-browser}.
 This package includes a copy of the dfr-browser files necessary to run the
 browser. By default, this routine only exports data files. To also copy
 over the dfr-browser source (javascript, HTML, and CSS), pass
-\code{supporting_files=T}. To insert the data directly into the main
-\code{index.html} file, also passed \code{internalize=T}. I recommend this
-last option for local viewing only, not for web hosting; in the latter case,
-separate data files will allow for asynchronous loading.
+\code{supporting_files=T}.
 }
 \section{Metadata format}{
 
@@ -106,6 +108,14 @@ metadata columns that are not used by the visualization: for example,
 \code{metadata(m)$publisher <- NULL}. Earlier versions of dfrtopics tried to
 eliminate such columns automatically, but this more conservative approach
 aims to allow you more flexibility about what gets exported.
+}
+
+\section{Deprecated option}{
+
+
+To insert the data directly into the main \code{index.html} file, pass
+\code{internalize=T}. This behavior is now deprecated and will be removed
+in a future version.
 }
 
 \examples{
