@@ -50,6 +50,9 @@ The tests are based on a sample set of data from DfR. I do not currently have pe
 
 ## Version history
 
+v0.2.5
+ : 8/6/19. Some support for visualization of multiple models together (sort of) using dfr-browser v0.8.1-alpha.
+
 v0.2.4
  : 4/26/16. Compatibility with `mallet` package versions 1.0 and 1.1+. *Very experimental* topic alignment functions.
 
