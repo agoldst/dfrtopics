@@ -45,6 +45,10 @@ corresponding to \code{condition}. If NULL, default values are used.}
 \item{ids}{character vector. If multiple models are specified in \code{m},
 the corresponding element of \code{ids} is used as a model ID in
 dfr-browser.}
+
+\item{insert_alignment_table}{if \code{m} is a \code{topic_alignment} object
+and this is TRUE, the "About" page of the generated browser will include a
+table of the topics in each model with aligned topics in the same row.}
 }
 \description{
 Export model data and all supporting files needed to browse a model or

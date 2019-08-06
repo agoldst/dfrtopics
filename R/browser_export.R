@@ -663,6 +663,9 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' @param ids character vector. If multiple models are specified in \code{m},
 #' the corresponding element of \code{ids} is used as a model ID in
 #' dfr-browser.
+#' @param insert_alignment_table if \code{m} is a \code{topic_alignment} object
+#' and this is TRUE, the "About" page of the generated browser will include a
+#' table of the topics in each model with aligned topics in the same row.
 #' @param ... passed on to \code{\link{export_browser_data}}, q.v., especially
 #' the parameters \code{overwrite}, \code{n_scaled_words}, \code{info}, 
 #' \code{proper}, and \code{permute}
@@ -884,7 +887,10 @@ a topic_alignment object, or a single mallet_model object"
 #' 
 dfr_browser.topic_alignment <- function (m, ids,
                                          condition="pubdate",
-                                         sub_info=NULL, ...) {
+                                         info=NULL,
+                                         sub_info=NULL,
+                                         insert_alignment_table=TRUE,
+                                         ...) {
     if (is.character(condition)) {
         condition <- rep(list(condition), length(m$clusters))
     }
@@ -906,9 +912,75 @@ dfr_browser.topic_alignment <- function (m, ids,
         }
     }
 
+    if (is.null(info)) {
+        info <- getOption("dfrtopics.browser_info")
+    }
+
+    info$meta_info <- info$meta_info %n% ""
+    if (insert_alignment_table) {
+        info$meta_info <- paste(info$meta_info,
+                                browser_alignment_table(m, ids, condition))
+    }
+
     # hand off to dfr_browser.list
     dfr_browser(m$model_distances$ms, ids=ids,
-                condition=condition, sub_info=sub_info, ...)
+                condition=condition,
+                info=info,
+                sub_info=sub_info, ...)
+}
+
+#' Generate an HTML table from a topic clustering
+#'
+#' This function is mainly meant for internal use but might conceivably help
+#' with creating custom visualizations of multiple models.
+#'
+#' @param cl clustering from \code{\link{align_topics}}
+#' @param ids character vector of model ids
+#' @param condition vector or list of metadata covariates as in \code{\link{dfr_browser}}
+#' @param n number of topic top words to display in table
+#'
+#' @return string with HTML table
+#'
+#' @export
+#'
+browser_alignment_table <- function (cl, ids, condition, n=4) {
+    ms <- cl$model_distances$ms
+    rows <- vector("list", length(cl$clusters))
+    for (m in seq_along(ms)) {
+        rows[[m]] <- top_words(ms[[m]], n=n) %>%
+            dplyr::group_by(topic) %>%
+            dplyr::summarize(label=paste(word, collapse=" ")) %>%
+            dplyr::mutate(cluster=cl$clusters[[m]]) %>% # cluster == topic_id
+            dplyr::mutate(label=paste(cluster, label)) %>%
+            dplyr::mutate(model=
+                if (length(condition[[m]]) > 1)
+                    paste0(ids[m], "-", condition[[1]])
+                else
+                    ids[m]) %>%
+            dplyr::mutate(label=paste0(
+                "<a href=\"/#/", ids[m], "/topic/", cluster, "\">", label,
+                "</a>"))
+    }
+    rows <- dplyr::bind_rows(rows) %>%
+        dplyr::select(cluster, model, label) %>%
+        tidyr::spread(model, label, fill="") %>%
+        dplyr::select(-cluster) %>%
+        dplyr::mutate_all(~ paste0("<td>", .x, "</td>")) %>%
+        as.matrix()
+
+    tbody <- rows %>% 
+        apply(1, paste0, collapse="")
+    tbody <- paste0("<tr>", tbody, "</tr>")
+    tbody <- paste(tbody, collapse="\n")
+    tbody <- paste0("<tbody>", tbody, "</tbody>")
+
+    thead <- paste0("<th>", colnames(rows), "</th>")
+    thead <- paste(thead, collapse="")
+    thead <- paste0("<thead><tr>", thead, "</tr></thead>")
+
+    paste0("<table class=\"table table-condensed\">",
+           thead, tbody,
+           "</table>")
 }
 
 #' @export
@@ -957,3 +1029,5 @@ browser_model_files <- function (out_dir, vars, id) {
 
     result
 }
+
+
