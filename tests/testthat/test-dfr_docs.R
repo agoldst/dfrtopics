@@ -84,7 +84,8 @@ hull\t1",
         stringr::str_replace_all("_", "/")
 
     expect_equal(
-        read_wordcounts(dummy_ws, ids, readr::read_tsv),
+        read_wordcounts(dummy_ws, ids,
+                        function (f) readr::read_tsv(f, col_types="ci")),
         fake_counts
     )
     unlink(dummy_ws)
