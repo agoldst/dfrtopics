@@ -94,16 +94,12 @@ test_that("Conversion from TopicModel works okay", {
         seq(date_range[1], date_range[2], by="years")
     )
 
-    brow <- getOption("browser")
-    options(browser=function (x) message("browser: ", x))
 
     bout <- tempfile("ldag-dfb")
-    expect_message(dfr_browser(ldag, out_dir=bout),
-        paste0("browser: file://",
-               normalizePath(file.path(bout, "index.html"))))
-
+    dfr_browser(ldag, out_dir=bout, browse=F)
+    expect_true(file.exists(file.path(bout, "index.html")))
+    expect_true(file.exists(file.path(bout, "data", "dt.json.zip")))
     clear_files(bout, recursive=T) 
-    options(browser=brow)
 })
 
 test_that("Conversion from stm works okay", {
@@ -141,17 +137,12 @@ test_that("Conversion from stm works okay", {
         seq(date_range[1], date_range[2], by="years")
     )
 
-    brow <- getOption("browser")
-    options(browser=function (x) message("browser: ", x))
-
     bout <- tempfile("stg-dfb")
-    expect_message(dfr_browser(stg, out_dir=bout),
-        paste0("browser: file://",
-               normalizePath(file.path(bout, "index.html"))))
 
+    dfr_browser(stg, out_dir=bout, browse=F)
+    expect_true(file.exists(file.path(bout, "index.html")))
+    expect_true(file.exists(file.path(bout, "data", "dt.json.zip")))
     clear_files(bout, recursive=T) 
-
-    options(browser=brow)
 })
 
 test_that("We can align models from a buncha sources", {
