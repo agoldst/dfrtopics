@@ -26,9 +26,11 @@ calc_row_entropies <- function(m) {
 #' This function computes the entropy of a vector, understood as a discrete
 #' distribution over the index.
 #'
-#' @param x vector representing the distribution. Not checked to see whether it is properly normalized.
+#' @param x vector representing the distribution. Not checked to see whether
+#' it is properly normalized.
 #'
-#' @return \eqn{sum_i x_i \log x_i}, where the log is base 2 and the sum is taken only over non-zero elements of \eqn{x}.
+#' @return \eqn{sum_i x_i \log x_i}, where the log is base 2 and the sum is
+#' taken only over non-zero elements of \eqn{x}.
 #'
 #' @export
 entropy <- function(x) {
