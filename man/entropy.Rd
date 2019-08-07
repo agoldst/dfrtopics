@@ -7,10 +7,12 @@
 entropy(x)
 }
 \arguments{
-\item{x}{vector representing the distribution. Not checked to see whether it is properly normalized.}
+\item{x}{vector representing the distribution. Not checked to see whether
+it is properly normalized.}
 }
 \value{
-\eqn{sum_i x_i \log x_i}, where the log is base 2 and the sum is taken only over non-zero elements of \eqn{x}.
+\eqn{sum_i x_i \log x_i}, where the log is base 2 and the sum is
+taken only over non-zero elements of \eqn{x}.
 }
 \description{
 This function computes the entropy of a vector, understood as a discrete

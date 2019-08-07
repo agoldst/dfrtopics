@@ -110,7 +110,7 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' @section Metadata format:
 #'
 #' If you are working with non-JSTOR documents, the one file that will reflect
-#' this is the exported metadata. dfr-browser expects seven metadata columns:
+#' this is the exported metadata. dfr-browser expects seven metadata columns by default:
 #' \code{id,title,author,journaltitle,volume,issue,pubdate,pagerange}. This
 #' function looks for these seven columns and, if it finds them, writes the
 #' metadata with these columns in this order. Any remaining columns are pushed
@@ -119,9 +119,14 @@ write_dfb_file <- function (txt, f, zip=TRUE,
 #' then \code{export_browser_data} will simply save all the metadata as is,
 #' adjusting only the CSV format to match the baseline expectation of
 #' dfr-browser (namely, a headerless CSV conforming to
-#' \href{http://tools.ietf.org/html/rfc4180}{RFC 4180}.). If your metadata does
-#' not match these expectations, you may have to write out the metadata yourself
-#' and/or customize dfr-browser to get satisfactory results.
+#' \href{http://tools.ietf.org/html/rfc4180}{RFC 4180}.).
+#'
+#' If your metadata does not match these expectations, an alternative is to set
+#' dfr-browser's configuration parameters \code{VIS.metadata.type} and
+#' \code{VIS.bib.type} to "base" (using the \code{info} parameter) and to write
+#' out a metadata file \emph{with} a header by passing \code{metadata_header=T}
+#' to this function or \code{\link{dfr_browser}}. For polished results more
+#' customization of dfr-browser might be necessary.
 #'
 #' Note that you can adjust the metadata held on the model object by assigning
 #' to \code{metadata(m)} before exporting the browser data. In particular, if
@@ -306,15 +311,21 @@ export_browser_data <- function (m, out_dir, zipped=TRUE,
 
     md_frame <- metadata(m)
     if (!is.null(md_frame)) {
+        # TODO clean up
+        #
+        # This whole business with the metadata columns is a bad idea and needs
+        # to be simplified both here and in dfr-brwser
+        
         dfb_expected <- c(
             "id", "title", "author", "journaltitle", "volume", "issue",
             "pubdate", "pagerange")
 
         if (any(! dfb_expected %in% colnames(md_frame))) {
-            warning(
-"Not all expected metadata columns are present. All available metadata
-will be written, without any column rearrangement. dfr-browser document
-display may not work as expected. See ?export_browser_data for details."
+            message(
+"Not all expected DfR metadata columns are present. All available metadata will
+be written, without any column rearrangement. dfr-browser document display may
+not work as expected without additional configuration. See ?export_browser_data
+for details."
 )
         } else {
             # reorder columns
@@ -599,11 +610,13 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' \href{http://agoldst.github.io/dfr-browser}{dfr-browser}, then (optionally)
 #' open a web browser. It is also possible to browse a list of models.
 #'
-#' If \code{browse=T}, the function attempts to start a local webserver and open a web browser pointing to the appropriate URL. This functionality requires the \code{servr} package. 
+#' If \code{browse=T}, the function attempts to start a local webserver and
+#' open a web browser pointing to the appropriate URL. This functionality
+#' requires the \code{servr} package. 
 #'
 #' For more control over the export, including the option to export data files
 #' only, if for example you have modified the HTML/CSS/JS of an existing
-#' dfr-browser, use \code{\link{export_browser_data}}.
+#' dfr-browser, use \code{\link{export_browser_data}} (q.v.).
 #'
 #' @section Browsing multiple models at once:
 #'
@@ -660,6 +673,9 @@ export_browser_info <- function (file, info, overwrite, index) {
 #' display only). The elements of this list should have names corresponding to
 #' \code{ids}, and each of the elements of its elements should have names
 #' corresponding to \code{condition}. If NULL, default values are used.
+#' @param metadata_header if TRUE (FALSE is default), the exported metadata CSV
+#' will have a header row (not expected by dfr-browser by default, but see the
+#' example below)
 #' @param ids character vector. If multiple models are specified in \code{m},
 #' the corresponding element of \code{ids} is used as a model ID in
 #' dfr-browser.
@@ -688,7 +704,22 @@ export_browser_info <- function (file, info, overwrite, index) {
 #'     "stoplist.txt", n_topics=40)
 #' cl <- model_distances(list(m, m2), n_words=40) %>% align_topics()
 #' dfr_browser(m2, permute=match(cl$clusters[[1]], cl$clusters[[2]])))
-#' 
+#' # or simply:
+#' dfr_browser(cl)
+#'
+#' # create a browser that allows you to toggle among 2 metadata variables
+#' dfr_browser(m, condition=c("pubdate", "journaltitle"))
+#'
+#' # create a browser for metadata in a non-DfR format; note info specification
+#'
+#' dfr_browser(m, condition="something_else",
+#'      metadata_header=T,
+#'      info=list(VIS=list(
+#'          metadata=list(type="base"),
+#'          bib=list(type="base"),
+#'          bib_view=list(major="all", minor="raw")
+#'      )),
+#' )
 #' }
 #'
 #' @export
@@ -714,15 +745,19 @@ dfr_browser.mallet_model <- function (m, out_dir=tempfile("dfr-browser"),
 
     if (is.null(info)) {
         info <- getOption("dfrtopics.browser_info")
+    }
+
+    if (is.null(info$VIS) || is.null(info$VIS$condition)) {
         info$VIS <- browser_condition_config(
             info=info$VIS,
             var=condition,
-            data=metadata(m)[condition]
+            data=metadata(m)[[condition]]
         )
     }
 
     export_browser_data(m, out_dir, supporting_files=TRUE,
-        internalize=internalize, ...)
+        internalize=internalize, overwrite=overwrite,
+        info=info, ...)
 
     if (browse)
         browse_dfb(out_dir)

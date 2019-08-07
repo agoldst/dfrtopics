@@ -142,10 +142,10 @@ test_that("metadata munging acts as expected", {
     md <- metadata(m)
     metadata(m)$journaltitle <- NULL
 
-    expect_warning(
+    expect_message(
         export_browser_data(m, out_dir=out_dir, zipped=T,
                             n_scaled_words=100),
-        "Not all expected metadata columns"
+        "Not all expected DfR metadata columns"
     )
     md_out <- read.csv(unz(file.path(out_dir, "meta.csv.zip"), "meta.csv"),
                        header=F, as.is=T)

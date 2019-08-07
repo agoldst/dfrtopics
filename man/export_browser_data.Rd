@@ -88,7 +88,7 @@ over the dfr-browser source (javascript, HTML, and CSS), pass
 
 
 If you are working with non-JSTOR documents, the one file that will reflect
-this is the exported metadata. dfr-browser expects seven metadata columns:
+this is the exported metadata. dfr-browser expects seven metadata columns by default:
 \code{id,title,author,journaltitle,volume,issue,pubdate,pagerange}. This
 function looks for these seven columns and, if it finds them, writes the
 metadata with these columns in this order. Any remaining columns are pushed
@@ -97,9 +97,14 @@ customize it.) If any these columns is not present in \code{metadata(m)},
 then \code{export_browser_data} will simply save all the metadata as is,
 adjusting only the CSV format to match the baseline expectation of
 dfr-browser (namely, a headerless CSV conforming to
-\href{http://tools.ietf.org/html/rfc4180}{RFC 4180}.). If your metadata does
-not match these expectations, you may have to write out the metadata yourself
-and/or customize dfr-browser to get satisfactory results.
+\href{http://tools.ietf.org/html/rfc4180}{RFC 4180}.).
+
+If your metadata does not match these expectations, an alternative is to set
+dfr-browser's configuration parameters \code{VIS.metadata.type} and
+\code{VIS.bib.type} to "base" (using the \code{info} parameter) and to write
+out a metadata file \emph{with} a header by passing \code{metadata_header=T}
+to this function or \code{\link{dfr_browser}}. For polished results more
+customization of dfr-browser might be necessary.
 
 Note that you can adjust the metadata held on the model object by assigning
 to \code{metadata(m)} before exporting the browser data. In particular, if

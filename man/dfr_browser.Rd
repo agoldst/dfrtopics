@@ -42,6 +42,10 @@ display only). The elements of this list should have names corresponding to
 \code{ids}, and each of the elements of its elements should have names
 corresponding to \code{condition}. If NULL, default values are used.}
 
+\item{metadata_header}{if TRUE (FALSE is default), the exported metadata CSV
+will have a header row (not expected by dfr-browser by default, but see the
+example below)}
+
 \item{ids}{character vector. If multiple models are specified in \code{m},
 the corresponding element of \code{ids} is used as a model ID in
 dfr-browser.}
@@ -57,11 +61,13 @@ models interactively using
 open a web browser. It is also possible to browse a list of models.
 }
 \details{
-If \code{browse=T}, the function attempts to start a local webserver and open a web browser pointing to the appropriate URL. This functionality requires the \code{servr} package.
+If \code{browse=T}, the function attempts to start a local webserver and
+open a web browser pointing to the appropriate URL. This functionality
+requires the \code{servr} package.
 
 For more control over the export, including the option to export data files
 only, if for example you have modified the HTML/CSS/JS of an existing
-dfr-browser, use \code{\link{export_browser_data}}.
+dfr-browser, use \code{\link{export_browser_data}} (q.v.).
 }
 \section{Browsing multiple models at once}{
 
@@ -113,7 +119,22 @@ m2 <- model_dfr_documents("citations.CSV", "wordcounts",
     "stoplist.txt", n_topics=40)
 cl <- model_distances(list(m, m2), n_words=40) \%>\% align_topics()
 dfr_browser(m2, permute=match(cl$clusters[[1]], cl$clusters[[2]])))
+# or simply:
+dfr_browser(cl)
 
+# create a browser that allows you to toggle among 2 metadata variables
+dfr_browser(m, condition=c("pubdate", "journaltitle"))
+
+# create a browser for metadata in a non-DfR format; note info specification
+
+dfr_browser(m, condition="something_else",
+     metadata_header=T,
+     info=list(VIS=list(
+         metadata=list(type="base"),
+         bib=list(type="base"),
+         bib_view=list(major="all", minor="raw")
+     )),
+)
 }
 
 }
