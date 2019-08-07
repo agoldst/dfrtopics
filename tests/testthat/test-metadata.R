@@ -35,7 +35,7 @@ test_that("metadata functions work as expected on new-style TSV", {
     meta_new_f <- file.path(path.package("dfrtopics"),
                             "test-data", "pmla-modphil1905-1915",
                             "citations.tsv")
-    expect_that(file.exists(meta_new_f), is_true())
+    expect_true(file.exists(meta_new_f))
     meta_new <- read_dfr_metadata(meta_new_f)
     meta_lines_new <- readLines(meta_new_f)
     meta_lines_new <- meta_lines_new[meta_lines_new != ""]
