@@ -50,9 +50,8 @@ test_that("Instances are made from DfR data successfully", {
 
     # check for presence of sample data
 
-    expect_that(file.exists(data_dir), is_true())
-    expect_that(file.exists(file.path(data_dir, "citations.tsv")),
-                is_true())
+    expect_true(file.exists(data_dir))
+    expect_true(file.exists(file.path(data_dir, "citations.tsv")))
 
     metadata <- read_dfr_metadata(file.path(data_dir, "citations.tsv"))
 
@@ -67,8 +66,7 @@ test_that("Instances are made from DfR data successfully", {
     instances <- make_instances(texts, stoplist_file=stop_f)
 
     # check instance ids against metadata ids (not in same order)
-    expect_that(all(instances_ids(instances) %in% metadata$id),
-                is_true())
+    expect_true(all(instances_ids(instances) %in% metadata$id))
 
     expect_that(instances$size(), equals(nrow(metadata)))
     vocab <- instances_vocabulary(instances)
