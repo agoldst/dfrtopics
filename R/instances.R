@@ -54,7 +54,7 @@ make_instances <- function (docs, stoplist_file=NULL, ...) {
         writeLines("", stoplist_file)
     }
     insts <- mallet::mallet.import(docs$id, docs$text,
-        stoplist.file=stoplist_file, ...)
+        stoplist=stoplist_file, ...)
     if (no_stop) {
         unlink(stoplist_file)
     }
