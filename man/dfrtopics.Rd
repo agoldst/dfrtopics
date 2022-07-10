@@ -3,7 +3,6 @@
 \docType{package}
 \name{dfrtopics}
 \alias{dfrtopics}
-\alias{dfrtopics-package}
 \title{Explore and analyze topic models}
 \description{
 This package supplies functions for creating and analyzing topic models using

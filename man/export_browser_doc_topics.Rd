@@ -4,8 +4,15 @@
 \alias{export_browser_doc_topics}
 \title{Export document-topic file for dfr-browser}
 \usage{
-export_browser_doc_topics(file, dtm, digits = 4, zipped, overwrite,
-  index, permute)
+export_browser_doc_topics(
+  file,
+  dtm,
+  digits = 4,
+  zipped,
+  overwrite,
+  index,
+  permute
+)
 }
 \arguments{
 \item{file}{output file name}

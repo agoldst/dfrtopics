@@ -4,8 +4,7 @@
 \alias{export_browser_metadata}
 \title{Export metadata file for dfr-browser}
 \usage{
-export_browser_metadata(file, meta, zipped, overwrite, index,
-  header = FALSE)
+export_browser_metadata(file, meta, zipped, overwrite, index, header = FALSE)
 }
 \arguments{
 \item{file}{output file name}

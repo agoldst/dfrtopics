@@ -4,8 +4,11 @@
 \alias{simplify_state}
 \title{Reduce a MALLET sampling state on disk to a simplified form}
 \usage{
-simplify_state(state_file, outfile,
-  chunk_size = getOption("dfrtopics.state_chunk_size"))
+simplify_state(
+  state_file,
+  outfile,
+  chunk_size = getOption("dfrtopics.state_chunk_size")
+)
 }
 \arguments{
 \item{state_file}{the MALLET state file. Supply either a file name or a

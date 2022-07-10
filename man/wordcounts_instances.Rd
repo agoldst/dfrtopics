@@ -4,8 +4,13 @@
 \alias{wordcounts_instances}
 \title{Create MALLET instances from a word-counts data frame}
 \usage{
-wordcounts_instances(counts, shuffle = FALSE, sep = " ",
-  token_regex = "\\\\S+", preserve_case = TRUE)
+wordcounts_instances(
+  counts,
+  shuffle = FALSE,
+  sep = " ",
+  token_regex = "\\\\S+",
+  preserve_case = TRUE
+)
 }
 \arguments{
 \item{counts}{data frame with \code{id}, \code{word}, \code{weight} columns}

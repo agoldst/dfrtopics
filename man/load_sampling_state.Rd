@@ -4,8 +4,7 @@
 \alias{load_sampling_state}
 \title{Load Gibbs sampling state into model object}
 \usage{
-load_sampling_state(m, simplified_state_file = NULL,
-  mallet_state_file = NULL)
+load_sampling_state(m, simplified_state_file = NULL, mallet_state_file = NULL)
 }
 \arguments{
 \item{m}{\code{mallet_model} object. Either its

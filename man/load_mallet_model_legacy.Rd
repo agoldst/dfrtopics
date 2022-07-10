@@ -4,11 +4,16 @@
 \alias{load_mallet_model_legacy}
 \title{Load a model with files from dfrtopics 0.1}
 \usage{
-load_mallet_model_legacy(f = ".", doc_topics_file = file.path(f,
-  "doc_topics.csv"), keys_file = file.path(f, "keys.csv"),
-  vocab_file = file.path(f, "vocab.txt"), params_file = file.path(f,
-  "params.csv"), topic_words_file = NULL, simplified_state_file = NULL,
-  metadata_file = NULL)
+load_mallet_model_legacy(
+  f = ".",
+  doc_topics_file = file.path(f, "doc_topics.csv"),
+  keys_file = file.path(f, "keys.csv"),
+  vocab_file = file.path(f, "vocab.txt"),
+  params_file = file.path(f, "params.csv"),
+  topic_words_file = NULL,
+  simplified_state_file = NULL,
+  metadata_file = NULL
+)
 }
 \arguments{
 \item{f}{directory name}

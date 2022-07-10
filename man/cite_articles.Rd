@@ -27,7 +27,7 @@ whether designating one author or multiple, are left as is.
 md <- dplyr::data_frame(
     id="10.2307/432680",
     doi="10.2307/432680",
-    title="Sidney's \\"Arcadia\\" and \\"The Tryall of Chevalry\\"",
+    title="Sidney's \"Arcadia\" and \"The Tryall of Chevalry\"",
     author='C. R. Baskervill',
     journaltitle="Modern Philology",
     volume=10,

@@ -4,8 +4,12 @@
 \alias{load_mallet_model_directory}
 \title{Load a model with conventional filenames from a directory}
 \usage{
-load_mallet_model_directory(f, load_topic_words = FALSE,
-  load_sampling_state = FALSE, metadata_file = NULL)
+load_mallet_model_directory(
+  f,
+  load_topic_words = FALSE,
+  load_sampling_state = FALSE,
+  metadata_file = NULL
+)
 }
 \arguments{
 \item{f}{directory name}

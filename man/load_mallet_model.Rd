@@ -4,9 +4,16 @@
 \alias{load_mallet_model}
 \title{Read in model outputs from files}
 \usage{
-load_mallet_model(doc_topics_file, doc_ids_file, vocab_file,
-  top_words_file = NULL, topic_words_file = NULL,
-  metadata_file = NULL, params_file = NULL, state_file = NULL)
+load_mallet_model(
+  doc_topics_file,
+  doc_ids_file,
+  vocab_file,
+  top_words_file = NULL,
+  topic_words_file = NULL,
+  metadata_file = NULL,
+  params_file = NULL,
+  state_file = NULL
+)
 }
 \arguments{
 \item{doc_topics_file}{document-topic matrix file (CSV)}

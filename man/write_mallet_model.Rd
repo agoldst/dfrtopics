@@ -4,9 +4,15 @@
 \alias{write_mallet_model}
 \title{A convenience function for saving all the model outputs at once.}
 \usage{
-write_mallet_model(m, output_dir = ".", n_top_words = 50,
-  save_instances = FALSE, save_scaled = FALSE, save_state = TRUE,
-  simplify_state = TRUE)
+write_mallet_model(
+  m,
+  output_dir = ".",
+  n_top_words = 50,
+  save_instances = FALSE,
+  save_scaled = FALSE,
+  save_state = TRUE,
+  simplify_state = TRUE
+)
 }
 \arguments{
 \item{m}{\code{mallet_model} object}

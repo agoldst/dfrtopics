@@ -4,8 +4,13 @@
 \alias{plot_series}
 \title{Plot time series of yearly topic proportions as bars}
 \usage{
-plot_series(series, group = "topic", date = "pubdate",
-  weight = "weight", labels = unique(series[[group]]))
+plot_series(
+  series,
+  group = "topic",
+  date = "pubdate",
+  weight = "weight",
+  labels = unique(series[[group]])
+)
 }
 \arguments{
 \item{series}{three-column data frame, as from \code{\link{topic_series}}}

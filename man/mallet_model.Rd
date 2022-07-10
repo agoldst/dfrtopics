@@ -7,16 +7,25 @@
 \alias{print.mallet_model_summary}
 \title{The model object}
 \usage{
-mallet_model(doc_topics = NULL, doc_ids = NULL, vocab = NULL,
-  top_words = NULL, topic_words = NULL, params = NULL,
-  hyper = NULL, metadata = NULL, model = NULL, ss = NULL,
-  instances = NULL)
+mallet_model(
+  doc_topics = NULL,
+  doc_ids = NULL,
+  vocab = NULL,
+  top_words = NULL,
+  topic_words = NULL,
+  params = NULL,
+  hyper = NULL,
+  metadata = NULL,
+  model = NULL,
+  ss = NULL,
+  instances = NULL
+)
 
-print.mallet_model(x)
+\method{print}{mallet_model}(x)
 
-summary.mallet_model(x)
+\method{summary}{mallet_model}(x)
 
-print.mallet_model_summary(x)
+\method{print}{mallet_model_summary}(x)
 }
 \arguments{
 \item{doc_topics}{document-topic matrix}

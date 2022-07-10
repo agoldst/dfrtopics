@@ -37,7 +37,7 @@ function \code{\link{wordcounts_instances}} instead.
 The \code{InstanceList} object is the form in which MALLET
 understands a corpus. These are the objects passed on to the
 model-training routines. If saved to disk the same corpus may be used
-with command-line MALLET.
+with command-line MALLET.  
 
 If java gives out-of-memory errors, try increasing the Java heap size to a
 large value, like 4GB, by setting \code{options(java.parameters="-Xmx4g")}

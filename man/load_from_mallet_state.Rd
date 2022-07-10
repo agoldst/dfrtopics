@@ -4,10 +4,14 @@
 \alias{load_from_mallet_state}
 \title{Load model from MALLET state output}
 \usage{
-load_from_mallet_state(mallet_state_file,
-  simplified_state_file = file.path(dirname(mallet_state_file),
-  "state.csv"), instances_file = NULL, keep_sampling_state = TRUE,
-  metadata_file = NULL, bigmemory = TRUE)
+load_from_mallet_state(
+  mallet_state_file,
+  simplified_state_file = file.path(dirname(mallet_state_file), "state.csv"),
+  instances_file = NULL,
+  keep_sampling_state = TRUE,
+  metadata_file = NULL,
+  bigmemory = TRUE
+)
 }
 \arguments{
 \item{mallet_state_file}{name of gzipped state file}

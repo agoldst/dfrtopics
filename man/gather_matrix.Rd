@@ -4,8 +4,13 @@
 \alias{gather_matrix}
 \title{Transform a matrix into a long ("tidy") data frame}
 \usage{
-gather_matrix(m, row_values = rownames(m), col_values = colnames(m),
-  col_names = c("row_key", "col_key", "value"), row_major = TRUE)
+gather_matrix(
+  m,
+  row_values = rownames(m),
+  col_values = colnames(m),
+  col_names = c("row_key", "col_key", "value"),
+  row_major = TRUE
+)
 }
 \arguments{
 \item{m}{matrix (or Matrix: but sparse matrices will be filled in)}

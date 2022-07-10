@@ -63,7 +63,7 @@ open a web browser. It is also possible to browse a list of models.
 \details{
 If \code{browse=T}, the function attempts to start a local webserver and
 open a web browser pointing to the appropriate URL. This functionality
-requires the \code{servr} package.
+requires the \code{servr} package. 
 
 For more control over the export, including the option to export data files
 only, if for example you have modified the HTML/CSS/JS of an existing

@@ -4,9 +4,13 @@
 \alias{model_dfr_documents}
 \title{Make a topic model of DfR documents}
 \usage{
-model_dfr_documents(citations_files, wordcounts_dirs, n_topics,
-  stoplist_file = file.path(path.package("dfrtopics"), "stoplist",
-  "stoplist.txt"), ...)
+model_dfr_documents(
+  citations_files,
+  wordcounts_dirs,
+  n_topics,
+  stoplist_file = file.path(path.package("dfrtopics"), "stoplist", "stoplist.txt"),
+  ...
+)
 }
 \arguments{
 \item{citations_files}{character vector with names of DfR

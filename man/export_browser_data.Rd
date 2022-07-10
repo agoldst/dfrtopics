@@ -4,11 +4,21 @@
 \alias{export_browser_data}
 \title{Output data files for dfr-browser}
 \usage{
-export_browser_data(m, out_dir, zipped = TRUE, n_top_words = 50,
-  n_scaled_words = 1000, supporting_files = FALSE, overwrite = FALSE,
-  internalize = FALSE, info = NULL, proper = FALSE,
-  digits = getOption("digits"), permute = NULL,
-  metadata_header = FALSE)
+export_browser_data(
+  m,
+  out_dir,
+  zipped = TRUE,
+  n_top_words = 50,
+  n_scaled_words = 1000,
+  supporting_files = FALSE,
+  overwrite = FALSE,
+  internalize = FALSE,
+  info = NULL,
+  proper = FALSE,
+  digits = getOption("digits"),
+  permute = NULL,
+  metadata_header = FALSE
+)
 }
 \arguments{
 \item{m}{\code{mallet_model} object from \code{\link{train_model}} or

@@ -10,9 +10,9 @@
 \usage{
 infer_topics(m, instances, ...)
 
-print.mallet_model_inferred(x)
+\method{print}{mallet_model_inferred}(x)
 
-summary.mallet_model_inferred(x)
+\method{summary}{mallet_model_inferred}(x)
 
 \method{docs_top_topics}{mallet_model_inferred}(m, n)
 

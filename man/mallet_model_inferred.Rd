@@ -4,9 +4,15 @@
 \alias{mallet_model_inferred}
 \title{An inferred topic model of new documents}
 \usage{
-mallet_model_inferred(doc_topics = NULL, doc_ids = NULL,
-  vocabulary = NULL, params = NULL, inf = NULL, instances = NULL,
-  parent = NULL)
+mallet_model_inferred(
+  doc_topics = NULL,
+  doc_ids = NULL,
+  vocabulary = NULL,
+  params = NULL,
+  inf = NULL,
+  instances = NULL,
+  parent = NULL
+)
 }
 \description{
 Constructs a representation of the results of using MALLET's topic-inference

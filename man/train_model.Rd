@@ -4,10 +4,21 @@
 \alias{train_model}
 \title{Train a topic model}
 \usage{
-train_model(instances, n_topics, alpha_sum = 5, beta = 0.01,
-  n_iters = 200, n_max_iters = 10, optimize_hyperparameters = TRUE,
-  n_hyper_iters = 20, n_burn_in = 50, symmetric_alpha = FALSE,
-  threads = 4L, seed = NULL, metadata = NULL)
+train_model(
+  instances,
+  n_topics,
+  alpha_sum = 5,
+  beta = 0.01,
+  n_iters = 200,
+  n_max_iters = 10,
+  optimize_hyperparameters = TRUE,
+  n_hyper_iters = 20,
+  n_burn_in = 50,
+  symmetric_alpha = FALSE,
+  threads = 4L,
+  seed = NULL,
+  metadata = NULL
+)
 }
 \arguments{
 \item{instances}{either an rJava reference to an \code{InstanceList} object

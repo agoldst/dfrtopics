@@ -4,8 +4,7 @@
 \alias{read_sampling_state}
 \title{Read in a Gibbs sampling state}
 \usage{
-read_sampling_state(filename, data_type = "integer",
-  big_workdir = tempdir())
+read_sampling_state(filename, data_type = "integer", big_workdir = tempdir())
 }
 \arguments{
 \item{filename}{the name of a CSV file holding the simplified state: a CSV

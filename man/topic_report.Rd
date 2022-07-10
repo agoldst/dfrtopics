@@ -4,8 +4,14 @@
 \alias{topic_report}
 \title{Overview visualization of multiple topics}
 \usage{
-topic_report(m, output_dir = "topic_report", topics = 1:n_topics(m),
-  breaks = "years", w = 1200, h = 800)
+topic_report(
+  m,
+  output_dir = "topic_report",
+  topics = 1:n_topics(m),
+  breaks = "years",
+  w = 1200,
+  h = 800
+)
 }
 \arguments{
 \item{m}{\code{dfr_lda} object}

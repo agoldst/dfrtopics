@@ -4,8 +4,7 @@
 \alias{instance_text}
 \title{Transform an instance back into text}
 \usage{
-instance_text(instance, vocab = instances_vocabulary(instance),
-  collapse = " ")
+instance_text(instance, vocab = instances_vocabulary(instance), collapse = " ")
 }
 \arguments{
 \item{instance}{reference to an instance}
