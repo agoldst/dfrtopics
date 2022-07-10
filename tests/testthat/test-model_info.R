@@ -45,7 +45,7 @@ test_that("Printing model objects gives appropriate output", {
 test_that("Top-words extraction is as expected", {
     keys <- top_words(m, 10)
     expect_equal(keys$word[11:13],
-                c("english", "story", "first"))
+                c("english", "first", "story"))
 })
 
 test_that("Asking for > V top words gives V top words", {
@@ -68,7 +68,7 @@ test_that("Topic docs are returned correctly", {
 
     # check identity weighting
     expect_equal(tdocs$weight[13:15],
-                c(8560, 8150, 3267))
+                 c(8464, 8036, 3262))                 
 })
 
 test_that("Top topics for docs are returned correctly", {
@@ -77,7 +77,7 @@ test_that("Top topics for docs are returned correctly", {
     d <- match("10.2307/432389", doc_ids(m))
     tt_check <- ttopics[ttopics$doc == d, ]
     expect_equal(tt_check$topic, c(1, 5))
-    expect_equal(tt_check$weight, c(1583, 625))
+    expect_equal(tt_check$weight, c(1541, 621))
 })
 
 test_that("Top topics for words are returned correctly", {
