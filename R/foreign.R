@@ -207,15 +207,18 @@ metadata will be stored.")
 unwrap <- function (x) UseMethod("unwrap")
 
 #' @export
+#' @method unwrap TopicModel_glue
 unwrap.TopicModel_glue <- function (x) x$m
 
 #' @export
+#' @method print TopicModel_glue
 print.TopicModel_glue <- function (x, ...) {
     cat("A dfrtopics wrapper around a topic model from another package:\n")
     print(x$m, ...)
 }
 
 #' @export
+#' @method summary TopicModel_glue
 summary.TopicModel_glue <- function (x, ...) {
     structure(list(s=summary(x$m, ...),
                    c=class(x$m)),
@@ -223,6 +226,7 @@ summary.TopicModel_glue <- function (x, ...) {
 }
 
 #' @export
+#' @method summary stm_glue
 summary.stm_glue <- function (x, ...) {
     # summary.STM `cat`s some of its output, so we capture it
     structure(list(s=capture.output(print(summary(x$m, ...))),
@@ -231,6 +235,7 @@ summary.stm_glue <- function (x, ...) {
 }
 
 #' @export
+#' @method print TopicModel_glue_summary
 print.TopicModel_glue_summary <- function (x) {
     cat("A dfrtopics wrapper around a topic model from another package:\n")
     cat("Source type:", x$c, "\n")

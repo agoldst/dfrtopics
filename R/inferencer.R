@@ -185,6 +185,7 @@ mallet_model_inferred <- function (
 
 #' @export
 #' @rdname infer_topics
+#' @method print mallet_model_inferred
 print.mallet_model_inferred <- function (x) {
     s <- stringr::str_c(
 'A model of documents inferred from a previously trained model by MALLET
@@ -199,6 +200,7 @@ Number of documents: ', nrow(x$doc_topics)
 
 #' @export
 #' @rdname infer_topics
+#' @method summary mallet_model_inferred
 summary.mallet_model_inferred <- function (x) {
     x # just print the object
 }

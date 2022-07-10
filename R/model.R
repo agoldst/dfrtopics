@@ -883,6 +883,7 @@ mallet_model <- function (doc_topics=NULL,
 
 #' @export
 #' @rdname mallet_model
+#' @method print mallet_model
 print.mallet_model <- function (x) {
     s <- stringr::str_c(
 "A topic model created by MALLET
@@ -897,6 +898,7 @@ Number of word types: ", length(vocabulary(x)))
 
 #' @export
 #' @rdname mallet_model
+#' @method summary mallet_model
 summary.mallet_model <- function (x) {
     members <- c("model", "instances", "doc_topics", "top_words", "topic_words",
                  "vocab", "doc_ids", "hyper", "ss")
@@ -911,6 +913,7 @@ summary.mallet_model <- function (x) {
 
 #' @export
 #' @rdname mallet_model
+#' @method print mallet_model_summary
 print.mallet_model_summary <- function (x) {
     yesno <- function (m) ifelse(x[[m]], "yes", " no")
 
