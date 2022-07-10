@@ -1,8 +1,10 @@
 # dfrtopics
 
-This small R package provides bits and pieces to help make and explore topic models of text, especially word-count data like that available from JSTOR's [Data for Research](http://dfr.jstor.org) (DfR) service. It uses [MALLET](http://mallet.cs.umass.edu) to run the models.
+This small R package provides bits and pieces to help make and explore topic models of text, especially word-count data. It relies on [MALLET](http://mallet.cs.umass.edu) to create the models. I originally wrote this package to study data from JSTOR's Data for Research (DfR) service. DfR has now been replaced by a more elaborate "platform," [Constellate](https://constellate.org), which supplies similar data in a different format. This package can still be used to support topic-model exploration from R, but you are on your own as far as processing the new Constellate output format goes.
 
-I wrote most of the bits and pieces here while working on my research (I am a literary scholar), so this is not meant to be a professional, sophisticated, multipurpose tool. Nonetheless, by now it seemed worth it to make some of what I'd done conceivably reusable by others who might also want to explore topic models even if they, like me, know very little about machine learning. The code skews to my amateurishness as a programmer. It is all very much in-progress, hacked together, catch-as-catch-can, I am not an expert, I am not a lawyer, etc., etc., etc. Use and share freely, at your own risk.
+Most of my work on this was in 2013–2016, with some sporadic additions through 2019. That's ages in computer years. Some of the package dependencies have started to accumulate cobwebs, including the R interface for MALLET. Some package functions use now-deprecated "[tidyverse](https://tidyverse.org)" idioms; they currently work, but you'll see warnings about this if you use the package. I am not actively maintaining this package, so if you wish to use it, good luck to you. For general text-data-manipulation purposes, take a look at the [tidytext](https://www.tidytextmining.com) package. A more recent and more flexible variant of topic modeling itself, called Structural Topic Modeling, is implemented in the [stm](https://www.jstatsoft.org/article/view/v091i02) package, which also has a rich set of tools for exploring and validating the models it makes. For whatever's trendy in machine learning these days, I have no idea, but I'm sure someone has a large language model with a bridge in Brooklyn to sell you.
+
+I am a literary scholar and I wrote this for my own research purposes, so this is not meant to be a professional, sophisticated, multipurpose tool. Nonetheless, it seemed worth it to make some of what I'd done conceivably reusable by others who might also want to explore topic models even if they, like me, know very little about machine learning. The code skews to my amateurishness as a programmer. It is just hacked together. I am not an expert, I am not a lawyer, etc., etc., etc. Use and share freely, at your own risk.
 
 Every function has online help in R. For a fairly detailed introduction to what you can do with this package, see the introductory vignette:  `vignette("introduction", "dfrtopics")` or [online here](http://agoldst.github.io/dfrtopics/introduction.html). I'm always happy to hear from anyone who makes use of this.
 
@@ -16,19 +18,13 @@ devtools::install_github("agoldst/dfrtopics")
 
 (You don't need to have git or a github account for this to work.) I have been profligate with dependencies on other R packages. This package contains C++ code, so R must be able to build it from source. Mac users should install XCode; Windows users need [RTools](https://cran.r-project.org/bin/windows/Rtools/).
 
-Note, however, that the [mallet](http://cran.r-project.org/web/packages/mallet) package is *not* a formal dependency of the package, so as to make it possible to use other parts of the passage without loading the Java VM. To make use of the topic-modeling functions, however, mallet must be installed. It is available in two versions. To install from CRAN, use
-
-```R
-install.packages("mallet")
-```
-
-To install a more recent development version of mallet, use
+Note, however, that the [mallet](http://cran.r-project.org/web/packages/mallet) package is *not* a formal dependency of the package, so as to make it possible to use other parts of the passage without dealing with Java or loading the Java VM. To make use of the topic-modeling functions, however, mallet must be installed. The package was available from CRAN but has currently (July 2022) been pulled, so it can be installed as follows:
 
 ```R
 devtools::install_github("mimno/RMallet", subdir="mallet")
 ```
 
-Either command will also install rJava, which mallet depends on. If you use RStudio, getting rJava and mallet to load can be a messy business. Mac users, see my [blog post on rJava and RStudio on MacOS X](http://andrewgoldstone.com/blog/2015/02/03/rjava/).
+This will also _try_ to install rJava, which mallet depends on. At this point you may be forced into some yak-shaving. Remember when Java was the great solution to cross-platform programming? Talk about long times in computer years. On my current OS (macOS Monterey) I got a working java that cooperated with rJava with `brew install java`.
 
 To install this package together with its optional as well as required dependencies (CRAN mallet included), use
 
@@ -38,7 +34,7 @@ devtools::install_github("agoldst/dfrtopics", dependencies=T)
 
 ## Browsing the model interactively
 
-Now in alpha release: another project of mine, [dfr-browser](http://agoldst.github.io/dfr-browser), which makes topic models of DfR data into a javascript-based interactive browser. To browse a model created in dfrtopics, use the package function `dfr_browser` (see the function documentation for more detail).
+Another project of mine, [dfr-browser](http://agoldst.github.io/dfr-browser), makes topic models from this package into a javascript-based interactive browser. To browse a model created in dfrtopics, use the package function `dfr_browser` (see the function documentation for more detail).
 
 ## A note on licensing
 
@@ -46,7 +42,7 @@ I have decided to apply the [MIT License](https://github.com/agoldst/dfr-analysi
 
 ## Running the package tests
 
-The tests are based on a sample set of data from DfR. I do not currently have permission to distribute that data, but you can recreate it if you wish to run the tests or regenerate the package vignette. Perform [this search in DfR](http://dfr.jstor.org/fsearch/submitrequest?cs=jo%3A%28pmla+OR+%22modern+philology%22%29+AND+year%3A%5B1905+TO+1915%5D+AND+ty%3Afla%5E1.0&fs=yrm1&view=text&) and make a Dataset Request for wordcounts and metadata in CSV format. Then unzip the archive to a directory `test-data` inside the package directory for `dfrtopics`.
+The tests are based on a sample set of data from DfR, in the repository under `test-data`. Since DfR has been shut down, these tests are of dubious usefulness.
 
 ## Version history
 
