@@ -46,7 +46,7 @@ The tests are based on a sample set of data from DfR, in the repository under `t
 
 ## Version history
 
-v0.2.5a
+v0.2.5.1
  : 7/1/22. Maintenance.
 
 v0.2.5
