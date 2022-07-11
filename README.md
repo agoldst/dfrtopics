@@ -46,6 +46,9 @@ The tests are based on a sample set of data from DfR, in the repository under `t
 
 ## Version history
 
+v0.2.5a
+ : 7/1/22. Maintenance.
+
 v0.2.5
  : 8/6/19. Some support for visualization of multiple models together (sort of) using dfr-browser v0.8.1-alpha.
 
