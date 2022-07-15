@@ -46,28 +46,24 @@ The tests are based on a sample set of data from DfR, in the repository under `t
 
 ## Version history
 
-v0.2.5.1
- : 7/1/22. Maintenance.
+Recent versions can be found on the [releases](https://github.com/agoldst/dfrtopics/releases) page.
 
-v0.2.5
- : 8/6/19. Some support for visualization of multiple models together (sort of) using dfr-browser v0.8.1-alpha.
+v0.2.5.2. 7/15/22. Maintenance I missed four days ago.
 
-v0.2.4
- : 4/26/16. Compatibility with `mallet` package versions 1.0 and 1.1+. *Very experimental* topic alignment functions.
+v0.2.5.1. 7/11/22. Maintenance.
 
-v0.2.3
- : 4/19/16. An adjusted dfr-browser export via `dfr_browser()` for one-line interactive browsing. `export_browser_data` is still available for more control. `wordcounts_instances` introduced to help express "no, MALLET, no more tokenizing!"
+v0.2.5. 8/6/19. Some support for visualization of multiple models together (sort of) using dfr-browser v0.8.1-alpha.
 
-v0.2.2
- : 2/10/16. New (beta) feature: functions for the mutual information of words and documents within topics, and for using this in a posterior predictive check of the model fit: `imi_topic`, `mi_topic`, `imi_check`, `mi_check`. Introduces a dependency on RcppEigen.
+v0.2.4.  4/26/16. Compatibility with `mallet` package versions 1.0 and 1.1+. *Very experimental* topic alignment functions.
 
-v0.2.1
- : 9/23/15. Minor updates. `read_wordcounts` accepts a `reader` method for improved flexibility about data sources, and `export_browser_data` is more tolerant of variant metadata formats. Scaled topic coordinates now use `JS_divergence` written in C++ (introducing a direct Rcpp dependency for a questionable speed gain in a function no one uses). Various code- and documentation-cleaning tweaks.
+v0.2.3.  4/19/16. An adjusted dfr-browser export via `dfr_browser()` for one-line interactive browsing. `export_browser_data` is still available for more control. `wordcounts_instances` introduced to help express "no, MALLET, no more tokenizing!"
 
-v0.2
- :  New release, September 2015. An almost completely rewritten API, so don't expect backwards compatibility. This version should be more flexible and easier to use. At least it has more documentation.
+v0.2.2.  2/10/16. New (beta) feature: functions for the mutual information of words and documents within topics, and for using this in a posterior predictive check of the model fit: `imi_topic`, `mi_topic`, `imi_check`, `mi_check`. Introduces a dependency on RcppEigen.
 
-v0.1
- :  Earliest public version(s), 2013--2015
+v0.2.1.  9/23/15. Minor updates. `read_wordcounts` accepts a `reader` method for improved flexibility about data sources, and `export_browser_data` is more tolerant of variant metadata formats. Scaled topic coordinates now use `JS_divergence` written in C++ (introducing a direct Rcpp dependency for a questionable speed gain in a function no one uses). Various code- and documentation-cleaning tweaks.
+
+v0.2.   New release, September 2015. An almost completely rewritten API, so don't expect backwards compatibility. This version should be more flexible and easier to use. At least it has more documentation.
+
+v0.1.   Earliest public version(s), 2013--2015
 
 Andrew Goldstone (<andrew.goldstone@rutgers.edu>)
